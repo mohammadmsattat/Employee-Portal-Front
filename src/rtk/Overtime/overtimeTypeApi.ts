@@ -1,5 +1,4 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import Cookies from "js-cookie";
 import baseURL, { overtimeTypeEndPoint } from "@/Api/GlobalData";
 import { OvertimeType, OvertimeTypesResponse } from "../interfaces";
 
@@ -30,7 +29,7 @@ export const overtimeTypeApi = createApi({
           limit: limit.toString(),
           ...(policyId ? { policyId } : {}),
         });
-        return `${overtimeTypeEndPoint}?${params.toString()}`;
+        return `${overtimeTypeEndPoint}/staff?${params.toString()}`;
       },
       providesTags: ["OvertimeTypes"],
     }),

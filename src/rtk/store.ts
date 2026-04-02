@@ -16,6 +16,7 @@ import { advancePolicyApi } from "./Advance/advancePolicyApi";
 import { advanceRequestApi } from "./Advance/advanceRequestApi";
 import { overtimeLogsApi } from "./Overtime/overtimeLogs";
 import { advanceLogsApi } from "./Advance/advanceLogsApi";
+import { NotificationsApi } from "./Notifications/NotificationsApi";
 
 export const store = configureStore({
   reducer: {
@@ -32,6 +33,7 @@ export const store = configureStore({
     [advanceRequestApi.reducerPath]: advanceRequestApi.reducer,
     [overtimeLogsApi.reducerPath]: overtimeLogsApi.reducer,
     [advanceLogsApi.reducerPath]: advanceLogsApi.reducer,
+    [NotificationsApi.reducerPath]: NotificationsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -47,7 +49,8 @@ export const store = configureStore({
       .concat(advancePolicyApi.middleware)
       .concat(advanceRequestApi.middleware)
       .concat(overtimeLogsApi.middleware)
-      .concat(advanceLogsApi.middleware),
+      .concat(advanceLogsApi.middleware)
+      .concat(NotificationsApi.middleware),
 });
 
 setupListeners(store.dispatch);

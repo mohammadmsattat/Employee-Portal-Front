@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useGetMyLeaveRequestsQuery } from "@/rtk/leaves/leaveRequestsApi";
 import { LeaveRequest } from "@/rtk/interfaces";
 import { differenceInCalendarDays, format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 export const useMyLeaves = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -33,9 +35,12 @@ export const useMyLeaves = () => {
         (acc, r) =>
           acc +
           (r.startDate && r.endDate
-            ? differenceInCalendarDays(new Date(r.endDate), new Date(r.startDate)) + 1
+            ? differenceInCalendarDays(
+                new Date(r.endDate),
+                new Date(r.startDate),
+              ) + 1
             : 0),
-        0
+        0,
       ),
     remaining: 0,
     pending: requests.filter((r) => r.status === "pending").length,
@@ -58,5 +63,6 @@ export const useMyLeaves = () => {
     limit,
     setLimit,
     totalPages,
+    t,
   };
 };

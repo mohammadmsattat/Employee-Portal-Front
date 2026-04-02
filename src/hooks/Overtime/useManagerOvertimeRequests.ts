@@ -4,8 +4,10 @@ import {
   useChangeOvertimeRequestStatusMutation,
   useGetMyApprovalOvertimeRequestsQuery,
 } from "@/rtk/Overtime/overtimeRequestsApi";
+import { useTranslation } from "react-i18next";
 
 export const useManagerOvertimeRequests = () => {
+  const {t} =useTranslation();
   const { toast } = useToast();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -117,5 +119,6 @@ console.log(data);
     handleReject,
     resetFilters,
     totalPages,
+    t,
   };
 };

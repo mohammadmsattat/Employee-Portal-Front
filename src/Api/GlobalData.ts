@@ -28,5 +28,10 @@ export const advanceTypeEndPoint = "/api/advance-types";
 export const advanceRequestEndPoint = "/api/advance-request";
 export const advanceLogsEndPoint = "/api/advance-logs";
 
+
+export const notificationsEndPoint = "/api/notification";
+
+
+
 // ================= EXPORT BASE =================
 export default baseURL;

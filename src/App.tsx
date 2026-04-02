@@ -10,7 +10,7 @@ import MyLeavesRequests from "./pages/Leaves/MyRequests";
 import Attendance from "./pages/Attendance/Attendance";
 import Profile from "./pages/Profile/Profile";
 import NotFound from "./pages/NotFound";
-import Login from "./pages/Auth/Login"; 
+import Login from "./pages/Auth/Login";
 import { store } from "./rtk/store";
 import { ForgotPassword } from "./pages/Auth/ForgotPassword";
 import { VerifyCode } from "./pages/Auth/VerifyCode";
@@ -20,6 +20,7 @@ import MyOvertimeRequests from "./pages/Overtime/MyOvertimeRequests";
 import MyAdvanceRequestsPage from "./pages/Advance/MyAdvanceRequestsPage";
 import ManagerOvertimeRequests from "./pages/Overtime/ManagerOvertimeRequests";
 import ManagerAdvanceRequests from "./pages/Advance/ManagerAdvanceRequests";
+import PrivateRoute from "./providers/PrivateRoute";
 
 const queryClient = new QueryClient();
 
@@ -31,39 +32,44 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public routes (accessible without login) */}
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/verify-code" element={<VerifyCode />} />
             <Route path="/new-password" element={<NewPassword />} />
 
-            <Route path="/" element={<Home />} />
-            <Route
-              path="/leaves/Leave-requests"
-              element={<MyLeavesRequests />}
-            />
-            <Route
-              path="/leaves/manager-leave-requests"
-              element={<ManagerLeaveRequests />}
-            />
-            <Route
-              path="/overtime/my-overtime-requests"
-              element={<MyOvertimeRequests />}
-            />
-            <Route
-              path="/overtime/manager-overtime-requests"
-              element={<ManagerOvertimeRequests />}
-            />
-            <Route
-              path="/advance/my-advance-requests"
-              element={<MyAdvanceRequestsPage />}
-            />
-            <Route
-              path="/advance/manager-advance-requests"
-              element={<ManagerAdvanceRequests />}
-            />
-            <Route path="/attendance" element={<Attendance />} />
-            <Route path="/profile" element={<Profile />} />
+            {/* Protected routes (require login) */}
+            <Route element={<PrivateRoute />}>
+              <Route path="/" element={<Home />} />
+              <Route
+                path="/leaves/Leave-requests"
+                element={<MyLeavesRequests />}
+              />
+              <Route
+                path="/leaves/manager-leave-requests"
+                element={<ManagerLeaveRequests />}
+              />
+              <Route
+                path="/overtime/my-overtime-requests"
+                element={<MyOvertimeRequests />}
+              />
+              <Route
+                path="/overtime/manager-overtime-requests"
+                element={<ManagerOvertimeRequests />}
+              />
+              <Route
+                path="/advance/my-advance-requests"
+                element={<MyAdvanceRequestsPage />}
+              />
+              <Route
+                path="/advance/manager-advance-requests"
+                element={<ManagerAdvanceRequests />}
+              />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
 
+            {/* 404 route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

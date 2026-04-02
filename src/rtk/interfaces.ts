@@ -23,7 +23,9 @@ export interface ApiResponse<T> {
 // ===================== LEAVE TYPES =====================
 import { LeaveRequestStatus } from "@/interfaces";
 
-export interface LeaveRule { days: number; }
+export interface LeaveRule {
+  days: number;
+}
 
 export interface PolicyLeaveType {
   _id: string;
@@ -44,13 +46,22 @@ export interface LeavesResponse {
   data: PolicyLeaveType[];
 }
 
-export interface LeaveResponse { status: boolean; data: PolicyLeaveType; }
+export interface LeaveResponse {
+  status: boolean;
+  data: PolicyLeaveType;
+}
 
 export type LeaveStatus = LeaveRequestStatus;
 
-export interface LeaveType { _id: string; typeKey: string; }
+export interface LeaveType {
+  _id: string;
+  typeKey: string;
+}
 
-export interface userId { _id: string; fullName: string; }
+export interface userId {
+  _id: string;
+  fullName: string;
+}
 
 export interface LeaveRequest {
   _id: string;
@@ -75,13 +86,16 @@ export interface LeaveRequestsResponse {
   data: LeaveRequest[];
 }
 
-export interface LeaveRequestResponse { status: boolean; data: LeaveRequest; }
+export interface LeaveRequestResponse {
+  status: boolean;
+  data: LeaveRequest;
+}
 
 export interface LeaveLog {
   _id: string;
-  userId: { _id: string; fullName: string; email: string; };
+  userId: { _id: string; fullName: string; email: string };
   companyId: string;
-  leaveType: { _id: string; typeKey: string; name?: string; };
+  leaveType: { _id: string; typeKey: string; name?: string };
   leaveRequestId: string;
   startDate: string;
   endDate: string;
@@ -108,8 +122,8 @@ export type OvertimeStatus = "pending" | "approved" | "rejected" | "cancelled";
 
 export interface OvertimeRequest {
   _id: string;
-  userId: { _id: string; fullName: string; email: string }; 
-  managerId: { _id: string; fullName?: string }; 
+  userId: { _id: string; fullName: string; email: string };
+  managerId: { _id: string; fullName?: string };
   companyId: string;
   overtimeTypeId: OvertimeType;
   workDate: string;
@@ -144,7 +158,7 @@ export interface OvertimeType {
   name?: string;
   description?: string;
   applicableDayType?: "workday" | "holiday";
-  requiresAttachment  ?: boolean;
+  requiresAttachment?: boolean;
   rateMultiplier?: number;
 }
 
@@ -367,4 +381,55 @@ export interface IAdvanceLogsResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+// ===================== NOTIFICATION TYPES =====================
+
+export interface IUser {
+  _id: string;
+  fullName: string;
+  email?: string;
+}
+
+export interface INotificationEntity {
+  id: string;
+  model: string;
+}
+
+export interface Notification {
+  _id: string;
+  recipient: IUser;
+  actor?: IUser;
+  title: string;
+  message: string;
+  entity?: INotificationEntity;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationsResponse {
+  status: boolean;
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  results: number;
+  data: Notification[];
+}
+
+export interface UnreadCountResponse {
+  status: boolean;
+  count: number;
+}
+
+export interface NotificationResponse {
+  status: boolean;
+  data: Notification;
+  message?: string;
+}
+
+export interface MarkAllReadResponse {
+  status: boolean;
+  modifiedCount: number;
 }

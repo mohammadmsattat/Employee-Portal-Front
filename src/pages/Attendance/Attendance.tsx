@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 
 import Layout from "@/components/layout/Layout";
 import PortalCard from "@/components/portal/PortalCard";
@@ -17,27 +16,13 @@ import {
 
 import LoadingFull from "@/components/ui/LoadingSkeleton";
 import { useAttendance } from "@/hooks/Attendance/useAttendance";
-import { FingerprintType } from "@/interfaces";
 
 const Attendance = () => {
   const token = localStorage.getItem("token");
 
-  const {
-    records,
-    lastCheckIn,
-    lastCheckOut,
-    canCheckIn,
-    canCheckOut,
-    workedTimeText,
-    handleAction,
-    isLoading,
-    locationLoading,
-    currentLocation,
-    isWithinDistance,
-  } = useAttendance();
+  const { records, isLoading, t, i18n } = useAttendance();
 
-  const [mode, setMode] = useState<"Check-in" | "Check-out">("Check-in");
-  const [status, setStatus] = useState<"success" | "error" | null>(null);
+  const isRTL = i18n.language === "ar";
 
   if (!token)
     return (
@@ -53,59 +38,62 @@ const Attendance = () => {
       </Layout>
     );
 
-  const canAction = mode === "Check-in" ? canCheckIn : canCheckOut;
-
-  const handleFingerprint = async () => {
-    if (!canAction) return;
-
-    try {
-      const fingerprintType: FingerprintType =
-        mode === "Check-in" ? "Check-in" : "Check-out";
-
-      await handleAction(fingerprintType);
-      setStatus("success");
-
-      setTimeout(() => setStatus(null), 2000);
-    } catch {
-      setStatus("error");
-      setTimeout(() => setStatus(null), 2000);
-    }
-  };
-
   return (
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between">
+          {/* Back Button */}
           <Button variant="ghost" size="icon" asChild>
             <Link to="/">
-              <ArrowLeft className="h-5 w-5" />
+              {isRTL ? (
+                <ArrowRight className="h-5 w-5" />
+              ) : (
+                <ArrowLeft className="h-5 w-5" />
+              )}
             </Link>
           </Button>
 
-          <div>
-            <h1 className="text-2xl font-bold">Attendance</h1>
-            <p>Track your daily attendance</p>
+          {/* Title */}
+          <div className="flex-1 text-start">
+            <h1 className="text-2xl font-bold">{t("attendancePage.title")}</h1>
+            <p className="text-muted-foreground">
+              {t("attendancePage.subtitle")}
+            </p>
           </div>
         </div>
 
         {/* Attendance History */}
-        <PortalCard title="Attendance History" icon={<Clock />}>
+        <PortalCard title={t("attendancePage.history")} icon={<Clock />}>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Time</TableHead>
+                <TableHead className="text-start">
+                  {t("attendancePage.date")}
+                </TableHead>
+
+                <TableHead className="text-center">
+                  {t("attendancePage.type")}
+                </TableHead>
+
+                <TableHead className="text-end">
+                  {t("attendancePage.time")}
+                </TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {records.map((r) => (
                 <TableRow key={r._id}>
-                  <TableCell>{new Date(r.date).toDateString()}</TableCell>
-                  <TableCell>{r.type}</TableCell>
-                  <TableCell>{r.Time}</TableCell>
+                  <TableCell>
+                    {new Intl.DateTimeFormat(i18n.language).format(
+                      new Date(r.date),
+                    )}
+                  </TableCell>
+
+                  <TableCell className="text-center">{r.type}</TableCell>
+
+                  <TableCell className="text-end">{r.Time}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

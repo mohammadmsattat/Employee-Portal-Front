@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/portal/StatusBadge";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 interface LeaveRequestModalProps {
   request: any;
@@ -18,14 +19,11 @@ const LeaveRequestModal = ({
   onReject,
   submitting,
 }: LeaveRequestModalProps) => {
-  console.log("555");
-  
+  const { t } = useTranslation();
+
   const [rejectReason, setRejectReason] = useState("");
   const [isRejecting, setIsRejecting] = useState(false);
 
-  // if (!request) return null;
-
-  // ===== حل مشكلة TypeScript =====
   const calculateDays = (start?: string | Date, end?: string | Date) => {
     if (!start || !end) return 1;
     const s = new Date(start).getTime();
@@ -41,10 +39,10 @@ const LeaveRequestModal = ({
 
   const FieldRow = ({ label, value }: { label: string; value: any }) => (
     <div className="flex flex-col sm:flex-row sm:items-start py-2 sm:py-3 border-b border-gray-100 w-full">
-      <div className="sm:w-1/3 text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+      <div className="sm:w-1/3 text-sm font-medium text-gray-500 mb-1 sm:mb-0 text-start">
         {label}
       </div>
-      <div className="sm:w-2/3 text-sm text-gray-800 break-words">
+      <div className="sm:w-2/3 text-sm text-gray-800 break-words text-start">
         {value || "-"}
       </div>
     </div>
@@ -53,10 +51,11 @@ const LeaveRequestModal = ({
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md sm:max-w-2xl p-5 sm:p-6 border border-gray-200 overflow-y-auto max-h-[90vh]">
+
         {/* Header */}
         <div className="flex justify-between items-center mb-4 sm:mb-6 pb-2 border-b border-gray-200">
-          <h2 className="text-xl sm:text-2xl font-bold text-portal-header">
-            Leave Request Details
+          <h2 className="text-xl sm:text-2xl font-bold text-portal-header text-start">
+            {t("leaveRequestModal.title")}
           </h2>
           <button
             onClick={onClose}
@@ -68,24 +67,41 @@ const LeaveRequestModal = ({
 
         {/* Content */}
         <div className="space-y-2 sm:space-y-3">
-          <FieldRow label="Employee" value={request?.userId?.fullName} />
-          <FieldRow label="Leave Type" value={request?.leaveType?.typeKey} />
           <FieldRow
-            label="Period"
-            value={`${formatDate(request?.startDate)} – ${formatDate(request?.endDate)}`}
+            label={t("leaveRequestModal.employee")}
+            value={request?.userId?.fullName}
           />
+
           <FieldRow
-            label="Days"
+            label={t("leaveRequestModal.leaveType")}
+            value={request?.leaveType?.typeKey}
+          />
+
+          <FieldRow
+            label={t("leaveRequestModal.period")}
+            value={`${formatDate(request?.startDate)} – ${formatDate(
+              request?.endDate
+            )}`}
+          />
+
+          <FieldRow
+            label={t("leaveRequestModal.days")}
             value={calculateDays(request?.startDate, request?.endDate)}
           />
+
           <FieldRow
-            label="Status"
+            label={t("leaveRequestModal.status")}
             value={<StatusBadge status={request?.status} />}
           />
-          <FieldRow label="Reason" value={request?.reason} />
+
+          <FieldRow
+            label={t("leaveRequestModal.reason")}
+            value={request?.reason}
+          />
+
           {request?.status === "rejected" && request?.rejectionReason && (
             <FieldRow
-              label="Rejection Reason"
+              label={t("leaveRequestModal.rejectionReason")}
               value={
                 <span className="text-red-600 font-medium">
                   {request.rejectionReason}
@@ -93,9 +109,10 @@ const LeaveRequestModal = ({
               }
             />
           )}
+
           {request?.attachment && (
             <FieldRow
-              label="Attachment"
+              label={t("leaveRequestModal.attachment")}
               value={
                 <a
                   href={request.attachment}
@@ -103,7 +120,7 @@ const LeaveRequestModal = ({
                   rel="noopener noreferrer"
                   className="text-blue-600 underline hover:text-blue-700 transition-colors"
                 >
-                  View File
+                  {t("leaveRequestModal.viewFile")}
                 </a>
               }
             />
@@ -118,15 +135,16 @@ const LeaveRequestModal = ({
               onClick={() => onApprove(request)}
               disabled={submitting}
             >
-              Approve
+              {t("leaveRequestModal.approve")}
             </Button>
+
             <Button
               variant="destructive"
               onClick={handleRejectClick}
               disabled={submitting}
               className="py-1.5 px-3 text-sm sm:py-2 sm:px-4"
             >
-              Reject
+              {t("leaveRequestModal.reject")}
             </Button>
           </div>
         )}
@@ -134,12 +152,13 @@ const LeaveRequestModal = ({
         {isRejecting && (
           <div className="space-y-3 mt-6">
             <textarea
-              placeholder="Reason for rejection"
-              className="w-full border rounded-md p-3 text-sm focus:ring-2 focus:ring-primary resize-none"
+              placeholder={t("leaveRequestModal.rejectPlaceholder")}
+              className="w-full border rounded-md p-3 text-sm focus:ring-2 focus:ring-primary resize-none text-start"
               rows={4}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
             />
+
             <div className="flex flex-row justify-end gap-2">
               <Button
                 variant="outline"
@@ -147,15 +166,16 @@ const LeaveRequestModal = ({
                 disabled={submitting}
                 className="flex-1 sm:flex-none py-2"
               >
-                Cancel
+                {t("leaveRequestModal.cancel")}
               </Button>
+
               <Button
                 variant="destructive"
                 onClick={submitRejection}
                 disabled={submitting}
                 className="flex-1 sm:flex-none py-2"
               >
-                Submit Rejection
+                {t("leaveRequestModal.submitRejection")}
               </Button>
             </div>
           </div>

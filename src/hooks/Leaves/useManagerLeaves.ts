@@ -4,8 +4,10 @@ import {
   useChangeLeaveRequestStatusMutation,
   useGetApprovalRequestsQuery,
 } from "@/rtk/leaves/leaveRequestsApi";
+import { useTranslation } from "react-i18next";
 
 export const useManagerLeaves = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -45,10 +47,10 @@ export const useManagerLeaves = () => {
 
   const { data, isLoading } = useGetApprovalRequestsQuery({
     page,
-    limit: isMobile ? mobileLimit : limit, 
+    limit: isMobile ? mobileLimit : limit,
     status: statusFilter,
   });
-console.log(data);
+  console.log(data);
 
   const totalPages = data?.totalPages || 1;
 
@@ -89,7 +91,9 @@ console.log(data);
       await changeStatus({ id: req._id, action: "reject", reason }).unwrap();
       toast({ title: "Leave rejected", description: "Request rejected." });
       setSelectedRequest(null);
-    } catch {
+    } catch (error) {
+ console.log(error);
+ 
       toast({
         title: "Error",
         description: "Failed to reject.",
@@ -150,5 +154,6 @@ console.log(data);
     resetFilters,
     totalPages,
     isMobile,
+    t,
   };
 };

@@ -11,21 +11,27 @@ export const NewPassword = () => {
     setConfirmPassword,
     resetting,
     resetPassword,
+    t,
   } = usePasswordReset();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
-      <Card className="w-full max-w-md shadow-lg border-border">
-        <CardHeader className="text-center space-y-2">
-          <img src="/logo.png" alt="Logo" className="h-12 mx-auto mb-2" />
-          <CardTitle className="text-2xl font-bold text-portal-header">
-            Create New Password
+    <div className="min-h-screen flex items-center justify-center bg-white px-4 sm:px-6 py-6">
+      <Card className="w-full max-w-sm sm:max-w-md shadow-lg border-border rounded-2xl">
+        <CardHeader className="text-center space-y-2 px-5 sm:px-6 pt-6">
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className="h-10 sm:h-12 mx-auto mb-2"
+          />
+          <CardTitle className="text-xl sm:text-2xl font-bold text-portal-header">
+            {t("newPassword.title")}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Choose a strong password for your account
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            {t("newPassword.subtitle")}
           </p>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="px-5 sm:px-6 pb-6">
           <form
             className="space-y-4"
             onSubmit={(e) => {
@@ -33,27 +39,42 @@ export const NewPassword = () => {
               resetPassword();
             }}
           >
+            {/* New Password */}
             <div>
-              <label className="text-sm font-medium">New Password</label>
+              <label className="text-sm sm:text-base font-medium">
+                {t("newPassword.newPassword")}
+              </label>
               <Input
                 type="password"
-                placeholder="******"
+                placeholder={t("newPassword.passwordPlaceholder")}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Confirm Password</label>
-              <Input
-                type="password"
-                placeholder="******"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="h-10 sm:h-11 text-sm sm:text-base"
               />
             </div>
 
-            <Button className="w-full" disabled={resetting}>
-              {resetting ? "Resetting..." : "Reset Password"}
+            {/* Confirm Password */}
+            <div>
+              <label className="text-sm sm:text-base font-medium">
+                {t("newPassword.confirmPassword")}
+              </label>
+              <Input
+                type="password"
+                placeholder={t("newPassword.passwordPlaceholder")}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="h-10 sm:h-11 text-sm sm:text-base"
+              />
+            </div>
+
+            {/* Button */}
+            <Button
+              className="w-full h-10 sm:h-11 text-sm sm:text-base"
+              disabled={resetting}
+            >
+              {resetting
+                ? t("newPassword.resetting")
+                : t("newPassword.resetPassword")}
             </Button>
           </form>
         </CardContent>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/portal/StatusBadge";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   request: any;
@@ -18,6 +19,7 @@ const ManagerOvertimeRequestModal = ({
   onReject,
   submitting,
 }: Props) => {
+  const{t}=useTranslation();
   const [rejectReason, setRejectReason] = useState("");
   const [isRejecting, setIsRejecting] = useState(false);
 
@@ -58,7 +60,7 @@ const ManagerOvertimeRequestModal = ({
         {/* Header */}
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-portal-header">
-            Overtime Request Details
+            {t("managerOvertimeRequestModal.title")}
           </h2>
           <button
             onClick={onClose}
@@ -72,32 +74,32 @@ const ManagerOvertimeRequestModal = ({
         <div className="bg-white rounded-xl border border-gray-100 px-4">
 
           <FieldRow
-            label="Employee"
+            label={t("managerOvertimeRequestModal.employee")}
             value={request.userId?.fullName}
           />
 
           <FieldRow
-            label="Overtime Type"
+            label={t("managerOvertimeRequestModal.overtimeType")}
             value={request.overtimeTypeId?.typeKey}
           />
 
           <FieldRow
-            label="Work Date"
+            label={t("managerOvertimeRequestModal.workDate")}
             value={safeFormat(request.workDate)}
           />
 
           <FieldRow
-            label="Start Time"
+            label={t("managerOvertimeRequestModal.startTime")}
             value={safeFormat(request.startTime)}
           />
 
           <FieldRow
-            label="End Time"
+            label={t("managerOvertimeRequestModal.endTime")}
             value={safeFormat(request.endTime)}
           />
 
           <FieldRow
-            label="Total Hours"
+            label={t("managerOvertimeRequestModal.totalHours")}
             value={
               request.hours
                 ? request.hours
@@ -106,18 +108,18 @@ const ManagerOvertimeRequestModal = ({
           />
 
           <FieldRow
-            label="Status"
+            label={t("managerOvertimeRequestModal.status")}
             value={<StatusBadge status={request.status} />}
           />
 
           <FieldRow
-            label="Reason"
+            label={t("managerOvertimeRequestModal.reason")}
             value={request.reason}
           />
 
           {request.status === "rejected" && request.rejectionReason && (
             <FieldRow
-              label="Rejection Reason"
+              label={t("managerOvertimeRequestModal.rejectionReason")}
               value={
                 <span className="text-red-600 font-medium">
                   {request.rejectionReason}
@@ -128,7 +130,7 @@ const ManagerOvertimeRequestModal = ({
 
           {request.attachment && (
             <FieldRow
-              label="Attachment"
+              label={t("managerOvertimeRequestModal.attachment")}
               value={
                 <a
                   href={request.attachment}
@@ -136,7 +138,7 @@ const ManagerOvertimeRequestModal = ({
                   rel="noopener noreferrer"
                   className="text-blue-600 underline hover:text-blue-700"
                 >
-                  View File
+                  {t("managerOvertimeRequestModal.viewFile")}
                 </a>
               }
             />
@@ -151,14 +153,14 @@ const ManagerOvertimeRequestModal = ({
               onClick={() => onApprove(request)}
               disabled={submitting}
             >
-              Approve
+              {t("managerOvertimeRequestModal.approve")}
             </Button>
             <Button
               variant="destructive"
               onClick={() => setIsRejecting(true)}
               disabled={submitting}
             >
-              Reject
+              {t("managerOvertimeRequestModal.reject")}
             </Button>
           </div>
         )}
@@ -166,7 +168,7 @@ const ManagerOvertimeRequestModal = ({
         {isRejecting && (
           <div className="space-y-3 mt-6">
             <textarea
-              placeholder="Reason for rejection"
+              placeholder={t("managerOvertimeRequestModal.rejectPlaceholder")}
               className="w-full border rounded-md p-3 text-sm focus:ring-2 focus:ring-primary resize-none"
               rows={3}
               value={rejectReason}
@@ -178,14 +180,14 @@ const ManagerOvertimeRequestModal = ({
                 onClick={() => setIsRejecting(false)}
                 disabled={submitting}
               >
-                Cancel
+                {t("managerOvertimeRequestModal.cancel")}
               </Button>
               <Button
                 variant="destructive"
                 onClick={() => onReject(request, rejectReason)}
                 disabled={submitting || !rejectReason.trim()}
               >
-                Submit Rejection
+                {t("managerOvertimeRequestModal.submitRejection")}
               </Button>
             </div>
           </div>

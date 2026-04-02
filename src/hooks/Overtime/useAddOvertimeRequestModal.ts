@@ -318,7 +318,7 @@ console.log(formData);
         description: "Failed to submit overtime request.",
         variant: "destructive",
       });
-      console.error(err);
+      console.log(err);
     } finally {
       setIsSubmitting(false);
     }

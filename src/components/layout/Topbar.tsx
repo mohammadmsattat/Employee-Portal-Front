@@ -184,7 +184,13 @@ const Topbar = () => {
                           <section.icon size={16} className="text-primary" />
                           {section.title}
                         </div>
-                        <ChevronRight size={14} />
+                        <ChevronRight
+                          size={14}
+                          style={{
+                            transform:
+                              i18n.language === "ar" ? "scaleX(-1)" : "none",
+                          }}
+                        />
                       </div>
                       {isActiveSection && (
                         <div

@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useGetMyOvertimeRequestsQuery } from "@/rtk/Overtime/overtimeRequestsApi";
 import { OvertimeRequest } from "@/rtk/interfaces";
+import { useTranslation } from "react-i18next";
 
 export const useMyOvertimes = () => {
+  const {t} = useTranslation();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10); 
   const mobileLimit = 10;
@@ -57,5 +59,6 @@ export const useMyOvertimes = () => {
     mobileLimit,
     totalPages,
     isMobile,
+    t,
   };
 };

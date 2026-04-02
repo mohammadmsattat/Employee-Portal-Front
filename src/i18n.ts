@@ -11,12 +11,28 @@ i18n
     supportedLngs: ["en", "ar"],
     fallbackLng: "en",
     debug: true,
-    backend: {
-      loadPath: "/locales/{{lng}}.json"
+
+    detection: {
+      // ترتيب مصادر اللغة
+      order: ["cookie"],
+
+      // يخزن اللغة فقط في cookies
+      caches: ["cookie"],
+
+      // اسم الكوكي
+      lookupCookie: "appLang",
+
+      // إعدادات الكوكي
+      cookieMinutes: 60 * 24 * 365, // سنة
     },
+
+    backend: {
+      loadPath: "/locales/{{lng}}.json",
+    },
+
     react: {
-      useSuspense: true
-    }
+      useSuspense: true,
+    },
   });
 
 export default i18n;

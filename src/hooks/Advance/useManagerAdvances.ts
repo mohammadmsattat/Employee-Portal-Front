@@ -5,8 +5,10 @@ import {
   useGetMyApprovalRequestsQuery,
   useHandleAdvanceStatusMutation,
 } from "@/rtk/Advance/advanceRequestApi";
+import { useTranslation } from "react-i18next";
 
 export const useManagerAdvances = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -117,5 +119,6 @@ export const useManagerAdvances = () => {
     handleReject,
     totalPages,
     isMobile,
+    t,
   };
 };

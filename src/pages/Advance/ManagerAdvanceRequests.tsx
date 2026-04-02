@@ -46,6 +46,7 @@ const ManagerAdvanceRequests = () => {
     handleReject,
     totalPages,
     isMobile,
+    t,
   } = useManagerAdvances();
 
   const formatDate = (date?: string) => {
@@ -66,21 +67,24 @@ const ManagerAdvanceRequests = () => {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-portal-header">
-            Team Advance Requests
+            {t("managerAdvanceRequestsPage.title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage advance requests from your team
+            {t("managerAdvanceRequestsPage.subtitle")}
           </p>
         </div>
 
         {/* Filters */}
-        <PortalCard title="Filters" icon={<Search className="h-5 w-5" />}>
+        <PortalCard
+          title={t("managerAdvanceRequestsPage.filters")}
+          icon={<Search className="h-5 w-5" />}
+        >
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search employee..."
+                placeholder={t("managerAdvanceRequestsPage.searchPlaceholder")}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-primary"
@@ -88,17 +92,25 @@ const ManagerAdvanceRequests = () => {
             </div>
             <div className="flex-1 min-w-[120px]">
               <label className="text-xs text-muted-foreground mb-1 block">
-                Status
+                {t("managerAdvanceRequestsPage.status")}
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full border rounded-md px-3 py-2 text-sm"
               >
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
+                <option value="">
+                  {t("managerAdvanceRequestsPage.allStatus")}
+                </option>
+                <option value="pending">
+                  {t("managerAdvanceRequestsPage.pending")}
+                </option>
+                <option value="approved">
+                  {t("managerAdvanceRequestsPage.approved")}
+                </option>
+                <option value="rejected">
+                  {t("managerAdvanceRequestsPage.rejected")}
+                </option>
               </select>
             </div>
             <div className="flex items-end">
@@ -111,7 +123,8 @@ const ManagerAdvanceRequests = () => {
                 }}
                 className="flex items-center gap-1"
               >
-                <X className="h-4 w-4" /> Reset
+                <X className="h-4 w-4" />{" "}
+                {t("managerAdvanceRequestsPage.reset")}
               </Button>
             </div>
           </div>
@@ -120,7 +133,7 @@ const ManagerAdvanceRequests = () => {
         {/* Desktop Table */}
         <div className="hidden md:block">
           <PortalCard
-            title="Advance Requests History"
+            title={t("managerAdvanceRequestsPage.history")}
             icon={<FileText className="h-5 w-5" />}
           >
             {data?.data?.length ? (
@@ -128,11 +141,21 @@ const ManagerAdvanceRequests = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                      <TableHead className="text-center">Action</TableHead>
+                      <TableHead>
+                        {t("managerAdvanceRequestsPage.employee")}
+                      </TableHead>
+                      <TableHead>
+                        {t("managerAdvanceRequestsPage.date")}
+                      </TableHead>
+                      <TableHead>
+                        {t("managerAdvanceRequestsPage.amount")}
+                      </TableHead>
+                      <TableHead className="text-center">
+                        {t("managerAdvanceRequestsPage.status")}
+                      </TableHead>
+                      <TableHead className="text-center">
+                        {t("managerAdvanceRequestsPage.action")}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -159,7 +182,7 @@ const ManagerAdvanceRequests = () => {
               </div>
             ) : (
               <div className="p-6 text-center text-muted-foreground">
-                No advance requests found
+                {t("managerAdvanceRequestsPage.noRequests")}
               </div>
             )}
           </PortalCard>
@@ -172,7 +195,9 @@ const ManagerAdvanceRequests = () => {
               <MobileCard key={req._id}>
                 <MobileCardHeader>
                   <div>
-                    <MobileCardLabel>Employee</MobileCardLabel>
+                    <MobileCardLabel>
+                      {t("managerAdvanceRequestsPage.employee")}
+                    </MobileCardLabel>
                     <MobileCardValue>
                       {req.userId?.fullName || "-"}
                     </MobileCardValue>
@@ -183,7 +208,9 @@ const ManagerAdvanceRequests = () => {
                 <MobileCardContent>
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Date</MobileCardLabel>
+                      <MobileCardLabel>
+                        {t("managerAdvanceRequestsPage.date")}
+                      </MobileCardLabel>
                       <MobileCardValue>
                         {formatDate(req.createdAt)}
                       </MobileCardValue>
@@ -192,7 +219,9 @@ const ManagerAdvanceRequests = () => {
 
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Amount</MobileCardLabel>
+                      <MobileCardLabel>
+                        {t("managerAdvanceRequestsPage.amount")}
+                      </MobileCardLabel>
                       <MobileCardValue>{req.amount || "-"}</MobileCardValue>
                     </div>
                   </MobileCardRow>
@@ -200,7 +229,7 @@ const ManagerAdvanceRequests = () => {
                   <MobileCardRow>
                     <div className="flex gap-2">
                       <Button size="sm" onClick={() => setSelectedRequest(req)}>
-                        View
+                        {t("managerAdvanceRequestsPage.view")}
                       </Button>
                     </div>
                   </MobileCardRow>
@@ -209,7 +238,7 @@ const ManagerAdvanceRequests = () => {
             ))
           ) : (
             <div className="p-6 text-center text-muted-foreground">
-              No advance requests found
+              {t("managerAdvanceRequestsPage.noRequests")}
             </div>
           )}
         </div>
@@ -223,17 +252,18 @@ const ManagerAdvanceRequests = () => {
           setPerPage={isMobile ? undefined : setLimit}
           className="mt-4"
         />
+
+        {/* Modal */}
+        {selectedRequest && (
+          <ManagerAdvanceRequestModal
+            request={selectedRequest}
+            onClose={() => setSelectedRequest(null)}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            submitting={updating}
+          />
+        )}
       </div>
-      {/* Modal */}
-      {selectedRequest && (
-        <ManagerAdvanceRequestModal
-          request={selectedRequest}
-          onClose={() => setSelectedRequest(null)}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          submitting={updating}
-        />
-      )}
     </Layout>
   );
 };

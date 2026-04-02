@@ -6,11 +6,13 @@ import {
   useResetPasswordMutation,
 } from "@/rtk/Auth/AuthApi";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export const usePasswordReset = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [email, setEmail] = useState<string>(
-    localStorage.getItem("resetEmail") || ""
+    localStorage.getItem("resetEmail") || "",
   );
   const [code, setCode] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
@@ -91,5 +93,6 @@ export const usePasswordReset = () => {
     sendResetCode,
     verifyCode,
     resetPassword,
+    t,
   };
 };

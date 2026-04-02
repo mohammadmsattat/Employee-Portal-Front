@@ -114,6 +114,7 @@ export const useAddLeaveRequestModal = ({
       { page: 1, limit: 100, policyId: group?.leavePolicy?._id || "" },
       { skip: !group?.leavePolicy?._id },
     );
+console.log(error);
 
   const { data: leaveLogsData } = useGetMyLeaveLogsQuery({
     page: 1,

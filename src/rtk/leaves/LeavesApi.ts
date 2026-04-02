@@ -8,6 +8,8 @@ import {
   LeavesResponse,
   LeaveResponse,
 } from "@/rtk/interfaces";
+const getJWT = () => localStorage.getItem("token");
+const getCompanyId = () => localStorage.getItem("company");
 
 // ================= API SLICE =================
 export const leavesApi = createApi({
@@ -15,7 +17,7 @@ export const leavesApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: baseURL,
     prepareHeaders: (headers) => {
-      const jwt = Cookies.get("Token") || "";
+      const jwt = getJWT();
       if (jwt) headers.set("Authorization", `Bearer ${jwt}`);
       return headers;
     },
@@ -28,17 +30,15 @@ export const leavesApi = createApi({
       { keyword?: string; page?: number; limit?: number; policyId?: string }
     >({
       query: ({ keyword = "", page = 1, limit = 10, policyId = "" }) => {
-        const companyId = localStorage.getItem("company") || "";
-
         const queryParams = new URLSearchParams({
-          companyId,
+          companyId: getCompanyId()!,
           keyword,
           limit: limit.toString(),
           page: page.toString(),
           policyId,
         });
 
-        return `${leavesEndPoint}?${queryParams.toString()}`;
+        return `${leavesEndPoint}/staff?${queryParams.toString()}`;
       },
       providesTags: ["Leaves"],
     }),
@@ -53,10 +53,7 @@ export const leavesApi = createApi({
     }),
 
     // ================= CREATE =================
-    createLeave: builder.mutation<
-      LeaveResponse,
-      Partial<PolicyLeaveType>
-    >({
+    createLeave: builder.mutation<LeaveResponse, Partial<PolicyLeaveType>>({
       query: (data) => {
         const companyId = localStorage.getItem("company") || "";
         return {
@@ -85,19 +82,18 @@ export const leavesApi = createApi({
     }),
 
     // ================= DELETE =================
-    deleteLeave: builder.mutation<
-      { status: boolean; message: string },
-      string
-    >({
-      query: (id) => {
-        const companyId = localStorage.getItem("company") || "";
-        return {
-          url: `${leavesEndPoint}/${id}?companyId=${companyId}`,
-          method: "DELETE",
-        };
+    deleteLeave: builder.mutation<{ status: boolean; message: string }, string>(
+      {
+        query: (id) => {
+          const companyId = localStorage.getItem("company") || "";
+          return {
+            url: `${leavesEndPoint}/${id}?companyId=${companyId}`,
+            method: "DELETE",
+          };
+        },
+        invalidatesTags: ["Leaves"],
       },
-      invalidatesTags: ["Leaves"],
-    }),
+    ),
   }),
 });
 

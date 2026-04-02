@@ -34,7 +34,7 @@ export const advanceTypeApi = createApi({
 
         if (policyId) params.append("policyId", policyId);
 
-        return `${advanceTypeEndPoint}?${params.toString()}`;
+        return `${advanceTypeEndPoint}/staff?${params.toString()}`;
       },
       providesTags: ["AdvanceTypes"],
     }),

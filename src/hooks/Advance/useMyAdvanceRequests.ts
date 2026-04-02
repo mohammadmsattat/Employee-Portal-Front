@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 import { useGetMyAdvanceRequestsQuery } from "@/rtk/Advance/advanceRequestApi";
+import { useTranslation } from "react-i18next";
 
 export const useMyAdvanceRequests = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
-  const { data, isLoading, isError, error } =
-    useGetMyAdvanceRequestsQuery({
-      page,
-      limit,
-    });
+  const { data, isLoading, isError, error } = useGetMyAdvanceRequestsQuery({
+    page,
+    limit,
+  });
 
   const requests = data?.data || [];
   const totalPages = data?.totalPages || 1;
@@ -49,5 +50,6 @@ export const useMyAdvanceRequests = () => {
     limit,
     setLimit,
     totalPages,
+    t,
   };
 };

@@ -38,8 +38,8 @@ const MyOvertimeRequests = () => {
     limit,
     setLimit,
     totalPages,
+    t,
   } = useMyOvertimes();
-
 
   const openModal = (request = null) => {
     setOvertimeModalOpen(true);
@@ -62,42 +62,45 @@ const MyOvertimeRequests = () => {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-portal-header">
-                My Overtime Requests
+                {t("myOvertimeRequestsPage.title")}
               </h1>
               <p className="text-muted-foreground mt-1">
-                View and track your overtime requests
+                {t("myOvertimeRequestsPage.subtitle")}
               </p>
             </div>
           </div>
 
           <Button onClick={() => openModal(null)}>
             <Plus className="mr-2 h-4 w-4" />
-            New Request
+            {t("buttons.newOvertimeRequest")}
           </Button>
         </div>
 
         {/* Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <SummaryCard title="Total Hours" value={counts.total} />
-          <SummaryCard title="Approved" value={counts.approved} />
-          <SummaryCard title="Pending" value={counts.pending} />
-          <SummaryCard title="Rejected" value={counts.rejected} />
+          <SummaryCard title={t("myOvertimeRequestsPage.totalHours")} value={counts.total} />
+          <SummaryCard title={t("myOvertimeRequestsPage.approved")} value={counts.approved} />
+          <SummaryCard title={t("myOvertimeRequestsPage.pending")} value={counts.pending} />
+          <SummaryCard title={t("myOvertimeRequestsPage.rejected")} value={counts.rejected} />
         </div>
 
         {/* Desktop Table */}
         <div className="hidden md:block">
-          <PortalCard title="Request History" icon={<FileText className="h-5 w-5" />}>
+          <PortalCard
+            title={t("myOvertimeRequestsPage.history")}
+            icon={<FileText className="h-5 w-5" />}
+          >
             {requests.length > 0 ? (
               <div className="overflow-x-auto -mx-5">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Overtime Type</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Start Time</TableHead>
-                      <TableHead>End Time</TableHead>
-                      <TableHead className="text-center">Hours</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead>{t("overtimeModal.overtimeType")}</TableHead>
+                      <TableHead>{t("overtimeModal.workDate")}</TableHead>
+                      <TableHead>{t("overtimeModal.startTime")}</TableHead>
+                      <TableHead>{t("overtimeModal.endTime")}</TableHead>
+                      <TableHead className="text-center">{t("overtimeModal.hours")}</TableHead>
+                      <TableHead className="text-center">{t("homePage.status")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -117,7 +120,7 @@ const MyOvertimeRequests = () => {
                 </Table>
               </div>
             ) : !isLoading ? (
-              <EmptyState onSubmit={() => openModal(null)} />
+              <EmptyState onSubmit={() => openModal(null)} t={t} />
             ) : null}
           </PortalCard>
         </div>
@@ -129,7 +132,7 @@ const MyOvertimeRequests = () => {
               <MobileCard key={r._id}>
                 <MobileCardHeader>
                   <div>
-                    <MobileCardLabel>Overtime Type</MobileCardLabel>
+                    <MobileCardLabel>{t("overtimeModal.overtimeType")}</MobileCardLabel>
                     <MobileCardValue>{r.overtimeTypeId?.typeKey || "-"}</MobileCardValue>
                   </div>
                   <StatusBadge status={r.status} />
@@ -137,21 +140,21 @@ const MyOvertimeRequests = () => {
                 <MobileCardContent>
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Date</MobileCardLabel>
+                      <MobileCardLabel>{t("overtimeModal.workDate")}</MobileCardLabel>
                       <MobileCardValue>{FormatTime(r.workDate)}</MobileCardValue>
                     </div>
                     <div>
-                      <MobileCardLabel>Hours</MobileCardLabel>
+                      <MobileCardLabel>{t("overtimeModal.hours")}</MobileCardLabel>
                       <MobileCardValue>{r.hours}</MobileCardValue>
                     </div>
                   </MobileCardRow>
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Start Time</MobileCardLabel>
+                      <MobileCardLabel>{t("overtimeModal.startTime")}</MobileCardLabel>
                       <MobileCardValue>{FormatTime(r.startTime, true)}</MobileCardValue>
                     </div>
                     <div>
-                      <MobileCardLabel>End Time</MobileCardLabel>
+                      <MobileCardLabel>{t("overtimeModal.endTime")}</MobileCardLabel>
                       <MobileCardValue>{FormatTime(r.endTime, true)}</MobileCardValue>
                     </div>
                   </MobileCardRow>
@@ -159,7 +162,7 @@ const MyOvertimeRequests = () => {
               </MobileCard>
             ))
           ) : !isLoading ? (
-            <EmptyState onSubmit={() => openModal(null)} />
+            <EmptyState onSubmit={() => openModal(null)} t={t} />
           ) : null}
         </div>
 
@@ -175,7 +178,10 @@ const MyOvertimeRequests = () => {
       </div>
 
       {isOvertimeModalOpen && (
-        <AddOvertimeRequestModal isOpen={isOvertimeModalOpen} onClose={closeModal} />
+        <AddOvertimeRequestModal
+          isOpen={isOvertimeModalOpen}
+          onClose={closeModal}
+        />
       )}
     </Layout>
   );
@@ -191,16 +197,18 @@ const SummaryCard = ({ title, value }: { title: string; value: number }) => (
   </div>
 );
 
-const EmptyState = ({ onSubmit }: { onSubmit: () => void }) => (
+const EmptyState = ({ onSubmit, t }: { onSubmit: () => void; t: any }) => (
   <div className="text-center py-12">
     <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-    <h3 className="text-lg font-medium text-portal-header mb-2">No requests yet</h3>
+    <h3 className="text-lg font-medium text-portal-header mb-2">
+      {t("myOvertimeRequestsPage.noRequests")}
+    </h3>
     <p className="text-muted-foreground mb-4">
-      You haven't submitted any overtime requests.
+      {t("myOvertimeRequestsPage.noRequestsDesc")}
     </p>
     <Button onClick={onSubmit}>
       <FileText className="mr-2 h-4 w-4" />
-      Submit Your First Request
+      {t("myOvertimeRequestsPage.submitFirst")}
     </Button>
   </div>
 );

@@ -1,5 +1,4 @@
-import { Link } from "react-router-dom";
-import { ArrowLeft, Plus, FileText } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import PortalCard from "@/components/portal/PortalCard";
 import StatusBadge from "@/components/portal/StatusBadge";
@@ -39,6 +38,7 @@ const MyLeavesRequests = () => {
     limit,
     setLimit,
     totalPages,
+    t,
   } = useMyLeaves();
 
   if (isLoading)
@@ -51,35 +51,42 @@ const MyLeavesRequests = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-portal-header">
-                My Leave Requests
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                View and track your leave requests
-              </p>
-            </div>
+          <div className="text-start">
+            <h1 className="text-2xl font-bold text-portal-header">
+              {t("myLeavesPage.title")}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {t("myLeavesPage.subtitle")}
+            </p>
           </div>
 
           <Button onClick={() => setLeaveModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Request
+            <Plus className="me-2 h-4 w-4" />
+            {t("myLeavesPage.newRequest")}
           </Button>
         </div>
 
         {/* Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <SummaryCard title="Total Balance" value={counts.total} />
-          <SummaryCard title="Used" value={counts.used} />
-          <SummaryCard title="Remaining" value={counts.remaining} />
-          <SummaryCard title="Pending" value={counts.pending} />
+          <SummaryCard
+            title={t("myLeavesPage.totalBalance")}
+            value={counts.total}
+          />
+          <SummaryCard title={t("myLeavesPage.used")} value={counts.used} />
+          <SummaryCard
+            title={t("myLeavesPage.remaining")}
+            value={counts.remaining}
+          />
+          <SummaryCard
+            title={t("myLeavesPage.pending")}
+            value={counts.pending}
+          />
         </div>
 
-        {/* ===== Desktop Version ===== */}
+        {/* Desktop */}
         <div className="hidden md:block">
           <PortalCard
-            title="Request History"
+            title={t("myLeavesPage.history")}
             icon={<FileText className="h-5 w-5" />}
           >
             {requests.length > 0 ? (
@@ -87,23 +94,36 @@ const MyLeavesRequests = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Leave Type</TableHead>
-                      <TableHead>From</TableHead>
-                      <TableHead>To</TableHead>
-                      <TableHead className="text-center">Days</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="text-start">
+                        {t("myLeavesPage.leaveType")}
+                      </TableHead>
+                      <TableHead className="text-start">
+                        {t("myLeavesPage.from")}
+                      </TableHead>
+                      <TableHead className="text-start">
+                        {t("myLeavesPage.to")}
+                      </TableHead>
+                      <TableHead className="text-center">
+                        {t("myLeavesPage.days")}
+                      </TableHead>
+                      <TableHead className="text-end">
+                        {t("myLeavesPage.status")}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
+
                   <TableBody>
                     {requests.map((r) => (
                       <TableRow key={r._id}>
-                        <TableCell>{r.leaveType?.typeKey || "-"}</TableCell>
+                        <TableCell className="text-start">
+                          {r.leaveType?.typeKey || "-"}
+                        </TableCell>
                         <TableCell>{formatDate(r.startDate)}</TableCell>
                         <TableCell>{formatDate(r.endDate)}</TableCell>
                         <TableCell className="text-center">
                           {calculateDays(r.startDate, r.endDate)}
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="text-end">
                           <StatusBadge status={r.status} />
                         </TableCell>
                       </TableRow>
@@ -111,42 +131,50 @@ const MyLeavesRequests = () => {
                   </TableBody>
                 </Table>
               </div>
-            ) : !isLoading ? (
-              <EmptyState onSubmit={() => setLeaveModalOpen(true)} />
-            ) : null}
+            ) : (
+              <EmptyState t={t} onSubmit={() => setLeaveModalOpen(true)} />
+            )}
           </PortalCard>
         </div>
 
-        {/* ===== Mobile Version ===== */}
+        {/* Mobile */}
         <div className="md:hidden space-y-4">
           {requests.length > 0 ? (
             requests.map((r) => (
               <MobileCard key={r._id}>
                 <MobileCardHeader>
                   <div>
-                    <MobileCardLabel>Leave Type</MobileCardLabel>
+                    <MobileCardLabel>
+                      {t("myLeavesPage.leaveType")}
+                    </MobileCardLabel>
                     <MobileCardValue>
                       {r.leaveType?.typeKey || "-"}
                     </MobileCardValue>
                   </div>
                   <StatusBadge status={r.status} />
                 </MobileCardHeader>
+
                 <MobileCardContent>
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>From</MobileCardLabel>
+                      <MobileCardLabel>
+                        {t("myLeavesPage.from")}
+                      </MobileCardLabel>
                       <MobileCardValue>
                         {formatDate(r.startDate)}
                       </MobileCardValue>
                     </div>
                     <div>
-                      <MobileCardLabel>To</MobileCardLabel>
+                      <MobileCardLabel>{t("myLeavesPage.to")}</MobileCardLabel>
                       <MobileCardValue>{formatDate(r.endDate)}</MobileCardValue>
                     </div>
                   </MobileCardRow>
+
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Days</MobileCardLabel>
+                      <MobileCardLabel>
+                        {t("myLeavesPage.days")}
+                      </MobileCardLabel>
                       <MobileCardValue>
                         {calculateDays(r.startDate, r.endDate)}
                       </MobileCardValue>
@@ -155,9 +183,9 @@ const MyLeavesRequests = () => {
                 </MobileCardContent>
               </MobileCard>
             ))
-          ) : !isLoading ? (
-            <EmptyState onSubmit={() => setLeaveModalOpen(true)} />
-          ) : null}
+          ) : (
+            <EmptyState t={t} onSubmit={() => setLeaveModalOpen(true)} />
+          )}
         </div>
       </div>
 
@@ -165,8 +193,6 @@ const MyLeavesRequests = () => {
         isOpen={isLeaveModalOpen}
         onClose={() => setLeaveModalOpen(false)}
       />
-
-      {/* Pagination */}
 
       <UnifiedPagination
         currentPage={page}
@@ -182,26 +208,27 @@ const MyLeavesRequests = () => {
 
 export default MyLeavesRequests;
 
-/* ===== Subcomponents ===== */
-const SummaryCard = ({ title, value }: { title: string; value: number }) => (
-  <div className="bg-card rounded-lg border border-portal-card-border p-4">
-    <p className="text-sm text-muted-foreground">{title}</p>
+/* Subcomponents */
+
+const SummaryCard = ({ title, value }) => (
+  <div className="bg-card rounded-lg border p-4">
+    <p className="text-sm text-muted-foreground text-start">{title}</p>
     <p className="text-2xl font-bold text-portal-header">{value}</p>
   </div>
 );
 
-const EmptyState = ({ onSubmit }: { onSubmit: () => void }) => (
+const EmptyState = ({ onSubmit, t }) => (
   <div className="text-center py-12">
     <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
     <h3 className="text-lg font-medium text-portal-header mb-2">
-      No requests yet
+      {t("myLeavesPage.noRequests")}
     </h3>
     <p className="text-muted-foreground mb-4">
-      You haven't submitted any leave requests.
+      {t("myLeavesPage.noRequestsDesc")}
     </p>
     <Button onClick={onSubmit}>
-      <FileText className="mr-2 h-4 w-4" />
-      Submit Your First Request
+      <FileText className="me-2 h-4 w-4" />
+      {t("myLeavesPage.submitFirst")}
     </Button>
   </div>
 );

@@ -3,8 +3,12 @@ import {
   useGetMyFingerprintsQuery,
   useCreateLogedFingerprintMutation,
 } from "@/rtk/Fingerprint/fingerprintApi";
-import {  AttendanceFingerprint, FingerprintType } from "@/interfaces/attendance";
+import {
+  AttendanceFingerprint,
+  FingerprintType,
+} from "@/interfaces/attendance";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 type LatLng = {
   latitude: number;
@@ -13,11 +17,12 @@ type LatLng = {
 
 export const useAttendance = () => {
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
   const [page, setPage] = useState(1);
 
   // 🔒 Prevent double click race condition
   const [actionLocked, setActionLocked] = useState(false);
- const [mode, setMode] = useState<"Check-in" | "Check-out">("Check-in");
+  const [mode, setMode] = useState<"Check-in" | "Check-out">("Check-in");
   const [status, setStatus] = useState<"success" | "error" | null>(null);
   /* ================== Work Location ================== */
   const workLocation: LatLng | null = useMemo(() => {
@@ -57,13 +62,12 @@ export const useAttendance = () => {
         setLocationLoading(false);
       },
       () => setLocationLoading(false),
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true },
     );
   }, []);
 
   /* ================== Attendance Data ================== */
-  const { data, isLoading, isFetching } =
-    useGetMyFingerprintsQuery(page);
+  const { data, isLoading, isFetching } = useGetMyFingerprintsQuery(page);
 
   const [createFingerprint, { isLoading: isSubmitting }] =
     useCreateLogedFingerprintMutation();
@@ -79,11 +83,11 @@ export const useAttendance = () => {
 
   const lastServerRecord = todayRecords[todayRecords.length - 1];
 
-  const [localLastType, setLocalLastType] =
-    useState<FingerprintType | null>(null);
+  const [localLastType, setLocalLastType] = useState<FingerprintType | null>(
+    null,
+  );
 
-  const effectiveLastType =
-    localLastType ?? lastServerRecord?.type ?? null;
+  const effectiveLastType = localLastType ?? lastServerRecord?.type ?? null;
 
   const lastCheckIn = [...todayRecords]
     .reverse()
@@ -131,7 +135,7 @@ export const useAttendance = () => {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ) => {
     const R = 6371000;
     const φ1 = (lat1 * Math.PI) / 180;
@@ -141,9 +145,7 @@ export const useAttendance = () => {
 
     const a =
       Math.sin(Δφ / 2) ** 2 +
-      Math.cos(φ1) *
-        Math.cos(φ2) *
-        Math.sin(Δλ / 2) ** 2;
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -157,25 +159,21 @@ export const useAttendance = () => {
       workLocation.latitude,
       workLocation.longitude,
       currentLocation.latitude,
-      currentLocation.longitude
+      currentLocation.longitude,
     );
 
     return distance <= 150;
   };
 
   /* ================== Readiness Fix ================== */
-  const isReady =
-    !isLoading &&
-    !locationLoading &&
-    !!currentLocation;
+  const isReady = !isLoading && !locationLoading && !!currentLocation;
 
   /* ================== Permissions ================== */
   const canCheckIn =
     isReady &&
     !actionLocked &&
     !isSubmitting &&
-    (effectiveLastType === null ||
-      effectiveLastType === "Check-out") &&
+    (effectiveLastType === null || effectiveLastType === "Check-out") &&
     isWithinDistance();
 
   const canCheckOut =
@@ -193,7 +191,7 @@ export const useAttendance = () => {
       workLocation!.latitude,
       workLocation!.longitude,
       currentLocation!.latitude,
-      currentLocation!.longitude
+      currentLocation!.longitude,
     );
 
     if (distance > 150) {
@@ -241,7 +239,7 @@ export const useAttendance = () => {
     }
   };
   return {
-   records,
+    records,
     lastCheckIn,
     lastCheckOut,
     workedTimeText,
@@ -261,5 +259,7 @@ export const useAttendance = () => {
     mode,
     setMode,
     status,
+    t,
+    i18n,
   };
 };

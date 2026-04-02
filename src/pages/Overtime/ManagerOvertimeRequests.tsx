@@ -45,6 +45,7 @@ const ManagerOvertimeRequests = () => {
     handleReject,
     resetFilters,
     totalPages,
+    t,
   } = useManagerOvertimeRequests();
 
   const formatDate = (date?: string) => {
@@ -62,22 +63,24 @@ const ManagerOvertimeRequests = () => {
   return (
     <Layout>
       <div className="space-y-6">
+        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-portal-header">
-            Team Overtime Requests
+            {t("managerOvertimeRequestsPage.title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage overtime requests from your team
+            {t("managerOvertimeRequestsPage.subtitle")}
           </p>
         </div>
 
-        <PortalCard title="Filters" icon={<Search className="h-5 w-5" />}>
+        {/* Filters */}
+        <PortalCard title={t("managerOvertimeRequestsPage.filters")} icon={<Search className="h-5 w-5" />}>
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search employee..."
+                placeholder={t("managerOvertimeRequestsPage.searchPlaceholder")}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-primary"
@@ -86,17 +89,17 @@ const ManagerOvertimeRequests = () => {
 
             <div className="flex-1 min-w-[120px]">
               <label className="text-xs text-muted-foreground mb-1 block">
-                Status
+                {t("managerOvertimeRequestsPage.status")}
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full border rounded-md px-3 py-2 text-sm"
               >
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
+                <option value="">{t("managerOvertimeRequestsPage.allStatus")}</option>
+                <option value="pending">{t("managerOvertimeRequestsPage.pending")}</option>
+                <option value="approved">{t("managerOvertimeRequestsPage.approved")}</option>
+                <option value="rejected">{t("managerOvertimeRequestsPage.rejected")}</option>
               </select>
             </div>
 
@@ -107,36 +110,32 @@ const ManagerOvertimeRequests = () => {
                 onClick={resetFilters}
                 className="flex items-center gap-1"
               >
-                <X className="h-4 w-4" /> Reset
+                <X className="h-4 w-4" /> {t("managerOvertimeRequestsPage.reset")}
               </Button>
             </div>
           </div>
         </PortalCard>
 
+        {/* Desktop Table */}
         <div className="hidden md:block">
-          <PortalCard
-            title="Overtime Requests History"
-            icon={<FileText className="h-5 w-5" />}
-          >
+          <PortalCard title={t("managerOvertimeRequestsPage.history")} icon={<FileText className="h-5 w-5" />}>
             {data?.data?.length ? (
               <div className="overflow-x-auto -mx-5">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Hours</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                      <TableHead className="text-center">Action</TableHead>
+                      <TableHead>{t("managerOvertimeRequestsPage.employee")}</TableHead>
+                      <TableHead>{t("managerOvertimeRequestsPage.date")}</TableHead>
+                      <TableHead>{t("managerOvertimeRequestsPage.hours")}</TableHead>
+                      <TableHead className="text-center">{t("managerOvertimeRequestsPage.status")}</TableHead>
+                      <TableHead className="text-center">{t("managerOvertimeRequestsPage.action")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data.data.map((req: any) => (
                       <TableRow key={req._id} className="hover:bg-gray-50">
                         <TableCell>{req.userId?.fullName || "-"}</TableCell>
-                        <TableCell>
-                          {formatDate(req.workDate || req.createdAt)}
-                        </TableCell>
+                        <TableCell>{formatDate(req.workDate || req.createdAt)}</TableCell>
                         <TableCell>{req.hours || "-"}</TableCell>
                         <TableCell className="text-center">
                           <StatusBadge status={req.status} />
@@ -156,22 +155,21 @@ const ManagerOvertimeRequests = () => {
               </div>
             ) : (
               <div className="p-6 text-center text-muted-foreground">
-                No overtime requests found
+                {t("managerOvertimeRequestsPage.noRequests")}
               </div>
             )}
           </PortalCard>
         </div>
 
+        {/* Mobile Cards */}
         <div className="md:hidden space-y-4">
           {data?.data?.length ? (
             data.data.map((req: any) => (
               <MobileCard key={req._id}>
                 <MobileCardHeader>
                   <div>
-                    <MobileCardLabel>Employee</MobileCardLabel>
-                    <MobileCardValue>
-                      {req.userId?.fullName || "-"}
-                    </MobileCardValue>
+                    <MobileCardLabel>{t("managerOvertimeRequestsPage.employee")}</MobileCardLabel>
+                    <MobileCardValue>{req.userId?.fullName || "-"}</MobileCardValue>
                   </div>
                   <StatusBadge status={req.status} />
                 </MobileCardHeader>
@@ -179,16 +177,14 @@ const ManagerOvertimeRequests = () => {
                 <MobileCardContent>
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Date</MobileCardLabel>
-                      <MobileCardValue>
-                        {formatDate(req.workDate || req.createdAt)}
-                      </MobileCardValue>
+                      <MobileCardLabel>{t("managerOvertimeRequestsPage.date")}</MobileCardLabel>
+                      <MobileCardValue>{formatDate(req.workDate || req.createdAt)}</MobileCardValue>
                     </div>
                   </MobileCardRow>
 
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Hours</MobileCardLabel>
+                      <MobileCardLabel>{t("managerOvertimeRequestsPage.hours")}</MobileCardLabel>
                       <MobileCardValue>{req.hours || "-"}</MobileCardValue>
                     </div>
                   </MobileCardRow>
@@ -196,7 +192,7 @@ const ManagerOvertimeRequests = () => {
                   <MobileCardRow>
                     <div className="flex gap-2">
                       <Button size="sm" onClick={() => setSelectedRequest(req)}>
-                        View
+                        {t("managerOvertimeRequestsPage.view")}
                       </Button>
                     </div>
                   </MobileCardRow>
@@ -205,7 +201,7 @@ const ManagerOvertimeRequests = () => {
             ))
           ) : (
             <div className="p-6 text-center text-muted-foreground">
-              No overtime requests found
+              {t("managerOvertimeRequestsPage.noRequests")}
             </div>
           )}
         </div>

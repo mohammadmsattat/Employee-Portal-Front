@@ -36,8 +36,6 @@ const ManagerLeaveRequests = () => {
     mobileLimit,
     statusFilter,
     setStatusFilter,
-    leaveTypeFilter,
-    setLeaveTypeFilter,
     startDateFilter,
     setStartDateFilter,
     endDateFilter,
@@ -53,9 +51,10 @@ const ManagerLeaveRequests = () => {
     resetFilters,
     totalPages,
     isMobile,
+    t,
   } = useManagerLeaves();
 
-  const formatDate = (date: string) => format(new Date(date), "PPP");
+  const formatDate = (date) => format(new Date(date), "PPP");
 
   if (isLoading)
     return (
@@ -65,48 +64,64 @@ const ManagerLeaveRequests = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
+        {/* Header */}
+        <div className="text-start">
           <h1 className="text-2xl font-bold text-portal-header">
-            Team Leave Requests
+            {t("managerLeavesPage.title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage leave requests from your team
+            {t("managerLeavesPage.subtitle")}
           </p>
         </div>
 
-        {/* ===== Filters ===== */}
-        <PortalCard title="Filters" icon={<Search className="h-5 w-5" />}>
+        {/* Filters */}
+        <PortalCard
+          title={t("managerLeavesPage.filters")}
+          icon={<Search className="h-5 w-5" />}
+        >
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between flex-wrap">
             <div className="flex flex-col gap-2 w-full md:flex-1 md:min-w-[200px]">
-              <label className="text-xs text-muted-foreground">Search</label>
+              <label className="text-xs text-muted-foreground">
+                {t("managerLeavesPage.search")}
+              </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search employee..."
+                  placeholder={t("managerLeavesPage.searchPlaceholder")}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-primary"
+                  className="w-full ps-9 pe-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-2 w-full md:flex-1 md:min-w-[120px]">
-              <label className="text-xs text-muted-foreground">Status</label>
+              <label className="text-xs text-muted-foreground">
+                {t("managerLeavesPage.status")}
+              </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full border rounded-md px-3 py-2 text-sm"
               >
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
+                <option value="">{t("managerLeavesPage.allStatus")}</option>
+                <option value="pending">
+                  {t("managerLeavesPage.pending")}
+                </option>
+                <option value="approved">
+                  {t("managerLeavesPage.approved")}
+                </option>
+                <option value="rejected">
+                  {t("managerLeavesPage.rejected")}
+                </option>
               </select>
             </div>
 
             <div className="flex flex-col gap-2 w-full md:flex-1 md:min-w-[140px]">
-              <label className="text-xs text-muted-foreground">From</label>
+              <label className="text-xs text-muted-foreground">
+                {t("managerLeavesPage.from")}
+              </label>
               <input
                 type="date"
                 value={startDateFilter}
@@ -116,7 +131,9 @@ const ManagerLeaveRequests = () => {
             </div>
 
             <div className="flex flex-col gap-2 w-full md:flex-1 md:min-w-[140px]">
-              <label className="text-xs text-muted-foreground">To</label>
+              <label className="text-xs text-muted-foreground">
+                {t("managerLeavesPage.to")}
+              </label>
               <input
                 type="date"
                 value={endDateFilter}
@@ -132,16 +149,17 @@ const ManagerLeaveRequests = () => {
                 onClick={resetFilters}
                 className="flex items-center gap-1 w-full md:w-auto"
               >
-                <X className="h-4 w-4" /> Reset
+                <X className="h-4 w-4" />
+                {t("managerLeavesPage.reset")}
               </Button>
             </div>
           </div>
         </PortalCard>
 
-        {/* ===== Desktop Requests ===== */}
+        {/* Desktop */}
         <div className="hidden md:block">
           <PortalCard
-            title="Requests History"
+            title={t("managerLeavesPage.history")}
             icon={<FileText className="h-5 w-5" />}
           >
             {data?.data?.length ? (
@@ -149,22 +167,45 @@ const ManagerLeaveRequests = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Leave Type</TableHead>
-                      <TableHead>From</TableHead>
-                      <TableHead>To</TableHead>
-                      <TableHead className="text-center">Days</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                      <TableHead className="text-center">Action</TableHead>
+                      <TableHead className="text-start">
+                        {t("managerLeavesPage.employee")}
+                      </TableHead>
+                      <TableHead className="text-start">
+                        {t("managerLeavesPage.leaveType")}
+                      </TableHead>
+                      <TableHead className="text-start">
+                        {t("managerLeavesPage.from")}
+                      </TableHead>
+                      <TableHead className="text-start">
+                        {t("managerLeavesPage.to")}
+                      </TableHead>
+                      <TableHead className="text-center">
+                        {t("managerLeavesPage.days")}
+                      </TableHead>
+                      <TableHead className="text-center">
+                        {t("managerLeavesPage.status")}
+                      </TableHead>
+                      <TableHead className="text-center">
+                        {t("managerLeavesPage.action")}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
+
                   <TableBody>
                     {data.data.map((req) => (
-                      <TableRow key={req._id} className="hover:bg-gray-50">
-                        <TableCell>{req.userId?.fullName || "-"}</TableCell>
-                        <TableCell>{req.leaveType?.typeKey || "-"}</TableCell>
-                        <TableCell>{formatDate(req.startDate)}</TableCell>
-                        <TableCell>{formatDate(req.endDate)}</TableCell>
+                      <TableRow key={req._id}>
+                        <TableCell className="text-start">
+                          {req.userId?.fullName || "-"}
+                        </TableCell>
+                        <TableCell className="text-start">
+                          {req.leaveType?.typeKey || "-"}
+                        </TableCell>
+                        <TableCell className="text-start">
+                          {formatDate(req.startDate)}
+                        </TableCell>
+                        <TableCell className="text-start">
+                          {formatDate(req.endDate)}
+                        </TableCell>
                         <TableCell className="text-center">
                           {calculateDays(req.startDate, req.endDate)}
                         </TableCell>
@@ -172,9 +213,9 @@ const ManagerLeaveRequests = () => {
                           <StatusBadge status={req.status} />
                         </TableCell>
                         <TableCell className="text-center">
-                          <div className="flex justify-center items-center h-full">
+                          <div className="flex flex-col items-center justify-center h-full space-y-1">
                             <Eye
-                              className="w-5 h-5 text-gray-600 hover:text-gray-800 cursor-pointer"
+                              className="w-5 h-5 cursor-pointer"
                               onClick={() => setSelectedRequest(req)}
                             />
                           </div>
@@ -186,20 +227,22 @@ const ManagerLeaveRequests = () => {
               </div>
             ) : (
               <div className="p-6 text-center text-muted-foreground">
-                No leave requests found
+                {t("managerLeavesPage.noRequests")}
               </div>
             )}
           </PortalCard>
         </div>
 
-        {/* ===== Mobile Requests ===== */}
+        {/* Mobile */}
         <div className="md:hidden space-y-4">
           {data?.data?.length ? (
             data.data.map((req) => (
               <MobileCard key={req._id}>
                 <MobileCardHeader>
                   <div>
-                    <MobileCardLabel>Employee</MobileCardLabel>
+                    <MobileCardLabel>
+                      {t("managerLeavesPage.employee")}
+                    </MobileCardLabel>
                     <MobileCardValue>
                       {req.userId?.fullName || "-"}
                     </MobileCardValue>
@@ -210,7 +253,9 @@ const ManagerLeaveRequests = () => {
                 <MobileCardContent>
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Leave Type</MobileCardLabel>
+                      <MobileCardLabel>
+                        {t("managerLeavesPage.leaveType")}
+                      </MobileCardLabel>
                       <MobileCardValue>
                         {req.leaveType?.typeKey || "-"}
                       </MobileCardValue>
@@ -219,13 +264,17 @@ const ManagerLeaveRequests = () => {
 
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>From</MobileCardLabel>
+                      <MobileCardLabel>
+                        {t("managerLeavesPage.from")}
+                      </MobileCardLabel>
                       <MobileCardValue>
                         {formatDate(req.startDate)}
                       </MobileCardValue>
                     </div>
                     <div>
-                      <MobileCardLabel>To</MobileCardLabel>
+                      <MobileCardLabel>
+                        {t("managerLeavesPage.to")}
+                      </MobileCardLabel>
                       <MobileCardValue>
                         {formatDate(req.endDate)}
                       </MobileCardValue>
@@ -234,7 +283,9 @@ const ManagerLeaveRequests = () => {
 
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Days</MobileCardLabel>
+                      <MobileCardLabel>
+                        {t("managerLeavesPage.days")}
+                      </MobileCardLabel>
                       <MobileCardValue>
                         {calculateDays(req.startDate, req.endDate)}
                       </MobileCardValue>
@@ -242,18 +293,16 @@ const ManagerLeaveRequests = () => {
                   </MobileCardRow>
 
                   <MobileCardRow>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => setSelectedRequest(req)}>
-                        View
-                      </Button>
-                    </div>
+                    <Button size="sm" onClick={() => setSelectedRequest(req)}>
+                      {t("managerLeavesPage.view")}
+                    </Button>
                   </MobileCardRow>
                 </MobileCardContent>
               </MobileCard>
             ))
           ) : (
             <div className="p-6 text-center text-muted-foreground">
-              No leave requests found
+              {t("managerLeavesPage.noRequests")}
             </div>
           )}
         </div>

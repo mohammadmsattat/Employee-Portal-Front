@@ -39,6 +39,7 @@ const MyAdvanceRequests = () => {
     limit,
     setLimit,
     totalPages,
+    t,
   } = useMyAdvanceRequests();
 
   const [isModalOpen, setModalOpen] = useState(false);
@@ -57,32 +58,44 @@ const MyAdvanceRequests = () => {
 
             <div>
               <h1 className="text-2xl font-bold text-portal-header">
-                My Advance Requests
+                {t("myAdvanceRequestsPage.title")}
               </h1>
               <p className="text-muted-foreground mt-1">
-                View and track your advance requests
+                {t("myAdvanceRequestsPage.subtitle")}
               </p>
             </div>
           </div>
 
           <Button onClick={() => setModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            New Request
+            {t("myAdvanceRequestsPage.newRequest")}
           </Button>
         </div>
 
         {/* Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <SummaryCard title="Total Amount" value={totalAmount} />
-          <SummaryCard title="Approved" value={approvedAmount} />
-          <SummaryCard title="Pending" value={pendingCount} />
-          <SummaryCard title="Rejected" value={rejectedCount} />
+          <SummaryCard
+            title={t("myAdvanceRequestsPage.totalAmount")}
+            value={totalAmount}
+          />
+          <SummaryCard
+            title={t("myAdvanceRequestsPage.approved")}
+            value={approvedAmount}
+          />
+          <SummaryCard
+            title={t("myAdvanceRequestsPage.pending")}
+            value={pendingCount}
+          />
+          <SummaryCard
+            title={t("myAdvanceRequestsPage.rejected")}
+            value={rejectedCount}
+          />
         </div>
 
         {/* Desktop */}
         <div className="hidden md:block">
           <PortalCard
-            title="Request History"
+            title={t("myAdvanceRequestsPage.history")}
             icon={<FileText className="h-5 w-5" />}
           >
             {requests.length > 0 ? (
@@ -90,25 +103,25 @@ const MyAdvanceRequests = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Installments</TableHead>
-                      <TableHead>Created At</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>{t("myAdvanceRequestsPage.type")}</TableHead>
+                      <TableHead>{t("myAdvanceRequestsPage.amount")}</TableHead>
+                      <TableHead>
+                        {t("myAdvanceRequestsPage.installments")}
+                      </TableHead>
+                      <TableHead>
+                        {t("myAdvanceRequestsPage.createdAt")}
+                      </TableHead>
+                      <TableHead>{t("myAdvanceRequestsPage.status")}</TableHead>
                     </TableRow>
                   </TableHeader>
 
                   <TableBody>
                     {requests.map((r: any) => (
                       <TableRow key={r._id}>
-                        <TableCell>
-                          {r.advanceTypeId?.typeKey || "-"}
-                        </TableCell>
+                        <TableCell>{r.advanceTypeId?.typeKey || "-"}</TableCell>
                         <TableCell>{r.amount}</TableCell>
                         <TableCell>{r.installments || "-"}</TableCell>
-                        <TableCell>
-                          {FormatTime(r.createdAt)}
-                        </TableCell>
+                        <TableCell>{FormatTime(r.createdAt)}</TableCell>
                         <TableCell>
                           <StatusBadge status={r.status} />
                         </TableCell>
@@ -118,7 +131,7 @@ const MyAdvanceRequests = () => {
                 </Table>
               </div>
             ) : !isLoading ? (
-              <EmptyState onSubmit={() => setModalOpen(true)} />
+              <EmptyState onSubmit={() => setModalOpen(true)} t={t} />
             ) : null}
           </PortalCard>
         </div>
@@ -130,7 +143,9 @@ const MyAdvanceRequests = () => {
               <MobileCard key={r._id}>
                 <MobileCardHeader>
                   <div>
-                    <MobileCardLabel>Type</MobileCardLabel>
+                    <MobileCardLabel>
+                      {t("myAdvanceRequestsPage.type")}
+                    </MobileCardLabel>
                     <MobileCardValue>
                       {r.advanceTypeId?.typeKey || "-"}
                     </MobileCardValue>
@@ -142,23 +157,25 @@ const MyAdvanceRequests = () => {
                 <MobileCardContent>
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Amount</MobileCardLabel>
+                      <MobileCardLabel>
+                        {t("myAdvanceRequestsPage.amount")}
+                      </MobileCardLabel>
                       <MobileCardValue>{r.amount}</MobileCardValue>
                     </div>
 
                     <div>
                       <MobileCardLabel>
-                        Installments
+                        {t("myAdvanceRequestsPage.installments")}
                       </MobileCardLabel>
-                      <MobileCardValue>
-                        {r.installments || "-"}
-                      </MobileCardValue>
+                      <MobileCardValue>{r.installments || "-"}</MobileCardValue>
                     </div>
                   </MobileCardRow>
 
                   <MobileCardRow>
                     <div>
-                      <MobileCardLabel>Created</MobileCardLabel>
+                      <MobileCardLabel>
+                        {t("myAdvanceRequestsPage.createdAt")}
+                      </MobileCardLabel>
                       <MobileCardValue>
                         {FormatTime(r.createdAt)}
                       </MobileCardValue>
@@ -168,7 +185,7 @@ const MyAdvanceRequests = () => {
               </MobileCard>
             ))
           ) : !isLoading ? (
-            <EmptyState onSubmit={() => setModalOpen(true)} />
+            <EmptyState onSubmit={() => setModalOpen(true)} t={t} />
           ) : null}
         </div>
       </div>
@@ -196,38 +213,25 @@ const MyAdvanceRequests = () => {
 export default MyAdvanceRequests;
 
 /* ===== Subcomponents ===== */
-
-const SummaryCard = ({
-  title,
-  value,
-}: {
-  title: string;
-  value: number;
-}) => (
+const SummaryCard = ({ title, value }: { title: string; value: number }) => (
   <div className="bg-card rounded-lg border border-portal-card-border p-4">
     <p className="text-sm text-muted-foreground">{title}</p>
-    <p className="text-2xl font-bold text-portal-header">
-      {value}
-    </p>
+    <p className="text-2xl font-bold text-portal-header">{value}</p>
   </div>
 );
 
-const EmptyState = ({
-  onSubmit,
-}: {
-  onSubmit: () => void;
-}) => (
+const EmptyState = ({ onSubmit, t }: { onSubmit: () => void; t: any }) => (
   <div className="text-center py-12">
     <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
     <h3 className="text-lg font-medium text-portal-header mb-2">
-      No requests yet
+      {t("myAdvanceRequestsPage.noRequests")}
     </h3>
     <p className="text-muted-foreground mb-4">
-      You haven't submitted any advance requests.
+      {t("myAdvanceRequestsPage.noRequestsDesc")}
     </p>
     <Button onClick={onSubmit}>
       <FileText className="mr-2 h-4 w-4" />
-      Submit Your First Request
+      {t("myAdvanceRequestsPage.submitFirst")}
     </Button>
   </div>
 );

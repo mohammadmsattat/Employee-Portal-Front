@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/portal/StatusBadge";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   request: any;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 const ManagerAdvanceRequestModal = ({ request, onClose, onApprove, onReject, submitting }: Props) => {
+  const {t} = useTranslation();
   const [rejectReason, setRejectReason] = useState("");
   const [isRejecting, setIsRejecting] = useState(false);
 
@@ -36,24 +38,24 @@ const ManagerAdvanceRequestModal = ({ request, onClose, onApprove, onReject, sub
       <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 border border-gray-200">
         {/* Header */}
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-portal-header">Advance Request Details</h2>
+          <h2 className="text-2xl font-bold text-portal-header">{t("managerAdvanceRequestModal.title")}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
 
         {/* Content */}
         <div className="bg-white rounded-xl border border-gray-100 px-4">
-          <FieldRow label="Employee" value={request.userId?.fullName} />
-          <FieldRow label="Advance Type" value={request.advanceTypeId?.typeKey} />
-          <FieldRow label="Requested At" value={safeFormat(request.createdAt)} />
-          <FieldRow label="Amount" value={request.amount} />
-          <FieldRow label="Reason" value={request.reason} />
-          <FieldRow label="Status" value={<StatusBadge status={request.status} />} />
+          <FieldRow label={t("managerAdvanceRequestModal.employee")} value={request.userId?.fullName} />
+          <FieldRow label={t("managerAdvanceRequestModal.advanceType")} value={request.advanceTypeId?.typeKey} />
+          <FieldRow label={t("managerAdvanceRequestModal.requestedAt")} value={safeFormat(request.createdAt)} />
+          <FieldRow label={t("managerAdvanceRequestModal.amount")} value={request.amount} />
+          <FieldRow label={t("managerAdvanceRequestModal.reason")} value={request.reason} />
+          <FieldRow label={t("managerAdvanceRequestModal.status")} value={<StatusBadge status={request.status} />} />
           {request.attachment && (
             <FieldRow
-              label="Attachment"
+              label={t("managerAdvanceRequestModal.attachment")}
               value={
                 <a href={request.attachment} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-700">
-                  View File
+                  {t("managerAdvanceRequestModal.viewFile")}
                 </a>
               }
             />
@@ -64,10 +66,10 @@ const ManagerAdvanceRequestModal = ({ request, onClose, onApprove, onReject, sub
         {request.status === "pending" && !isRejecting && (
           <div className="flex justify-end gap-3 mt-6">
             <Button className="bg-green-600 text-white hover:bg-green-700" onClick={() => onApprove(request)} disabled={submitting}>
-              Approve
+              {t("managerAdvanceRequestModal.approve")}
             </Button>
             <Button variant="destructive" onClick={() => setIsRejecting(true)} disabled={submitting}>
-              Reject
+              {t("managerAdvanceRequestModal.reject")}
             </Button>
           </div>
         )}
@@ -75,16 +77,18 @@ const ManagerAdvanceRequestModal = ({ request, onClose, onApprove, onReject, sub
         {isRejecting && (
           <div className="space-y-3 mt-6">
             <textarea
-              placeholder="Reason for rejection"
+              placeholder={t("managerAdvanceRequestModal.rejectionReasonPlaceholder")}
               className="w-full border rounded-md p-3 text-sm focus:ring-2 focus:ring-primary resize-none"
               rows={3}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
             />
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setIsRejecting(false)} disabled={submitting}>Cancel</Button>
+              <Button variant="outline" onClick={() => setIsRejecting(false)} disabled={submitting}>
+                {t("managerAdvanceRequestModal.cancel")}
+              </Button>
               <Button variant="destructive" onClick={() => onReject(request, rejectReason)} disabled={submitting || !rejectReason.trim()}>
-                Submit Rejection
+                {t("managerAdvanceRequestModal.submitRejection")}
               </Button>
             </div>
           </div>
