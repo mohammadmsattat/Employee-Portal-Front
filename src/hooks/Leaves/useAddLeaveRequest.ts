@@ -100,7 +100,7 @@ export const useAddLeaveRequestModal = ({
     return true;
   };
 
-  // ✅ Correct useEffect cleanup
+  // Correct useEffect cleanup
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
 

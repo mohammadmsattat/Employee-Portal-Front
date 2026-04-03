@@ -253,6 +253,7 @@ const ManagerAdvanceRequests = () => {
           className="mt-4"
         />
 
+      </div>
         {/* Modal */}
         {selectedRequest && (
           <ManagerAdvanceRequestModal
@@ -263,7 +264,6 @@ const ManagerAdvanceRequests = () => {
             submitting={updating}
           />
         )}
-      </div>
     </Layout>
   );
 };

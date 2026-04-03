@@ -33,51 +33,26 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import logo from "../../../public/logo.png";
+import { useTopbar } from "@/hooks/Topbar/useTopbar";
 
 const Topbar = () => {
-  const { t, i18n } = useTranslation();
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const user = useMemo(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  }, []);
-
-  const userName = user?.fullName || t("navigation.name");
-  const userEmail = user?.email || "";
-  const userInitials = userName
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  const [requestsOpen, setRequestsOpen] = useState(false);
-  const [userOpen, setUserOpen] = useState(false);
-  const [activeDesktopSection, setActiveDesktopSection] = useState<
-    string | null
-  >(null);
-
-  const isActive = (path: string) => location.pathname.startsWith(path);
-  const navLink = (path: string) =>
-    `px-4 py-2 text-sm font-medium rounded-md transition ${
-      isActive(path)
-        ? "bg-primary/10 text-primary"
-        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-    }`;
-
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
-    window.location.reload();
-  };
-
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-    document.documentElement.dir = lng === "ar" ? "rtl" : "ltr";
-    document.body.classList.toggle("rtl", lng === "ar");
-  };
+  const {
+    t,
+    i18n,
+    userName,
+    userEmail,
+    userInitials,
+    requestsOpen,
+    setRequestsOpen,
+    userOpen,
+    setUserOpen,
+    activeDesktopSection,
+    setActiveDesktopSection,
+    isActive,
+    navLink,
+    handleLogout,
+    changeLanguage,
+  } = useTopbar();
 
   const requestSections = [
     {

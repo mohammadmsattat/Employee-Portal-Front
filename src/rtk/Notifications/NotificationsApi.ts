@@ -3,7 +3,7 @@ import baseURL, { notificationsEndPoint } from "@/Api/GlobalData";
 import { Notification, NotificationsResponse } from "../interfaces";
 
 const getJWT = () => localStorage.getItem("token");
-const getCompanyId = () => localStorage.getItem("company"); // إضافة companyId
+const getCompanyId = () => localStorage.getItem("company"); 
 
 export const NotificationsApi = createApi({
   reducerPath: "notificationsApi",

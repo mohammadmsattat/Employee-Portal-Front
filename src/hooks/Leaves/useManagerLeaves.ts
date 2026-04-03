@@ -92,8 +92,6 @@ export const useManagerLeaves = () => {
       toast({ title: "Leave rejected", description: "Request rejected." });
       setSelectedRequest(null);
     } catch (error) {
- console.log(error);
- 
       toast({
         title: "Error",
         description: "Failed to reject.",

@@ -1,3 +1,4 @@
+// hooks/usePasswordReset.ts
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -8,9 +9,18 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
+/**
+ * Custom hook to handle the password reset flow
+ * Steps:
+ * 1. Send reset code to email
+ * 2. Verify the code
+ * 3. Reset the password
+ */
 export const usePasswordReset = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  // ===== Form State =====
   const [email, setEmail] = useState<string>(
     localStorage.getItem("resetEmail") || "",
   );
@@ -18,6 +28,7 @@ export const usePasswordReset = () => {
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
 
+  // ===== Mutations =====
   const [forgotPasswordMutation, { isLoading: sendingCode }] =
     useForgotPasswordMutation();
   const [verifyCodeMutation, { isLoading: verifying }] =
@@ -25,6 +36,7 @@ export const usePasswordReset = () => {
   const [resetPasswordMutation, { isLoading: resetting }] =
     useResetPasswordMutation();
 
+  // ===== Step 1: Send Reset Code =====
   const sendResetCode = async () => {
     if (!email) {
       toast.error("Email is required");
@@ -42,6 +54,7 @@ export const usePasswordReset = () => {
     }
   };
 
+  // ===== Step 2: Verify Reset Code =====
   const verifyCode = async () => {
     if (!email || !code) {
       toast.error("Email and code are required");
@@ -58,6 +71,7 @@ export const usePasswordReset = () => {
     }
   };
 
+  // ===== Step 3: Reset Password =====
   const resetPassword = async () => {
     if (!email) {
       toast.error("Email is missing");
@@ -78,6 +92,7 @@ export const usePasswordReset = () => {
     }
   };
 
+  // ===== Return Hook State & Actions =====
   return {
     email,
     setEmail,

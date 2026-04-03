@@ -28,23 +28,30 @@ const Layout = ({ children }: LayoutProps) => {
     <div className="min-h-screen bg-white">
       <Topbar />
 
-      <main className="container mx-auto px-4 py-8 bg-white">
-        {children}
-      </main>
+      <main className="container mx-auto px-4 py-8 bg-white">{children}</main>
 
       <Bottombar openModal={openModal} />
 
       {/* Modals */}
       {leaveOpen && (
-        <AddLeaveRequestModal isOpen={leaveOpen} onClose={() => setLeaveOpen(false)} />
+        <AddLeaveRequestModal
+          isOpen={leaveOpen}
+          onClose={() => setLeaveOpen(false)}
+        />
       )}
 
       {advanceOpen && (
-        <AddAdvanceRequestModal isOpen={advanceOpen} onClose={() => setAdvanceOpen(false)} />
+        <AddAdvanceRequestModal
+          isOpen={advanceOpen}
+          onClose={() => setAdvanceOpen(false)}
+        />
       )}
 
       {overtimeOpen && (
-        <AddOvertimeRequestModal isOpen={overtimeOpen} onClose={() => setOvertimeOpen(false)} />
+        <AddOvertimeRequestModal
+          isOpen={overtimeOpen}
+          onClose={() => setOvertimeOpen(false)}
+        />
       )}
     </div>
   );

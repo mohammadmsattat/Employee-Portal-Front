@@ -1,3 +1,66 @@
+// ===================== AUTH TYPES =====================
+
+// ===== LOGIN =====
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  status: boolean;
+  token: string;
+  user: {
+    _id: string;
+    fullName: string;
+    email: string;
+    companyId?: string;
+    role?: string;
+  };
+  message?: string;
+}
+
+// ===== SIGN OUT =====
+export interface SignOutRequest {
+  userId: string;
+}
+
+export interface SignOutResponse {
+  status: boolean;
+  message?: string;
+}
+
+// ===== FORGOT PASSWORD =====
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  status: boolean;
+  message?: string;
+}
+
+// ===== VERIFY RESET CODE =====
+export interface VerifyResetCodeRequest {
+  email: string;
+  resetCode: string;
+}
+
+export interface VerifyResetCodeResponse {
+  status: boolean;
+  message?: string;
+}
+
+// ===== RESET PASSWORD =====
+export interface ResetPasswordRequest {
+  email: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  status: boolean;
+  message?: string;
+}
+
 // ===================== FINGERPRINT TYPES =====================
 export interface IFingerprint {
   _id: string;

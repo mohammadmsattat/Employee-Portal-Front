@@ -10,7 +10,6 @@ import { useTranslation } from "react-i18next";
 export const useManagerAdvances = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);

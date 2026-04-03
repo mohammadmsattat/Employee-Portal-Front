@@ -218,7 +218,6 @@ export const useAddOvertimeRequestModal = ({
     );
     const endTimeDate = parseTimeToDate(formData.workDate, formData.endTime);
     const hours = differenceInMinutes(endTimeDate, startTimeDate) / 60;
-console.log(formData);
 
     if (endTimeDate <= startTimeDate) {
       toast({

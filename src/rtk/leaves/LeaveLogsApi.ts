@@ -1,7 +1,6 @@
 // LeaveLogsApi.ts
 import baseURL, { leavesLogsEndPoint } from "@/Api/GlobalData";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import Cookies from "js-cookie";
 
 // ================= IMPORT TYPES =================
 import { LeaveLog, LeaveLogsResponse } from "@/rtk/interfaces";

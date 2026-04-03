@@ -1,6 +1,5 @@
 import baseURL, { leavesEndPoint } from "@/Api/GlobalData";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import Cookies from "js-cookie";
 
 // ================= IMPORT TYPES =================
 import {
@@ -8,6 +7,7 @@ import {
   LeavesResponse,
   LeaveResponse,
 } from "@/rtk/interfaces";
+
 const getJWT = () => localStorage.getItem("token");
 const getCompanyId = () => localStorage.getItem("company");
 

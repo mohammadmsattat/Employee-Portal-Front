@@ -3,10 +3,10 @@ import baseURL, { overtimeLogsEndPoint } from "@/Api/GlobalData";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 // ================= IMPORT TYPES =================
-import { OvertimeLog, OvertimeLogsResponse } from "@/rtk/interfaces";
+import {  OvertimeLogsResponse } from "@/rtk/interfaces";
 
 // ================= CONFIG =================
-const companyId = localStorage.getItem("company");
+const getCompanyId = () => localStorage.getItem("company"); 
 
 // ================= API SLICE =================
 export const overtimeLogsApi = createApi({
@@ -25,7 +25,7 @@ export const overtimeLogsApi = createApi({
     getMyOvertimeLogs: builder.query<OvertimeLogsResponse, { page?: number; limit?: number }>({
       query: ({ page = 1, limit = 20 }) => {
         const params = new URLSearchParams({
-          companyId: companyId!,
+          companyId: getCompanyId()!,
           page: page.toString(),
           limit: limit.toString(),
         });

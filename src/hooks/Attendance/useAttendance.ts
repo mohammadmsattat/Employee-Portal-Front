@@ -1,3 +1,4 @@
+// hooks/useAttendance.ts
 import { useState, useEffect, useMemo } from "react";
 import {
   useGetMyFingerprintsQuery,
@@ -15,16 +16,26 @@ type LatLng = {
   longitude: number;
 };
 
+/**
+ * Custom hook to manage attendance logic
+ * - Current location
+ * - Work location validation
+ * - Today's attendance records
+ * - Check-in / Check-out actions
+ */
 export const useAttendance = () => {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
-  const [page, setPage] = useState(1);
 
-  // 🔒 Prevent double click race condition
+  // ===== Pagination & Action Lock =====
+  const [page, setPage] = useState(1);
   const [actionLocked, setActionLocked] = useState(false);
+
+  // ===== Attendance Mode & Status =====
   const [mode, setMode] = useState<"Check-in" | "Check-out">("Check-in");
   const [status, setStatus] = useState<"success" | "error" | null>(null);
-  /* ================== Work Location ================== */
+
+  // ===== Work Location from group =====
   const workLocation: LatLng | null = useMemo(() => {
     try {
       const storedGroup = localStorage.getItem("group");
@@ -43,7 +54,7 @@ export const useAttendance = () => {
     }
   }, []);
 
-  /* ================== Current Location ================== */
+  // ===== Current Geolocation =====
   const [currentLocation, setCurrentLocation] = useState<LatLng | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
 
@@ -66,15 +77,13 @@ export const useAttendance = () => {
     );
   }, []);
 
-  /* ================== Attendance Data ================== */
+  // ===== Fetch Attendance Records =====
   const { data, isLoading, isFetching } = useGetMyFingerprintsQuery(page);
-
   const [createFingerprint, { isLoading: isSubmitting }] =
     useCreateLogedFingerprintMutation();
-
   const records: AttendanceFingerprint[] = data?.data || [];
 
-  /* ================== Today Logic ================== */
+  // ===== Today's Attendance Records =====
   const todayDate = new Date().toLocaleDateString("en-CA");
 
   const todayRecords = records
@@ -82,22 +91,19 @@ export const useAttendance = () => {
     .sort((a, b) => a.Time.localeCompare(b.Time));
 
   const lastServerRecord = todayRecords[todayRecords.length - 1];
-
   const [localLastType, setLocalLastType] = useState<FingerprintType | null>(
     null,
   );
-
   const effectiveLastType = localLastType ?? lastServerRecord?.type ?? null;
 
   const lastCheckIn = [...todayRecords]
     .reverse()
     .find((r) => r.type === "Check-in");
-
   const lastCheckOut = [...todayRecords]
     .reverse()
     .find((r) => r.type === "Check-out");
 
-  /* ================== Worked Time ================== */
+  // ===== Calculate Worked Time =====
   const workedTimeText = (() => {
     if (!todayRecords.length) return "--";
 
@@ -106,11 +112,7 @@ export const useAttendance = () => {
 
     for (const record of todayRecords) {
       const recordTime = new Date(`${todayDate}T${record.Time}`);
-
-      if (record.type === "Check-in") {
-        openCheckIn = recordTime;
-      }
-
+      if (record.type === "Check-in") openCheckIn = recordTime;
       if (record.type === "Check-out" && openCheckIn) {
         const diff = recordTime.getTime() - openCheckIn.getTime();
         if (diff > 0) totalMs += diff;
@@ -118,26 +120,23 @@ export const useAttendance = () => {
       }
     }
 
-    if (openCheckIn) {
-      totalMs += new Date().getTime() - openCheckIn.getTime();
-    }
-
+    // Account for open check-in until now
+    if (openCheckIn) totalMs += new Date().getTime() - openCheckIn.getTime();
     if (totalMs <= 0) return "--";
 
     const hours = Math.floor(totalMs / (1000 * 60 * 60));
     const minutes = Math.floor((totalMs / (1000 * 60)) % 60);
-
     return `${hours}h ${minutes}m`;
   })();
 
-  /* ================== Distance ================== */
+  // ===== Distance Utilities =====
   const getDistanceMeters = (
     lat1: number,
     lon1: number,
     lat2: number,
     lon2: number,
   ) => {
-    const R = 6371000;
+    const R = 6371000; // Earth radius in meters
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;
     const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -154,21 +153,19 @@ export const useAttendance = () => {
 
   const isWithinDistance = () => {
     if (!workLocation || !currentLocation) return false;
-
     const distance = getDistanceMeters(
       workLocation.latitude,
       workLocation.longitude,
       currentLocation.latitude,
       currentLocation.longitude,
     );
-
-    return distance <= 150;
+    return distance <= 150; // 150 meters radius
   };
 
-  /* ================== Readiness Fix ================== */
+  // ===== Readiness Check =====
   const isReady = !isLoading && !locationLoading && !!currentLocation;
 
-  /* ================== Permissions ================== */
+  // ===== Permissions =====
   const canCheckIn =
     isReady &&
     !actionLocked &&
@@ -183,7 +180,7 @@ export const useAttendance = () => {
     effectiveLastType === "Check-in" &&
     isWithinDistance();
 
-  /* ================== Action ================== */
+  // ===== Action Handler =====
   const handleAction = async (type: FingerprintType) => {
     if (actionLocked || !isReady) return;
 
@@ -209,12 +206,9 @@ export const useAttendance = () => {
 
       await createFingerprint({ type }).unwrap();
 
-      toast({
-        title: `Successfully ${type}`,
-      });
+      toast({ title: `Successfully ${type}` });
     } catch (error: any) {
       setLocalLastType(null);
-
       toast({
         title: error?.data?.message || "Action failed",
         variant: "destructive",
@@ -223,10 +217,12 @@ export const useAttendance = () => {
       setActionLocked(false);
     }
   };
+
   const canAction = mode === "Check-in" ? canCheckIn : canCheckOut;
 
   const handleFingerprint = async () => {
     if (!canAction) return;
+
     try {
       const fingerprintType: FingerprintType =
         mode === "Check-in" ? "Check-in" : "Check-out";
@@ -238,6 +234,7 @@ export const useAttendance = () => {
       setTimeout(() => setStatus(null), 2000);
     }
   };
+
   return {
     records,
     lastCheckIn,

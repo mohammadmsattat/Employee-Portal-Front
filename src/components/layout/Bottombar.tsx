@@ -1,21 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  Home,
-  Clock,
-  FileText,
-  CheckCircle2,
-  Plus,
-  X,
-} from "lucide-react";
+import { Home, Clock, FileText, CheckCircle2, Plus, X } from "lucide-react";
 import { CalendarDays, Clock as ClockIcon, HandCoins } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const Bottombar = ({ openModal }) => {
   const { t, i18n } = useTranslation();
   const [fabOpen, setFabOpen] = useState(false);
-
-  const isRTL = i18n.language === "ar";
 
   const buttons = [
     {

@@ -3,7 +3,6 @@ import { useState, useMemo, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateAdvanceRequestMutation } from "@/rtk/Advance/advanceRequestApi";
 import { useGetAllAdvanceTypesQuery } from "@/rtk/Advance/advanceTypeApi";
-import { useGetMyAdvanceLogsQuery } from "@/rtk/Advance/advanceLogsApi";
 
 interface FormState {
   advanceTypeId: string;
@@ -13,6 +12,9 @@ interface FormState {
   attachment: File | null;
 }
 
+/**
+ * Custom hook for managing Add Advance Request modal
+ */
 export const useAddAdvanceRequestModal = ({
   isOpen,
   onClose,
@@ -22,6 +24,7 @@ export const useAddAdvanceRequestModal = ({
 }) => {
   const { toast } = useToast();
 
+  // ===== Get user & group from localStorage =====
   const user = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "null");
@@ -38,6 +41,7 @@ export const useAddAdvanceRequestModal = ({
     }
   }, []);
 
+  // ===== Form state =====
   const [formData, setFormData] = useState<FormState>({
     advanceTypeId: "",
     amount: "",
@@ -45,10 +49,9 @@ export const useAddAdvanceRequestModal = ({
     reason: "",
     attachment: null,
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ✅ body scroll lock مثل leave
+  // ===== Lock body scroll when modal is open =====
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
@@ -56,8 +59,8 @@ export const useAddAdvanceRequestModal = ({
     };
   }, [isOpen]);
 
-  // ✅ جلب الأنواع مثل leave types
-  const { data: advanceTypesData, isLoading: isAdvanceTypesLoading ,error } =
+  // ===== Fetch advance types =====
+  const { data: advanceTypesData, isLoading: isAdvanceTypesLoading } =
     useGetAllAdvanceTypesQuery(
       {
         policyId: group?.advancePolicy?._id || "",
@@ -67,12 +70,7 @@ export const useAddAdvanceRequestModal = ({
       { skip: !group?.advancePolicy?._id },
     );
 
-
-const { data: advanceLogs } = useGetMyAdvanceLogsQuery({
-    page: 1,
-    limit: 50,
-  });
-  
+  // ===== Selected advance type based on form =====
   const selectedAdvanceType = useMemo(() => {
     return advanceTypesData?.data?.find(
       (t: any) => t._id === formData.advanceTypeId,
@@ -81,9 +79,11 @@ const { data: advanceLogs } = useGetMyAdvanceLogsQuery({
 
   const [createAdvanceRequest] = useCreateAdvanceRequestMutation();
 
+  // ===== Submit handler =====
   const handleSubmit = async () => {
     if (!user) return;
 
+    //  Basic validation
     if (!formData.advanceTypeId || !formData.amount) {
       toast({
         title: "Missing Information",
@@ -93,14 +93,12 @@ const { data: advanceLogs } = useGetMyAdvanceLogsQuery({
       return;
     }
 
-    // ✅ Policy Validation (مثل leave validation)
     const salary = Number(user.salary);
     const requestedAmount = Number(formData.amount);
 
+    //  Policy validations
     if (selectedAdvanceType?.maxPercentageOfSalary) {
-      const maxAllowed =
-        salary * selectedAdvanceType.maxPercentageOfSalary;
-
+      const maxAllowed = salary * selectedAdvanceType.maxPercentageOfSalary;
       if (requestedAmount > maxAllowed) {
         toast({
           title: "Amount Exceeds Limit",
@@ -123,10 +121,7 @@ const { data: advanceLogs } = useGetMyAdvanceLogsQuery({
       return;
     }
 
-    if (
-      selectedAdvanceType?.requiresAttachment &&
-      !formData.attachment
-    ) {
+    if (selectedAdvanceType?.requiresAttachment && !formData.attachment) {
       toast({
         title: "Attachment Required",
         description: "This advance type requires an attachment.",
@@ -135,26 +130,21 @@ const { data: advanceLogs } = useGetMyAdvanceLogsQuery({
       return;
     }
 
+    // ===== Submit request =====
     setIsSubmitting(true);
-
     try {
       const data = new FormData();
-
       data.append("advanceTypeId", formData.advanceTypeId);
       data.append("amount", formData.amount);
-      data.append("salarySnapshot", user.salary);
+      // data.append("salarySnapshot", user.salary);
       data.append("userId", user._id);
       data.append("managerId", user.directManager);
       data.append("companyId", user.companyId);
 
       if (formData.installments)
         data.append("installments", formData.installments);
-
-      if (formData.reason)
-        data.append("reason", formData.reason);
-
-      if (formData.attachment)
-        data.append("attachment", formData.attachment);
+      if (formData.reason) data.append("reason", formData.reason);
+      if (formData.attachment) data.append("attachment", formData.attachment);
 
       await createAdvanceRequest(data).unwrap();
 
@@ -163,6 +153,7 @@ const { data: advanceLogs } = useGetMyAdvanceLogsQuery({
         description: "Your advance request has been submitted.",
       });
 
+      // Reset form & close modal
       setFormData({
         advanceTypeId: "",
         amount: "",
@@ -170,10 +161,9 @@ const { data: advanceLogs } = useGetMyAdvanceLogsQuery({
         reason: "",
         attachment: null,
       });
-
       onClose();
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast({
         title: "Error",
         description: "Failed to submit advance request.",
