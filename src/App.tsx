@@ -21,6 +21,7 @@ import MyAdvanceRequestsPage from "./pages/Advance/MyAdvanceRequestsPage";
 import ManagerOvertimeRequests from "./pages/Overtime/ManagerOvertimeRequests";
 import ManagerAdvanceRequests from "./pages/Advance/ManagerAdvanceRequests";
 import PrivateRoute from "./providers/PrivateRoute";
+import LeavesPage from "./pages/Leaves/LeavesPage";
 
 const queryClient = new QueryClient();
 
@@ -41,10 +42,7 @@ const App = () => (
             {/* Protected routes (require login) */}
             <Route element={<PrivateRoute />}>
               <Route path="/" element={<Home />} />
-              <Route
-                path="/leaves/Leave-requests"
-                element={<MyLeavesRequests />}
-              />
+              <Route path="/leaves/Leaves" element={<LeavesPage />} />
               <Route
                 path="/leaves/manager-leave-requests"
                 element={<ManagerLeaveRequests />}

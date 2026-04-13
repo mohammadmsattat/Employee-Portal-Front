@@ -73,7 +73,7 @@ export const useAttendance = () => {
         setLocationLoading(false);
       },
       () => setLocationLoading(false),
-      { enableHighAccuracy: true },
+      { enableHighAccuracy: true }
     );
   }, []);
 
@@ -92,7 +92,7 @@ export const useAttendance = () => {
 
   const lastServerRecord = todayRecords[todayRecords.length - 1];
   const [localLastType, setLocalLastType] = useState<FingerprintType | null>(
-    null,
+    null
   );
   const effectiveLastType = localLastType ?? lastServerRecord?.type ?? null;
 
@@ -134,7 +134,7 @@ export const useAttendance = () => {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number,
+    lon2: number
   ) => {
     const R = 6371000; // Earth radius in meters
     const φ1 = (lat1 * Math.PI) / 180;
@@ -157,7 +157,7 @@ export const useAttendance = () => {
       workLocation.latitude,
       workLocation.longitude,
       currentLocation.latitude,
-      currentLocation.longitude,
+      currentLocation.longitude
     );
     return distance <= 150; // 150 meters radius
   };
@@ -188,7 +188,7 @@ export const useAttendance = () => {
       workLocation!.latitude,
       workLocation!.longitude,
       currentLocation!.latitude,
-      currentLocation!.longitude,
+      currentLocation!.longitude
     );
 
     if (distance > 150) {

@@ -16,10 +16,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Upload, FileText } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Upload,
+  FileText,
+  X,
+  Paperclip,
+} from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
-
 import { useAddLeaveRequestModal } from "@/hooks/Leaves/useAddLeaveRequest";
 
 const AddLeaveRequestModal = ({ isOpen, onClose }) => {
@@ -48,235 +53,293 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
   const dateFields = ["startDate", "endDate"] as const;
 
   return (
-    <div className="fixed inset-0 z-[999] bg-black/50 flex items-end sm:items-center justify-center sm:overflow-y-auto">
-      <div className="w-full sm:max-w-3xl bg-white rounded-t-2xl sm:rounded-2xl shadow-lg max-h-[80vh] overflow-y-auto sm:max-h-none sm:overflow-visible sm:my-10 p-5 sm:p-6">
-        {/* Drag Handle (mobile only) */}
-        <div className="sm:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4" />
+    <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center sm:overflow-y-auto">
+      <div className="w-full sm:max-w-3xl">
+        <div className="max-h-[88vh] overflow-y-auto rounded-t-[28px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:my-8 sm:max-h-none sm:rounded-[32px]">
+          {/* drag handle */}
+          <div className="flex justify-center pt-3 sm:hidden">
+            <div className="h-1.5 w-14 rounded-full bg-slate-300" />
+          </div>
 
-        {/* Header */}
-        <div className="flex justify-between items-center border-b pb-3 mb-4">
-          <h3 className="text-lg sm:text-xl font-semibold">
-            {selectedLeave
-              ? t("leaveModal.editLeaveRequest")
-              : t("buttons.requestLeave")}
-          </h3>
-          <button
-            className="text-gray-500 hover:text-gray-700"
-            onClick={onClose}
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Leave Balance */}
-        {formData.leaveType && (
-          <div className="my-4 p-4 bg-white border border-border rounded-lg flex justify-between items-center shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
+          <div className="p-5 sm:p-6 lg:p-7">
+            {/* Header */}
+            <div className="mb-6 flex items-start justify-between gap-4 border-b border-slate-200/70 pb-4">
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t("leaveModal.leaveBalance", {
-                    type: getLeaveTypeName(selectedLeave),
-                  })}
-                </p>
-                <p className="font-semibold text-lg">
-                  {remainingDays} / {totalAllowed}{" "}
-                  {t("leaveModal.daysRemaining")}
+                <div className="mb-2 inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold tracking-wide text-blue-700">
+                  {selectedLeave
+                    ? t("leaveModal.editLeaveRequest")
+                    : t("buttons.requestLeave")}
+                </div>
+
+                <h3 className="text-xl font-bold tracking-[-0.02em] text-slate-900 sm:text-2xl">
+                  {selectedLeave
+                    ? t("leaveModal.editLeaveRequest")
+                    : t("buttons.requestLeave")}
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  {t("leaveModal.provideReason")}
                 </p>
               </div>
+
+              <button
+                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-700"
+                onClick={onClose}
+                type="button"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          </div>
-        )}
 
-        <div className="space-y-4">
-          {/* Leave Type */}
-          <div className="space-y-2">
-            <Label>{t("leaveModal.leaveType")} *</Label>
-            <Select
-              value={formData.leaveType}
-              onValueChange={(v) =>
-                setFormData((prev) => ({ ...prev, leaveType: v }))
-              }
-              disabled={isLeaveTypesLoading}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={
-                    isLeaveTypesLoading
-                      ? t("overtimeModal.loading")
-                      : t("leaveModal.selectLeaveType")
+            {/* Leave Balance */}
+            {formData.leaveType && (
+              <div className="mb-6 rounded-[24px] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50/70 p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm ring-1 ring-blue-100">
+                      <FileText className="h-5 w-5" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">
+                        {t("leaveModal.leaveBalance", {
+                          type: getLeaveTypeName(selectedLeave),
+                        })}
+                      </p>
+                      <p className="mt-1 text-lg font-bold tracking-[-0.02em] text-slate-900">
+                        {remainingDays} / {totalAllowed}{" "}
+                        <span className="text-slate-500">
+                          {t("leaveModal.daysRemaining")}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-5">
+              {/* Leave Type */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-slate-700">
+                  {t("leaveModal.leaveType")} *
+                </Label>
+                <Select
+                  value={formData.leaveType}
+                  onValueChange={(v) =>
+                    setFormData((prev) => ({ ...prev, leaveType: v }))
                   }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {leaveTypesData?.data?.map((type) => (
-                  <SelectItem key={type._id} value={type._id}>
-                    {getLeaveTypeName(type)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  disabled={isLeaveTypesLoading}
+                >
+                  <SelectTrigger className="h-12 rounded-2xl border-slate-200 bg-white text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500">
+                    <SelectValue
+                      placeholder={
+                        isLeaveTypesLoading
+                          ? t("overtimeModal.loading")
+                          : t("leaveModal.selectLeaveType")
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-slate-200">
+                    {leaveTypesData?.data?.map((type) => (
+                      <SelectItem key={type._id} value={type._id}>
+                        {getLeaveTypeName(type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Dates */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {dateFields.map((field) => (
-              <div key={field} className="space-y-2">
-                <Label>
-                  {field === "startDate"
-                    ? t("leaveModal.startDate") + " *"
-                    : t("leaveModal.endDate") + " *"}
+              {/* Dates */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {dateFields.map((field) => (
+                  <div key={field} className="space-y-2">
+                    <Label className="text-sm font-semibold text-slate-700">
+                      {field === "startDate"
+                        ? t("leaveModal.startDate") + " *"
+                        : t("leaveModal.endDate") + " *"}
+                    </Label>
+
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={cn(
+                            "h-12 w-full justify-start rounded-2xl border-slate-200 bg-white text-left font-medium text-slate-900 shadow-sm hover:bg-slate-50",
+                            !formData[field] && "text-slate-400"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
+                          {formData[field]
+                            ? format(formData[field], "PPP")
+                            : field === "startDate"
+                            ? t("leaveModal.selectStartDate")
+                            : t("leaveModal.selectEndDate")}
+                        </Button>
+                      </PopoverTrigger>
+
+                      <PopoverContent
+                        className="z-[1000] w-auto rounded-2xl border-slate-200 p-2 shadow-xl"
+                        align="start"
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={formData[field]}
+                          onSelect={(date) => handleDateSelect(field, date)}
+                          disabled={(date) =>
+                            date < new Date() || isHoliday(date)
+                          }
+                          initialFocus
+                          className="pointer-events-auto"
+                          modifiers={{
+                            holiday: (date) =>
+                              group?.calendarRules?.some((rule) => {
+                                if (rule.effectType !== "FULL_DAY_OFF")
+                                  return false;
+                                if (rule.patternType === "SINGLE_DATE")
+                                  return isSameDay(
+                                    date,
+                                    new Date(rule.startDate)
+                                  );
+                                if (rule.patternType === "RECURRING_WEEKLY") {
+                                  const weekDays = [
+                                    "Sunday",
+                                    "Monday",
+                                    "Tuesday",
+                                    "Wednesday",
+                                    "Thursday",
+                                    "Friday",
+                                    "Saturday",
+                                  ];
+                                  return rule.daysOfWeek?.some(
+                                    (day) => weekDays[date.getDay()] === day
+                                  );
+                                }
+                                return false;
+                              }),
+                          }}
+                          modifiersClassNames={{
+                            holiday: "bg-red-200 text-red-700 rounded-full",
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                ))}
+              </div>
+
+              {/* Number of Days */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-slate-700">
+                  {t("leaveModal.numberOfDays")}
+                </Label>
+                <Input
+                  value={numberOfDays}
+                  readOnly
+                  className="h-12 max-w-[140px] rounded-2xl border-slate-200 bg-slate-50 text-center font-semibold text-slate-900 shadow-sm"
+                />
+              </div>
+
+              {/* Reason */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-slate-700">
+                  {t("leaveModal.reason")} *
+                </Label>
+                <Textarea
+                  placeholder={t("leaveModal.provideReason")}
+                  value={formData.reason}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, reason: e.target.value }))
+                  }
+                  rows={5}
+                  className="rounded-2xl border-slate-200 bg-white text-slate-900 shadow-sm placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500"
+                />
+              </div>
+
+              {/* Attachment */}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-slate-700">
+                  {t("leaveModal.attachment")} ({t("leaveModal.optional")})
                 </Label>
 
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !formData[field] && "text-muted-foreground",
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData[field]
-                        ? format(formData[field], "PPP")
-                        : field === "startDate"
-                          ? t("leaveModal.selectStartDate")
-                          : t("leaveModal.selectEndDate")}
-                    </Button>
-                  </PopoverTrigger>
-
-                  <PopoverContent className="w-auto p-0 z-[1000]" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formData[field]}
-                      onSelect={(date) => handleDateSelect(field, date)}
-                      disabled={(date) => date < new Date() || isHoliday(date)}
-                      initialFocus
-                      className="pointer-events-auto"
-                      modifiers={{
-                        holiday: (date) =>
-                          group?.calendarRules?.some((rule) => {
-                            if (rule.effectType !== "FULL_DAY_OFF")
-                              return false;
-                            if (rule.patternType === "SINGLE_DATE")
-                              return isSameDay(date, new Date(rule.startDate));
-                            if (rule.patternType === "RECURRING_WEEKLY") {
-                              const weekDays = [
-                                "Sunday",
-                                "Monday",
-                                "Tuesday",
-                                "Wednesday",
-                                "Thursday",
-                                "Friday",
-                                "Saturday",
-                              ];
-                              return rule.daysOfWeek?.some(
-                                (day) => weekDays[date.getDay()] === day,
-                              );
-                            }
-                            return false;
-                          }),
-                      }}
-                      modifiersClassNames={{
-                        holiday: "bg-red-200 text-red-700 rounded-full",
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            ))}
-          </div>
-
-          {/* Number of Days */}
-          <div className="space-y-1">
-            <Label>{t("leaveModal.numberOfDays")}</Label>
-            <Input
-              value={numberOfDays}
-              readOnly
-              className="bg-white max-w-[120px]"
-            />
-          </div>
-
-          {/* Reason */}
-          <div className="space-y-2">
-            <Label>{t("leaveModal.reason")} *</Label>
-            <Textarea
-              placeholder={t("leaveModal.provideReason")}
-              value={formData.reason}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, reason: e.target.value }))
-              }
-              rows={4}
-            />
-          </div>
-
-          {/* Attachment */}
-          <div className="space-y-2">
-            <Label>
-              {t("leaveModal.attachment")} ({t("leaveModal.optional")})
-            </Label>
-            <div
-              className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
-              onClick={() => document.getElementById("file-input")?.click()}
-            >
-              <input
-                id="file-input"
-                type="file"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file)
-                    setFormData((prev) => ({ ...prev, attachment: file }));
-                }}
-              />
-
-              {!formData.attachment ? (
-                <div className="flex flex-col items-center">
-                  <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    {t("leaveModal.clickUploadOrDrag")}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded-md">
-                  <span className="truncate">{formData.attachment.name}</span>
-                  <button
-                    type="button"
-                    className="ml-2 text-red-500"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setFormData((prev) => ({ ...prev, attachment: null }));
+                <div
+                  className="rounded-[24px] border border-dashed border-blue-200 bg-blue-50/40 p-5 text-center transition-colors hover:border-blue-300 hover:bg-blue-50/70 cursor-pointer"
+                  onClick={() => document.getElementById("file-input")?.click()}
+                >
+                  <input
+                    id="file-input"
+                    type="file"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file)
+                        setFormData((prev) => ({ ...prev, attachment: file }));
                     }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+                  />
 
-          {/* Actions */}
-          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="w-full sm:w-auto"
-            >
-              {t("buttons.cancel")}
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting
-                ? t("buttons.submitting")
-                : t("buttons.submitRequest")}
-            </Button>
+                  {!formData.attachment ? (
+                    <div className="flex flex-col items-center">
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm ring-1 ring-blue-100">
+                        <Upload className="h-5 w-5" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-700">
+                        {t("leaveModal.clickUploadOrDrag")}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        PDF, JPG, PNG
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-blue-100">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                          <Paperclip className="h-4 w-4" />
+                        </div>
+                        <span className="truncate text-sm font-medium text-slate-700">
+                          {formData.attachment.name}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-red-500 transition hover:bg-red-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormData((prev) => ({
+                            ...prev,
+                            attachment: null,
+                          }));
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="h-12 w-full rounded-2xl border-slate-200 text-slate-700 hover:bg-slate-50 sm:w-auto"
+                >
+                  {t("buttons.cancel")}
+                </Button>
+
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="h-12 w-full rounded-2xl bg-blue-600 px-6 font-semibold text-white shadow-[0_12px_24px_rgba(37,99,235,0.24)] hover:bg-blue-700 sm:w-auto"
+                >
+                  {isSubmitting
+                    ? t("buttons.submitting")
+                    : t("buttons.submitRequest")}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

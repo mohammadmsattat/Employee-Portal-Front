@@ -6,6 +6,7 @@ import MobileTabs from "@/components/home/MobileTabs";
 import { useHome } from "@/hooks/home/useHome";
 import { useAttendance } from "@/hooks/Attendance/useAttendance";
 import InfoRow from "@/components/home/InfoRow";
+import HomeQuickActions from "@/components/home/HomeQuickActions.tsx";
 
 const Home = () => {
   // Custom hooks for home page logic
@@ -40,11 +41,9 @@ const Home = () => {
   return (
     <Layout>
       <div className="space-y-6 px-4 sm:px-6 lg:px-8">
-        {/* Header  InfoRow */}
-        <InfoRow t={t} userName={user?.fullName?.split(" ")[0]} />
-
+        <HomeQuickActions t={t} />
         {/* Web Layout */}
-        <div className="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* <div className="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="space-y-6 lg:col-span-2">
             <AttendanceCard
               lastCheckIn={lastCheckIn}
@@ -65,10 +64,10 @@ const Home = () => {
             <LeaveBalanceCard leaveBalances={leaveBalances} t={t} />
             <PendingRequestsCard pendingRequests={pendingRequests} t={t} />
           </div>
-        </div>
+        </div> */}
 
         {/* Mobile Tabs */}
-        <MobileTabs
+        {/* <MobileTabs
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           tabsContent={{
@@ -93,7 +92,7 @@ const Home = () => {
             ),
           }}
           t={t}
-        />
+        /> */}
       </div>
     </Layout>
   );

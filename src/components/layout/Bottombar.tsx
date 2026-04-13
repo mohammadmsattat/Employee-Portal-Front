@@ -1,110 +1,207 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Home, Clock, FileText, CheckCircle2, Plus, X } from "lucide-react";
-import { CalendarDays, Clock as ClockIcon, HandCoins } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  Home,
+  User,
+  Fingerprint,
+  CalendarDays,
+  Clock3,
+  HandCoins,
+  X,
+  ChevronUp,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const Bottombar = ({ openModal }) => {
-  const { t, i18n } = useTranslation();
-  const [fabOpen, setFabOpen] = useState(false);
+interface BottombarProps {
+  openModal: (type: "leave" | "advance" | "overtime") => void;
+  onAttendanceAction?: () => void;
+  attendanceLabel?: string;
+}
 
-  const buttons = [
+const Bottombar = ({
+  openModal,
+  onAttendanceAction,
+  attendanceLabel,
+}: BottombarProps) => {
+  const { t } = useTranslation();
+  const location = useLocation();
+  const [requestsOpen, setRequestsOpen] = useState(false);
+
+  const activeKey = useMemo(() => {
+    const path = location.pathname;
+
+    if (path === "/") return "home";
+    if (path.startsWith("/profile") || path.startsWith("/settings"))
+      return "profile";
+
+    return "";
+  }, [location.pathname]);
+
+  const navItems = [
     {
-      icon: CalendarDays,
+      key: "home",
+      label: t("navigation.home"),
+      icon: Home,
+      to: "/",
+      type: "link" as const,
+    },
+    {
+      key: "attendance",
+      label: attendanceLabel || t("navigation.attendance"),
+      icon: Fingerprint,
+      type: "action" as const,
+      onClick: onAttendanceAction,
+    },
+    {
+      key: "requests",
+      label: t("navigation.requests"),
+      icon: ChevronUp,
+      type: "action" as const,
+      onClick: () => setRequestsOpen((prev) => !prev),
+      forceActive: requestsOpen,
+    },
+    {
+      key: "profile",
+      label: t("navigation.myProfile"),
+      icon: User,
+      to: "/profile",
+      type: "link" as const,
+    },
+  ];
+
+  const requestActions = [
+    {
+      key: "leave",
       label: t("buttons.requestLeave"),
-      color: "bg-primary/10 text-primary",
-      modal: "leave",
+      icon: CalendarDays,
+      onClick: () => openModal("leave"),
+      iconClass: "bg-blue-50 text-blue-600 ring-1 ring-blue-100",
     },
     {
-      icon: HandCoins,
+      key: "advance",
       label: t("buttons.requestAdvance"),
-      color: "bg-green-100 text-green-600",
-      modal: "advance",
+      icon: HandCoins,
+      onClick: () => openModal("advance"),
+      iconClass: "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100",
     },
     {
-      icon: ClockIcon,
+      key: "overtime",
       label: t("buttons.requestOvertime"),
-      color: "bg-orange-100 text-orange-600",
-      modal: "overtime",
+      icon: Clock3,
+      onClick: () => openModal("overtime"),
+      iconClass: "bg-orange-50 text-orange-600 ring-1 ring-orange-100",
     },
   ];
 
   return (
     <>
-      {/* Overlay */}
-      <div className="md:hidden inset-0 z-50">
-        <div
-          className={`absolute inset-0 bg-black/20 transition-opacity duration-300 ${
-            fabOpen
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
-          }`}
-          onClick={() => setFabOpen(false)}
-        />
+      {/* overlay */}
+      <div
+        className={`fixed inset-0 z-40 bg-slate-900/20 transition-opacity duration-200 md:hidden ${
+          requestsOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        }`}
+        onClick={() => setRequestsOpen(false)}
+      />
+
+      {/* requests sheet */}
+      <div
+        className={`fixed inset-x-4 bottom-24 z-50 transition-all duration-200 md:hidden ${
+          requestsOpen
+            ? "translate-y-0 opacity-100"
+            : "pointer-events-none translate-y-3 opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/95 p-3 shadow-[0_20px_50px_rgba(15,23,42,0.16)] backdrop-blur-xl">
+          <div className="mb-2 flex items-center justify-between px-2 py-1">
+            <p className="text-sm font-semibold text-slate-900">
+              {t("navigation.requests")}
+            </p>
+            <button
+              onClick={() => setRequestsOpen(false)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {requestActions.map((action) => {
+              const Icon = action.icon;
+
+              return (
+                <button
+                  key={action.key}
+                  onClick={() => {
+                    setRequestsOpen(false);
+                    setTimeout(() => action.onClick(), 120);
+                  }}
+                  className="rounded-[22px] border border-slate-100 bg-slate-50/70 px-3 py-4 text-center transition active:scale-[0.98]"
+                >
+                  <div
+                    className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl ${action.iconClass}`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <p className="text-[12px] font-semibold leading-4 text-slate-700">
+                    {action.label}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* FAB Buttons */}
-      <div className="md:hidden fixed inset-x-0 bottom-[6em] z-50 flex flex-col items-center gap-2">
-        {fabOpen &&
-          buttons.map((btn) => {
-            const Icon = btn.icon;
+      {/* floating nav */}
+      <div className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4 md:hidden">
+        <div className="flex w-full max-w-sm items-center justify-between rounded-full border border-slate-200/80 bg-white/90 p-2 shadow-[0_14px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              item.forceActive || activeKey === item.key || false;
+
+            const content = (
+              <div
+                className={`flex h-12 items-center transition-all duration-200 ${
+                  isActive
+                    ? "rounded-full bg-blue-600 px-4 text-white shadow-[0_10px_20px_rgba(37,99,235,0.28)]"
+                    : "w-12 justify-center rounded-full text-slate-500"
+                }`}
+              >
+                <Icon className={`h-5 w-5 shrink-0 ${isActive ? "" : ""}`} />
+                {isActive && (
+                  <span className="ml-2 truncate text-sm font-semibold">
+                    {item.label}
+                  </span>
+                )}
+              </div>
+            );
+
+            if (item.type === "link" && item.to) {
+              return (
+                <Link
+                  key={item.key}
+                  to={item.to}
+                  className="flex items-center"
+                  onClick={() => setRequestsOpen(false)}
+                >
+                  {content}
+                </Link>
+              );
+            }
+
             return (
               <button
-                key={btn.label}
-                onClick={() => {
-                  setFabOpen(false);
-                  setTimeout(() => {
-                    openModal(btn.modal);
-                  }, 100);
-                }}
-                className="w-56 flex items-center gap-2 bg-white shadow-lg rounded-full py-2 px-4"
+                key={item.key}
+                onClick={item.onClick}
+                className="flex items-center"
               >
-                <div
-                  className={`w-8 h-8 flex items-center justify-center rounded-full ${btn.color}`}
-                >
-                  <Icon className="w-4.5 h-4.5" />
-                </div>
-
-                <span className="text-sm font-medium whitespace-nowrap">
-                  {btn.label}
-                </span>
+                {content}
               </button>
             );
           })}
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t">
-        <div className="flex items-center justify-around h-16 relative">
-          <Link to="/" className="flex flex-col items-center text-xs">
-            <Home size={20} />
-            <span>{t("navigation.home")}</span>
-          </Link>
-
-          <Link to="/attendance" className="flex flex-col items-center text-xs">
-            <Clock size={20} />
-            <span>{t("navigation.attendance")}</span>
-          </Link>
-
-          <button
-            onClick={() => setFabOpen(!fabOpen)}
-            className="absolute -top-6 bg-primary text-white p-4 rounded-full shadow-lg"
-          >
-            {fabOpen ? <X /> : <Plus />}
-          </button>
-
-          <Link
-            to="/my-requests"
-            className="flex flex-col items-center text-xs"
-          >
-            <FileText size={20} />
-            <span>{t("navigation.myRequests")}</span>
-          </Link>
-
-          <Link to="/approvals" className="flex flex-col items-center text-xs">
-            <CheckCircle2 size={20} />
-            <span>{t("navigation.approvals")}</span>
-          </Link>
         </div>
       </div>
     </>

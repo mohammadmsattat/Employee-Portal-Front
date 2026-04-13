@@ -1,6 +1,6 @@
 // src/Api/GlobalData.ts
 
-const baseURL = "http://localhost:8001";
+const baseURL = "http://localhost:8002";
 // const baseURL = "http://192.168.137.1:8001";
 
 // ================= AUTH =================
@@ -17,7 +17,6 @@ export const leavesEndPoint = "/api/leaves";
 export const leaveRequestEndPoint = "/api/leave-request";
 export const leavesLogsEndPoint = "/api/leave-logs";
 
-
 export const overtimeRequestEndPoint = "/api/overtime-request";
 export const overtimePolicyEndPoint = "/api/overtime-policy";
 export const overtimeTypeEndPoint = "/api/overtime-types";
@@ -28,10 +27,7 @@ export const advanceTypeEndPoint = "/api/advance-types";
 export const advanceRequestEndPoint = "/api/advance-request";
 export const advanceLogsEndPoint = "/api/advance-logs";
 
-
 export const notificationsEndPoint = "/api/notification";
-
-
 
 // ================= EXPORT BASE =================
 export default baseURL;

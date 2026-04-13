@@ -18,13 +18,15 @@
     "sendCode": "Send Reset Code",
     "sending": "Sending...",
     "backToLogin": "Back to Login"
-  },"verifyCode": {
+  },
+  "verifyCode": {
     "title": "Verification Code",
     "subtitle": "Enter the 5-digit code sent to your email",
     "placeholder": "*****",
     "verify": "Verify",
     "verifying": "Verifying..."
-  }, "newPassword": {
+  },
+  "newPassword": {
     "title": "Create New Password",
     "subtitle": "Choose a strong password for your account",
     "newPassword": "New Password",
@@ -56,7 +58,7 @@
     "arabic": "Arabic",
     "english": "English"
   },
-   "notifications": {
+  "notifications": {
     "title": "Notifications",
     "clearAll": "Clear All",
     "loading": "Loading...",
@@ -138,7 +140,9 @@
     "leave": "Leave",
     "advance": "Advance",
     "overtime": "Overtime",
-    "amount": "Amount"
+    "amount": "Amount",
+    "tasks": "tasks",
+    "salary": "salary"
   },
   "attendancePage": {
     "title": "Attendance",

@@ -10,7 +10,7 @@
     "signIn": "تسجيل الدخول",
     "signingIn": "جاري تسجيل الدخول..."
   },
-   "forgotPassword": {
+  "forgotPassword": {
     "title": "إعادة تعيين كلمة المرور",
     "subtitle": "أدخل بريدك الإلكتروني لاستلام رمز إعادة التعيين",
     "email": "البريد الإلكتروني",
@@ -18,13 +18,15 @@
     "sendCode": "إرسال رمز التحقق",
     "sending": "جارٍ الإرسال...",
     "backToLogin": "العودة إلى تسجيل الدخول"
-  },"verifyCode": {
+  },
+  "verifyCode": {
     "title": "رمز التحقق",
     "subtitle": "أدخل الرمز المكون من 5 أرقام المرسل إلى بريدك الإلكتروني",
     "placeholder": "*****",
     "verify": "تحقق",
     "verifying": "جارٍ التحقق..."
-  }, "newPassword": {
+  },
+  "newPassword": {
     "title": "إنشاء كلمة مرور جديدة",
     "subtitle": "اختر كلمة مرور قوية لحسابك",
     "newPassword": "كلمة المرور الجديدة",
@@ -56,7 +58,7 @@
     "arabic": "العربية",
     "english": "الإنجليزية"
   },
-   "notifications": {
+  "notifications": {
     "title": "الإشعارات",
     "clearAll": "مسح الكل",
     "loading": "جار التحميل...",
