@@ -34,6 +34,8 @@ export const useLogin = () => {
 
       navigate("/");
     } catch (err: any) {
+      console.log(err);
+      
       const message =
         err?.data?.message || err?.error || "Login failed, please try again";
       setError(message);

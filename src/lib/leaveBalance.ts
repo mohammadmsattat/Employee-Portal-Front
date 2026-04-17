@@ -48,7 +48,7 @@ export const calculateLeaveBalances = (
     }
 
     const usedDays = leaveLogs
-      .filter((log) => log.leaveType._id === leaveType._id)
+      .filter((log) => log.leaveType?._id === leaveType?._id)
       .reduce((acc, log) => acc + log.days, 0);
 
     return {

@@ -57,6 +57,8 @@ console.log(data);
       });
       setSelectedRequest(null);
     } catch (error) {
+      console.log(error);
+      
       toast({
         title: "Error",
         description: "Failed to approve request.",
@@ -84,7 +86,9 @@ console.log(data);
         description: "Request rejected successfully.",
       });
       setSelectedRequest(null);
-    } catch {
+    } catch (error) {
+      console.log(error);
+      
       toast({
         title: "Error",
         description: "Failed to reject request.",

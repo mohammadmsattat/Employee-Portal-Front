@@ -311,5 +311,17 @@
     "rejectionReasonPlaceholder": "Reason for rejection",
     "cancel": "Cancel",
     "submitRejection": "Submit Rejection"
-  }
+  },
+  "tasks": {
+  "newTask": "New Task",
+  "createTask": "Create Task",
+  "fillDetails": "Fill in the details below to create a new task",
+  "title": "Title",
+  "description": "Description",
+  "status": "Status",
+  "priority": "Priority",
+  "assignTo": "Assign To",
+  "dueDate": "Due Date",
+  "tags": "Tags"
+}
 }

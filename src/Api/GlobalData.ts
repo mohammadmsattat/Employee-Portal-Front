@@ -1,6 +1,6 @@
 // src/Api/GlobalData.ts
 
-const baseURL = "http://localhost:8002";
+const baseURL = "http://localhost:8001";
 // const baseURL = "http://192.168.137.1:8001";
 
 // ================= AUTH =================
@@ -28,6 +28,12 @@ export const advanceRequestEndPoint = "/api/advance-request";
 export const advanceLogsEndPoint = "/api/advance-logs";
 
 export const notificationsEndPoint = "/api/notification";
+
+//tasks Endpoints
+export const taskEndPoint = "/api/tasks";
+export const subTaskEndPoint = "/api/subtasks";
+export const commentEndPoint = "/api/comments";
+export const attachmentEndPoint = "/api/attachments";
 
 // ================= EXPORT BASE =================
 export default baseURL;

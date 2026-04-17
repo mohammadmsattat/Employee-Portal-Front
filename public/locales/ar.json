@@ -309,5 +309,17 @@
     "rejectionReasonPlaceholder": "سبب الرفض",
     "cancel": "إلغاء",
     "submitRejection": "تقديم الرفض"
+  },
+  "tasks": {
+    "newTask": "مهمة جديدة",
+    "createTask": "إنشاء مهمة",
+    "fillDetails": "قم بتعبئة التفاصيل أدناه لإنشاء مهمة جديدة",
+    "title": "العنوان",
+    "description": "الوصف",
+    "status": "الحالة",
+    "priority": "الأولوية",
+    "assignTo": "تعيين إلى",
+    "dueDate": "تاريخ الاستحقاق",
+    "tags": "الوسوم"
   }
 }

@@ -22,6 +22,7 @@ import ManagerOvertimeRequests from "./pages/Overtime/ManagerOvertimeRequests";
 import ManagerAdvanceRequests from "./pages/Advance/ManagerAdvanceRequests";
 import PrivateRoute from "./providers/PrivateRoute";
 import LeavesPage from "./pages/Leaves/LeavesPage";
+import TasksPage from "./pages/Tasks/TasksPage";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,8 @@ const App = () => (
               />
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/profile" element={<Profile />} />
+
+              <Route path="/tasks" element={<TasksPage />} />
             </Route>
 
             {/* 404 route */}
