@@ -1,27 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+// hooks/SubTasks/useCreateSubTask.ts
+import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateTaskMutation } from "@/rtk/Tasks/tasksApi";
 import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
+import { useCreateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
 
-interface FormState {
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  assignedTo: string;
-  dueDate?: Date;
-  tags: string;
-}
-
-export const useAddTaskModal = ({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) => {
+export const useCreateSubTask = (taskId: string, onClose: () => void) => {
   const { toast } = useToast();
-  const [createTask, { isLoading }] = useCreateTaskMutation();
+  const [createSubTask, { isLoading }] = useCreateSubTaskMutation();
 
   const user = useMemo(() => {
     try {
@@ -31,26 +16,18 @@ export const useAddTaskModal = ({
     }
   }, []);
 
-  const { data, isError } = useGetAllStaffQuery({
-    directManager: user._id,
+  const { data } = useGetAllStaffQuery({
+    directManager: user?._id,
   });
 
-  const [formData, setFormData] = useState<FormState>({
+  const [formData, setFormData] = useState({
     title: "",
     description: "",
-    status: "todo",
     priority: "medium",
+    status: "todo",
     assignedTo: "",
-    dueDate: undefined,
-    tags: "",
+    dueDate: null,
   });
-
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -58,14 +35,14 @@ export const useAddTaskModal = ({
     if (!formData.title.trim()) {
       toast({
         title: "Missing Title",
-        description: "Task title is required.",
+        description: "SubTask title is required",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      let assignedToFinal: string | null = null;
+      let assignedToFinal = null;
 
       if (formData.assignedTo === "me") {
         assignedToFinal = user._id;
@@ -80,37 +57,36 @@ export const useAddTaskModal = ({
         priority: formData.priority,
         assignedTo: assignedToFinal ? [assignedToFinal] : [],
         dueDate: formData.dueDate,
-        tags: formData.tags
-          ? formData.tags.split(",").map((t) => t.trim())
-          : [],
+        task: taskId, // 🔥 الربط الأساسي
         companyId: user.companyId,
         createdBy: user._id,
+        missionType: "task",
       };
 
-      await createTask(payload).unwrap();
+      await createSubTask(payload).unwrap();
 
       toast({
-        title: "Task Created",
-        description: "Task has been successfully created.",
+        title: "SubTask Created",
+        description: "SubTask created successfully",
       });
 
       setFormData({
         title: "",
         description: "",
-        status: "todo",
         priority: "medium",
+        status: "todo",
         assignedTo: "",
-        dueDate: undefined,
-        tags: "",
+        dueDate: null,
       });
 
       onClose();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create task.",
+        description: "Failed to create subtask",
         variant: "destructive",
       });
+
       console.log(error);
     }
   };

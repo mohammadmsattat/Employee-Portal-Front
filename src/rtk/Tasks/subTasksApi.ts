@@ -48,7 +48,7 @@ export const subTaskApi = createApi({
     updateSubTask: builder.mutation<any, { id: string; data: any }>({
       query: ({ id, data }) => ({
         url: `${subTaskEndPoint}/${id}?companyId=${getCompanyId()}`,
-        method: "PATCH",
+        method: "PUT",
         body: data,
       }),
       invalidatesTags: ["SubTasks"],

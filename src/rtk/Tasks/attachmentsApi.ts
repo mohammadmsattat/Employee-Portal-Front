@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import baseURL, { attachmentEndPoint } from "@/Api/GlobalData";
 
+const getCompanyId = () => localStorage.getItem("company");
 const getJWT = () => localStorage.getItem("token");
 
 export const attachmentApi = createApi({
@@ -16,21 +17,33 @@ export const attachmentApi = createApi({
   tagTypes: ["Attachments"],
 
   endpoints: (builder) => ({
-    getAttachments: builder.query<any, { taskId?: string; subTaskId?: string }>({
-      query: ({ taskId, subTaskId }) => {
-        const params = new URLSearchParams();
+    getAttachments: builder.query<any, { taskId?: string; subTaskId?: string }>(
+      {
+        query: ({ taskId, subTaskId }) => {
+          const params = new URLSearchParams();
 
-        if (taskId) params.append("taskId", taskId);
-        if (subTaskId) params.append("subTaskId", subTaskId);
+          if (taskId) params.append("taskId", taskId);
+          if (subTaskId) params.append("subTaskId", subTaskId);
 
-        return `${attachmentEndPoint}?${params.toString()}`;
+          return `${attachmentEndPoint}?companyId=${getCompanyId()}&${params.toString()}`;
+        },
+        providesTags: ["Attachments"],
       },
-      providesTags: ["Attachments"],
+    ),
+    addAttachment: builder.mutation<any, { taskId: string; url: string }>({
+      query: (data) => ({
+        url: `${attachmentEndPoint}?companyId=${getCompanyId()}`,
+        method: "POST",
+        body: {
+          task: data.taskId,
+          url: data.url, 
+        },
+      }),
+      invalidatesTags: ["Attachments"],
     }),
-
     uploadAttachment: builder.mutation<any, FormData>({
       query: (formData) => ({
-        url: `${attachmentEndPoint}`,
+        url: `${attachmentEndPoint}?companyId=${getCompanyId()}`,
         method: "POST",
         body: formData,
       }),
@@ -39,7 +52,7 @@ export const attachmentApi = createApi({
 
     deleteAttachment: builder.mutation<any, string>({
       query: (id) => ({
-        url: `${attachmentEndPoint}/${id}`,
+        url: `${attachmentEndPoint}/${id}?companyId=${getCompanyId()}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Attachments"],
@@ -49,6 +62,7 @@ export const attachmentApi = createApi({
 
 export const {
   useGetAttachmentsQuery,
+  useAddAttachmentMutation,
   useUploadAttachmentMutation,
   useDeleteAttachmentMutation,
 } = attachmentApi;

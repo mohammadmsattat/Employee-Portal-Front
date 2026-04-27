@@ -21,7 +21,10 @@ import { taskApi } from "./Tasks/tasksApi";
 import { subTaskApi } from "./Tasks/subTasksApi";
 import { commentApi } from "./Tasks/commentsApi";
 import { attachmentApi } from "./Tasks/attachmentsApi";
-
+import { staffApi } from "./Staff/StaffApi";
+import { workspaceApi } from "./Tasks/workspaceApi";
+import { folderApi } from "./Tasks/folderApi";
+import { listApi } from "./Tasks/listApi";
 
 export const store = configureStore({
   reducer: {
@@ -39,6 +42,12 @@ export const store = configureStore({
     [overtimeLogsApi.reducerPath]: overtimeLogsApi.reducer,
     [advanceLogsApi.reducerPath]: advanceLogsApi.reducer,
     [NotificationsApi.reducerPath]: NotificationsApi.reducer,
+    [staffApi.reducerPath]: staffApi.reducer,
+
+    //tasks
+    [workspaceApi.reducerPath]: workspaceApi.reducer,
+    [folderApi.reducerPath]: folderApi.reducer,
+    [listApi.reducerPath]: listApi.reducer,
     [taskApi.reducerPath]: taskApi.reducer,
     [subTaskApi.reducerPath]: subTaskApi.reducer,
     [commentApi.reducerPath]: commentApi.reducer,
@@ -60,10 +69,16 @@ export const store = configureStore({
       .concat(overtimeLogsApi.middleware)
       .concat(advanceLogsApi.middleware)
       .concat(NotificationsApi.middleware)
+      .concat(staffApi.middleware)
+
+
+      .concat(workspaceApi.middleware)
+      .concat(folderApi.middleware)
+      .concat(listApi.middleware)
       .concat(taskApi.middleware)
       .concat(subTaskApi.middleware)
       .concat(commentApi.middleware)
-      .concat(attachmentApi.middleware),
+      .concat(attachmentApi.middleware)
 });
 
 setupListeners(store.dispatch);

@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import baseURL, { commentEndPoint } from "@/Api/GlobalData";
 
+const getCompanyId = () => localStorage.getItem("company");
 const getJWT = () => localStorage.getItem("token");
 
 export const commentApi = createApi({
@@ -23,14 +24,14 @@ export const commentApi = createApi({
         if (taskId) params.append("taskId", taskId);
         if (subTaskId) params.append("subTaskId", subTaskId);
 
-        return `${commentEndPoint}?${params.toString()}`;
+        return `${commentEndPoint}?companyId=${getCompanyId()}&${params.toString()}`;
       },
       providesTags: ["Comments"],
     }),
 
     createComment: builder.mutation<any, any>({
       query: (data) => ({
-        url: `${commentEndPoint}`,
+        url: `${commentEndPoint}?companyId=${getCompanyId()}`,
         method: "POST",
         body: data,
       }),
@@ -39,7 +40,7 @@ export const commentApi = createApi({
 
     updateComment: builder.mutation<any, { id: string; data: any }>({
       query: ({ id, data }) => ({
-        url: `${commentEndPoint}/${id}`,
+        url: `${commentEndPoint}/${id}?companyId=${getCompanyId()}`,
         method: "PATCH",
         body: data,
       }),
@@ -48,7 +49,7 @@ export const commentApi = createApi({
 
     deleteComment: builder.mutation<any, string>({
       query: (id) => ({
-        url: `${commentEndPoint}/${id}`,
+        url: `${commentEndPoint}/${id}?companyId=${getCompanyId()}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Comments"],

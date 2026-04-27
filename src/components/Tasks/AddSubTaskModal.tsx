@@ -1,18 +1,14 @@
-import { useTranslation } from "react-i18next";
-import { Calendar as CalendarIcon, X, Plus } from "lucide-react";
-import { useAddTaskModal } from "@/hooks/Tasks/useAddTaskModal";
+// components/SubTasks/AddSubTaskModal.tsx
+import { useCreateSubTask } from "@/hooks/Tasks/seCreateSubTask";
+import { X, Plus } from "lucide-react";
 import TaskForm from "./TaskForm";
+import { useTranslation } from "react-i18next";
 
-const AddTaskModal = ({ isOpen, onClose }) => {
-  const { t } = useTranslation();
+const AddSubTaskModal = ({ isOpen, onClose, taskId }) => {
+if (!isOpen || !taskId) return null;  const { t } = useTranslation();
 
   const { data, formData, setFormData, handleSubmit, isLoading } =
-    useAddTaskModal({
-      isOpen,
-      onClose,
-    });
-
-  if (!isOpen) return null;
+    useCreateSubTask(taskId, onClose);
 
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">
@@ -46,13 +42,14 @@ const AddTaskModal = ({ isOpen, onClose }) => {
 
             {/* BODY */}
             <TaskForm
-              mode="task"
+              mode="subtask"
               formData={formData}
               setFormData={setFormData}
               onSubmit={handleSubmit}
               isLoading={isLoading}
               t={t}
               staffData={data?.data}
+              onClose={onClose}
             />
           </div>
         </div>
@@ -61,4 +58,4 @@ const AddTaskModal = ({ isOpen, onClose }) => {
   );
 };
 
-export default AddTaskModal;
+export default AddSubTaskModal;

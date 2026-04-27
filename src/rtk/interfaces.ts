@@ -496,3 +496,33 @@ export interface MarkAllReadResponse {
   status: boolean;
   modifiedCount: number;
 }
+// ===================== staff interfaces =====================
+
+export interface Staff {
+  _id: string;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  position?: string;
+  branch?: string;
+  companyId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StaffsResponse {
+  status: boolean;
+  page: number;
+  totalPages: number;
+  results: number;
+  totalItems: number;
+  data: Staff[];
+}
+
+export interface GetAllStaffParams {
+  keyword?: string;
+  limit?: number;
+  page?: number;
+  branchId?: string;
+  position?: string;
+}

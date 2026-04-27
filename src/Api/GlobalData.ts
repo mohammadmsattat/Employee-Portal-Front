@@ -29,11 +29,20 @@ export const advanceLogsEndPoint = "/api/advance-logs";
 
 export const notificationsEndPoint = "/api/notification";
 
+//staff endpoint
+export const StaffEndPoint = "/api/staff";
+
 //tasks Endpoints
 export const taskEndPoint = "/api/tasks";
 export const subTaskEndPoint = "/api/subtasks";
 export const commentEndPoint = "/api/comments";
 export const attachmentEndPoint = "/api/attachments";
+
+export const workspaceEndPoint = "/api/workspace";
+export const folderEndPoint = "/api/folder";
+export const listEndPoint = "/api/list";
+
+
 
 // ================= EXPORT BASE =================
 export default baseURL;

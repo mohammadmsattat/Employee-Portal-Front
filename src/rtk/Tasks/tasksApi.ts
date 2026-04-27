@@ -17,8 +17,9 @@ export const taskApi = createApi({
   tagTypes: ["Tasks"],
 
   endpoints: (builder) => ({
-    getAllTasks: builder.query<any, void>({
-      query: () => `${taskEndPoint}?companyId=${getCompanyId()}`,
+    getAllTasks: builder.query<any, { type: "my" | "team" }>({
+      query: ({ type }) =>
+        `${taskEndPoint}?type=${type}&companyId=${getCompanyId()}`,
       providesTags: ["Tasks"],
     }),
 
