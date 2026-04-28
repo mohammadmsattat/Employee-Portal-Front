@@ -1,6 +1,9 @@
 // ===================== IMPORTS =====================
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import baseURL, { fingerprintEndPoint } from "../../Api/GlobalData";
+import baseURL, {
+  fingerprintByDayEndPoint,
+  fingerprintEndPoint,
+} from "../../Api/GlobalData";
 
 import { AttendanceFingerprint } from "@/interfaces/attendance";
 
@@ -46,6 +49,17 @@ export const fingerprintApi = createApi({
       providesTags: ["Fingerprint"],
     }),
 
+    /* ================= GET MY DAILY ATTENDANCE ================= */
+    getMyDailyFingerprints: builder.query<
+      ApiResponse<AttendanceFingerprint[]>,
+      number
+    >({
+      query: (page = 1) =>
+        `${fingerprintByDayEndPoint}?companyId=${getCompanyId()}&page=${page}`,
+
+      providesTags: ["Fingerprint"],
+    }),
+
     /* ================= CREATE CHECK-IN / CHECK-OUT ================= */
 
     createLogedFingerprint: builder.mutation<
@@ -64,5 +78,8 @@ export const fingerprintApi = createApi({
 });
 
 // ===================== EXPORT HOOKS =====================
-export const { useGetMyFingerprintsQuery, useCreateLogedFingerprintMutation } =
-  fingerprintApi;
+export const {
+  useGetMyFingerprintsQuery,
+  useGetMyDailyFingerprintsQuery,
+  useCreateLogedFingerprintMutation,
+} = fingerprintApi;

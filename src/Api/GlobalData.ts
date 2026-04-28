@@ -13,6 +13,7 @@ export const HrVerifyResetCodeEndPoint = "/api/hrauth/verify-resetcode";
 export const HrResetPasswordEndPoint = "/api/hrauth/reset-password";
 
 export const fingerprintEndPoint = "/api/finger-print/loged";
+export const fingerprintByDayEndPoint = "/api/finger-print/days";
 export const leavesEndPoint = "/api/leaves";
 export const leaveRequestEndPoint = "/api/leave-request";
 export const leavesLogsEndPoint = "/api/leave-logs";

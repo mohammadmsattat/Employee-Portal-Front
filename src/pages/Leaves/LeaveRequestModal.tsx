@@ -3,6 +3,15 @@ import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/portal/StatusBadge";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
+import {
+  CalendarDays,
+  CheckCircle2,
+  FileText,
+  Paperclip,
+  UserRound,
+  X,
+  XCircle,
+} from "lucide-react";
 
 interface LeaveRequestModalProps {
   request: any;
@@ -38,61 +47,80 @@ const LeaveRequestModal = ({
   const submitRejection = () => onReject(request, rejectReason);
 
   const FieldRow = ({ label, value }: { label: string; value: any }) => (
-    <div className="flex flex-col sm:flex-row sm:items-start py-2 sm:py-3 border-b border-gray-100 w-full">
-      <div className="sm:w-1/3 text-sm font-medium text-gray-500 mb-1 sm:mb-0 text-start">
+    <div className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3 sm:flex sm:w-full sm:items-start sm:border-0 sm:border-b sm:border-gray-100 sm:bg-transparent sm:px-0">
+      <div className="mb-1 text-xs font-medium uppercase text-gray-500 sm:mb-0 sm:w-1/3 sm:text-sm sm:normal-case">
         {label}
       </div>
-      <div className="sm:w-2/3 text-sm text-gray-800 break-words text-start">
+      <div className="break-words text-sm font-medium text-gray-800 sm:w-2/3 sm:font-normal">
         {value || "-"}
       </div>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md sm:max-w-2xl p-5 sm:p-6 border border-gray-200 overflow-y-auto max-h-[90vh]">
-
-        {/* Header */}
-        <div className="flex justify-between items-center mb-4 sm:mb-6 pb-2 border-b border-gray-200">
-          <h2 className="text-xl sm:text-2xl font-bold text-portal-header text-start">
-            {t("leaveRequestModal.title")}
-          </h2>
+    <div className="fixed inset-0 z-[999] flex items-end justify-center bg-black/50 px-0 pt-8 sm:items-center sm:p-4">
+      <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl border border-gray-200 bg-white p-4 shadow-xl sm:max-h-[90vh] sm:max-w-2xl sm:rounded-2xl sm:p-6">
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-gray-200 pb-4 sm:mb-6 sm:pb-2">
+          <div className="min-w-0">
+            <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase text-blue-600 sm:hidden">
+              <FileText className="h-4 w-4" />
+              <span>{request?.leaveType?.typeKey || "-"}</span>
+            </div>
+            <h2 className="text-xl font-bold text-portal-header sm:text-2xl">
+              {t("leaveRequestModal.title")}
+            </h2>
+            <p className="mt-1 truncate text-sm text-slate-500 sm:hidden">
+              {request?.userId?.fullName || "-"}
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-lg sm:text-xl transition-colors"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-gray-500 transition-colors hover:bg-slate-50 hover:text-gray-700"
           >
-            ✕
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Content */}
+        <div className="mb-4 grid grid-cols-[auto_1fr] gap-3 rounded-2xl bg-slate-50/70 p-4 sm:hidden">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-200">
+            <UserRound className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold">
+              {request?.userId?.fullName || "-"}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <StatusBadge status={request?.status} />
+              <span className="rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium">
+                {calculateDays(request?.startDate, request?.endDate)}{" "}
+                {t("leaveRequestModal.days")}
+              </span>
+            </div>
+          </div>
+          <div className="col-span-2 mt-1 flex items-center gap-2 rounded-xl bg-gray-200 px-3 py-2 text-sm">
+            <CalendarDays className="h-4 w-4 shrink-0" />
+            <span className="min-w-0">
+              {formatDate(request?.startDate)} - {formatDate(request?.endDate)}
+            </span>
+          </div>
+        </div>
+
         <div className="space-y-2 sm:space-y-3">
-          <FieldRow
-            label={t("leaveRequestModal.employee")}
-            value={request?.userId?.fullName}
-          />
+          <div className="grid grid-cols-2 gap-x-2 md:block">
+            <div className="md:w-full">
+              <FieldRow
+                label={t("leaveRequestModal.employee")}
+                value={request?.userId?.fullName}
+              />
+            </div>
 
-          <FieldRow
-            label={t("leaveRequestModal.leaveType")}
-            value={request?.leaveType?.typeKey}
-          />
-
-          <FieldRow
-            label={t("leaveRequestModal.period")}
-            value={`${formatDate(request?.startDate)} – ${formatDate(
-              request?.endDate
-            )}`}
-          />
-
-          <FieldRow
-            label={t("leaveRequestModal.days")}
-            value={calculateDays(request?.startDate, request?.endDate)}
-          />
-
-          <FieldRow
-            label={t("leaveRequestModal.status")}
-            value={<StatusBadge status={request?.status} />}
-          />
+            <div className="md:w-full">
+              <FieldRow
+                label={t("leaveRequestModal.leaveType")}
+                value={request?.leaveType?.typeKey}
+              />
+            </div>
+          </div>
 
           <FieldRow
             label={t("leaveRequestModal.reason")}
@@ -103,7 +131,7 @@ const LeaveRequestModal = ({
             <FieldRow
               label={t("leaveRequestModal.rejectionReason")}
               value={
-                <span className="text-red-600 font-medium">
+                <span className="font-medium text-red-600">
                   {request.rejectionReason}
                 </span>
               }
@@ -118,8 +146,9 @@ const LeaveRequestModal = ({
                   href={request.attachment}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 underline hover:text-blue-700 transition-colors"
+                  className="inline-flex items-center gap-2 text-blue-600 underline transition-colors hover:text-blue-700"
                 >
+                  <Paperclip className="h-4 w-4" />
                   {t("leaveRequestModal.viewFile")}
                 </a>
               }
@@ -127,14 +156,14 @@ const LeaveRequestModal = ({
           )}
         </div>
 
-        {/* Actions */}
         {request?.status === "pending" && !isRejecting && (
-          <div className="flex justify-end gap-2 mt-6 flex-wrap sm:flex-nowrap">
+          <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:justify-end sm:gap-2">
             <Button
-              className="bg-green-600 text-white hover:bg-green-700 py-1.5 px-3 text-sm sm:py-2 sm:px-4"
+              className="h-11 bg-green-600 text-sm text-white hover:bg-green-700 sm:h-10 sm:px-4"
               onClick={() => onApprove(request)}
               disabled={submitting}
             >
+              <CheckCircle2 className="me-2 h-4 w-4" />
               {t("leaveRequestModal.approve")}
             </Button>
 
@@ -142,29 +171,30 @@ const LeaveRequestModal = ({
               variant="destructive"
               onClick={handleRejectClick}
               disabled={submitting}
-              className="py-1.5 px-3 text-sm sm:py-2 sm:px-4"
+              className="h-11 text-sm sm:h-10 sm:px-4"
             >
+              <XCircle className="me-2 h-4 w-4" />
               {t("leaveRequestModal.reject")}
             </Button>
           </div>
         )}
 
         {isRejecting && (
-          <div className="space-y-3 mt-6">
+          <div className="mt-6 space-y-3">
             <textarea
               placeholder={t("leaveRequestModal.rejectPlaceholder")}
-              className="w-full border rounded-md p-3 text-sm focus:ring-2 focus:ring-primary resize-none text-start"
+              className="w-full resize-none rounded-xl border border-slate-200 p-3 text-start text-sm outline-none focus:ring-2 focus:ring-primary"
               rows={4}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
             />
 
-            <div className="flex flex-row justify-end gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
               <Button
                 variant="outline"
                 onClick={() => setIsRejecting(false)}
                 disabled={submitting}
-                className="flex-1 sm:flex-none py-2"
+                className="h-11 sm:h-10 sm:flex-none"
               >
                 {t("leaveRequestModal.cancel")}
               </Button>
@@ -173,7 +203,7 @@ const LeaveRequestModal = ({
                 variant="destructive"
                 onClick={submitRejection}
                 disabled={submitting}
-                className="flex-1 sm:flex-none py-2"
+                className="h-11 sm:h-10 sm:flex-none"
               >
                 {t("leaveRequestModal.submitRejection")}
               </Button>
