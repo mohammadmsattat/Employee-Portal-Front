@@ -1,7 +1,8 @@
 // hooks/useAttendance.ts
 import { useState, useEffect, useMemo } from "react";
 import {
-  useGetMyFingerprintsQuery,
+  DailyFingerprintGroup,
+  useGetMyDailyFingerprintsQuery,
   useCreateLogedFingerprintMutation,
 } from "@/rtk/Fingerprint/fingerprintApi";
 import {
@@ -31,8 +32,7 @@ export const useAttendance = () => {
   const [page, setPage] = useState(1);
   const [actionLocked, setActionLocked] = useState(false);
 
-  // ===== Attendance Mode & Status =====
-  const [mode, setMode] = useState<"Check-in" | "Check-out">("Check-in");
+  // ===== Attendance Status =====
   const [status, setStatus] = useState<"success" | "error" | null>(null);
 
   // ===== Work Location from group =====
@@ -77,24 +77,33 @@ export const useAttendance = () => {
     );
   }, []);
 
-  // ===== Fetch Attendance Records =====
-  const { data, isLoading, isFetching } = useGetMyFingerprintsQuery(page);
+  // ===== Fetch Attendance Records Grouped By Day =====
+  const { data, isLoading, isFetching } = useGetMyDailyFingerprintsQuery(page);
   const [createFingerprint, { isLoading: isSubmitting }] =
     useCreateLogedFingerprintMutation();
-  const records: AttendanceFingerprint[] = data?.data || [];
+  const dailyRecords: DailyFingerprintGroup[] = data?.data || [];
+  const records: AttendanceFingerprint[] = dailyRecords.flatMap(
+    (day) => day.records || [],
+  );
 
   // ===== Today's Attendance Records =====
   const todayDate = new Date().toLocaleDateString("en-CA");
 
-  const todayRecords = records
-    .filter((r) => r.date === todayDate)
+  const todayRecords = (
+    dailyRecords.find((day) => day.date === todayDate)?.records || []
+  )
     .sort((a, b) => a.Time.localeCompare(b.Time));
 
   const lastServerRecord = todayRecords[todayRecords.length - 1];
-  const [localLastType, setLocalLastType] = useState<FingerprintType | null>(
-    null
-  );
+  const [localLastAction, setLocalLastAction] = useState<{
+    date: string;
+    type: FingerprintType;
+  } | null>(null);
+  const localLastType =
+    localLastAction?.date === todayDate ? localLastAction.type : null;
   const effectiveLastType = localLastType ?? lastServerRecord?.type ?? null;
+  const nextAction: FingerprintType =
+    effectiveLastType === "Check-in" ? "Check-out" : "Check-in";
 
   const lastCheckIn = [...todayRecords]
     .reverse()
@@ -166,19 +175,9 @@ export const useAttendance = () => {
   const isReady = !isLoading && !locationLoading && !!currentLocation;
 
   // ===== Permissions =====
-  const canCheckIn =
-    isReady &&
-    !actionLocked &&
-    !isSubmitting &&
-    (effectiveLastType === null || effectiveLastType === "Check-out") &&
-    isWithinDistance();
-
-  const canCheckOut =
-    isReady &&
-    !actionLocked &&
-    !isSubmitting &&
-    effectiveLastType === "Check-in" &&
-    isWithinDistance();
+  const canAction = isReady && !actionLocked && !isSubmitting && isWithinDistance();
+  const canCheckIn = canAction && nextAction === "Check-in";
+  const canCheckOut = canAction && nextAction === "Check-out";
 
   // ===== Action Handler =====
   const handleAction = async (type: FingerprintType) => {
@@ -202,13 +201,13 @@ export const useAttendance = () => {
 
     try {
       setActionLocked(true);
-      setLocalLastType(type);
+      setLocalLastAction({ date: todayDate, type });
 
       await createFingerprint({ type }).unwrap();
 
       toast({ title: `Successfully ${type}` });
     } catch (error: any) {
-      setLocalLastType(null);
+      setLocalLastAction(null);
       toast({
         title: error?.data?.message || "Action failed",
         variant: "destructive",
@@ -218,15 +217,11 @@ export const useAttendance = () => {
     }
   };
 
-  const canAction = mode === "Check-in" ? canCheckIn : canCheckOut;
-
   const handleFingerprint = async () => {
     if (!canAction) return;
 
     try {
-      const fingerprintType: FingerprintType =
-        mode === "Check-in" ? "Check-in" : "Check-out";
-      await handleAction(fingerprintType);
+      await handleAction(nextAction);
       setStatus("success");
       setTimeout(() => setStatus(null), 2000);
     } catch {
@@ -237,6 +232,8 @@ export const useAttendance = () => {
 
   return {
     records,
+    dailyRecords,
+    todayRecords,
     lastCheckIn,
     lastCheckOut,
     workedTimeText,
@@ -253,8 +250,9 @@ export const useAttendance = () => {
     totalPages: data?.Pages || 1,
     canAction,
     handleFingerprint,
-    mode,
-    setMode,
+    mode: nextAction,
+    nextAction,
+    setMode: () => {},
     status,
     t,
     i18n,

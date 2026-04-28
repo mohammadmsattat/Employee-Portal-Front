@@ -34,6 +34,7 @@ const Layout = ({ children }: LayoutProps) => {
     lastCheckIn,
     lastCheckOut,
     workedTimeText,
+    todayRecords,
     locationLoading,
     currentLocation,
     isWithinDistance,
@@ -66,6 +67,7 @@ const Layout = ({ children }: LayoutProps) => {
         lastCheckIn={lastCheckIn}
         lastCheckOut={lastCheckOut}
         workedTimeText={workedTimeText}
+        todayRecords={todayRecords}
         locationLoading={locationLoading}
         currentLocation={currentLocation}
         isWithinDistance={isWithinDistance}

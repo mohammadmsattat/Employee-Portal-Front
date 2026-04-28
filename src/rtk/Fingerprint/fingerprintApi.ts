@@ -15,6 +15,14 @@ export interface ApiResponse<T> {
   Pages?: number;
 }
 
+export interface DailyFingerprintGroup {
+  _id?: string;
+  date: string;
+  records: AttendanceFingerprint[];
+  latestRecord?: string;
+  totalRecords?: number;
+}
+
 // ===================== LOCAL VARIABLES =====================
 const getCompanyId = () => localStorage.getItem("company");
 
@@ -51,7 +59,7 @@ export const fingerprintApi = createApi({
 
     /* ================= GET MY DAILY ATTENDANCE ================= */
     getMyDailyFingerprints: builder.query<
-      ApiResponse<AttendanceFingerprint[]>,
+      ApiResponse<DailyFingerprintGroup[]>,
       number
     >({
       query: (page = 1) =>
