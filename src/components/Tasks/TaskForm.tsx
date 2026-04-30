@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { useTranslation } from "react-i18next";
 
 type Mode = "task" | "subtask";
 
@@ -26,9 +25,8 @@ interface Props {
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   onSubmit: () => void;
   isLoading?: boolean;
-
-    t: any;
-  staffData?: any;
+  t: any;
+  staffData?: any[];
   onClose?: () => void;
 }
 
@@ -39,13 +37,11 @@ const TaskForm = ({
   onSubmit,
   isLoading,
   t,
-  staffData,
+  staffData = [],
   onClose,
 }: Props) => {
-
   return (
     <div className="space-y-5">
-
       {/* TITLE */}
       <div className="space-y-2">
         <Label>{t("tasks.title")} *</Label>
@@ -58,27 +54,10 @@ const TaskForm = ({
         />
       </div>
 
-      {/* DESCRIPTION */}
-      <div className="space-y-2">
-        <Label>{t("tasks.description")}</Label>
-        <Textarea
-          rows={4}
-          className="rounded-2xl border-slate-200"
-          value={formData.description}
-          onChange={(e) =>
-            setFormData((p) => ({
-              ...p,
-              description: e.target.value,
-            }))
-          }
-        />
-      </div>
-
       {/* STATUS + PRIORITY */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>{t("tasks.status")}</Label>
-
           <Select
             value={formData.status}
             onValueChange={(value) =>
@@ -92,14 +71,15 @@ const TaskForm = ({
             <SelectContent className="z-[9999] bg-white">
               <SelectItem value="todo">Todo</SelectItem>
               <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="review">Review</SelectItem>
               <SelectItem value="done">Done</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
           <Label>{t("tasks.priority")}</Label>
-
           <Select
             value={formData.priority}
             onValueChange={(value) =>
@@ -119,15 +99,95 @@ const TaskForm = ({
           </Select>
         </div>
       </div>
+      {/* DATES */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* START DATE */}
+        <div className="space-y-2">
+          <Label>{t("tasks.startDate") || "Start Date"}</Label>
 
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-12 w-full justify-start rounded-2xl border-slate-200"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
+
+                {formData.startDate
+                  ? new Date(formData.startDate).toDateString()
+                  : "Start date"}
+              </Button>
+            </PopoverTrigger>
+
+            <PopoverContent className="z-[9999] w-auto rounded-2xl p-2 bg-white">
+              <Calendar
+                mode="single"
+                selected={formData.startDate}
+                onSelect={(date) =>
+                  setFormData((p) => ({ ...p, startDate: date }))
+                }
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* DUE DATE */}
+        <div className="space-y-2">
+          <Label>{t("tasks.dueDate")}</Label>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-12 w-full justify-start rounded-2xl border-slate-200"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
+
+                {formData.dueDate
+                  ? new Date(formData.dueDate).toDateString()
+                  : "Due date"}
+              </Button>
+            </PopoverTrigger>
+
+            <PopoverContent className="z-[9999] w-auto rounded-2xl p-2 bg-white">
+              <Calendar
+                mode="single"
+                selected={formData.dueDate}
+                onSelect={(date) =>
+                  setFormData((p) => ({ ...p, dueDate: date }))
+                }
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      {/* DESCRIPTION */}
+      <div className="space-y-2">
+        <Label>{t("tasks.description")}</Label>
+        <Textarea
+          rows={4}
+          className="rounded-2xl border-slate-200"
+          value={formData.description}
+          onChange={(e) =>
+            setFormData((p) => ({
+              ...p,
+              description: e.target.value,
+            }))
+          }
+        />
+      </div>
       {/* ASSIGN */}
       <div className="space-y-2">
         <Label>{t("tasks.assignTo")}</Label>
 
         <Select
-          value={formData.assignedTo}
+          value={formData.assignedTo?.[0] || ""}
           onValueChange={(value) =>
-            setFormData((p) => ({ ...p, assignedTo: value }))
+            setFormData((p) => ({
+              ...p,
+              assignedTo: value ? [value] : [],
+            }))
           }
         >
           <SelectTrigger className="h-12 rounded-2xl border-slate-200">
@@ -137,45 +197,16 @@ const TaskForm = ({
           <SelectContent className="z-[9999] bg-white">
             <SelectItem value="me">Me</SelectItem>
 
-            {staffData.map((s) => (
+            {staffData?.map((s) => (
               <SelectItem key={s._id} value={s._id}>
-                {s.fullName}
+                {s.fullName || s.email}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* DATE */}
-      <div className="space-y-2">
-        <Label>{t("tasks.dueDate")}</Label>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="h-12 w-full justify-start rounded-2xl border-slate-200"
-            >
-              <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
-              {formData.dueDate
-                ? formData.dueDate.toDateString()
-                : "Select date"}
-            </Button>
-          </PopoverTrigger>
-
-          <PopoverContent className="z-[9999] w-auto rounded-2xl p-2 bg-white">
-            <Calendar
-              mode="single"
-              selected={formData.dueDate}
-              onSelect={(date) =>
-                setFormData((p) => ({ ...p, dueDate: date }))
-              }
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {/* TAGS (TASK ONLY) */}
+      {/* TAGS */}
       {mode === "task" && (
         <div className="space-y-2">
           <Label>{t("tasks.tags")}</Label>
@@ -191,7 +222,6 @@ const TaskForm = ({
 
       {/* ACTIONS */}
       <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-
         {onClose && (
           <Button
             variant="outline"

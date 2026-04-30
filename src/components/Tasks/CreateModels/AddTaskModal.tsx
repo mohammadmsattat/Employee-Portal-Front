@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { Calendar as CalendarIcon, X, Plus } from "lucide-react";
-import { useAddTaskModal } from "@/hooks/Tasks/useAddTaskModal";
-import TaskForm from "./TaskForm";
+import { X, Plus } from "lucide-react";
+import { useAddTaskModal } from "@/hooks/Tasks/CreateModels/useCreateTaskModal";
+import TaskForm from "../TaskForm";
 
-const AddTaskModal = ({ isOpen, onClose }) => {
+const AddTaskModal = ({ isOpen, onClose, listId, workspaceId }) => {
   const { t } = useTranslation();
 
   const { data, formData, setFormData, handleSubmit, isLoading } =
@@ -13,6 +13,19 @@ const AddTaskModal = ({ isOpen, onClose }) => {
     });
 
   if (!isOpen) return null;
+
+  // 🔥 inject list + workspace into formData once modal opens
+  // (prevent overwriting every render)
+  if (
+    isOpen &&
+    (formData.list !== listId || formData.workspace !== workspaceId)
+  ) {
+    setFormData((prev) => ({
+      ...prev,
+      list: listId || "",
+      workspace: workspaceId || "",
+    }));
+  }
 
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">

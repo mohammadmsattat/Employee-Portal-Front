@@ -57,7 +57,7 @@ export const useCreateSubTask = (taskId: string, onClose: () => void) => {
         priority: formData.priority,
         assignedTo: assignedToFinal ? [assignedToFinal] : [],
         dueDate: formData.dueDate,
-        task: taskId, // 🔥 الربط الأساسي
+        task: taskId, 
         companyId: user.companyId,
         createdBy: user._id,
         missionType: "task",

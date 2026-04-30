@@ -23,8 +23,8 @@ const addComment = async (text: string) => {
 
   try {
     await createComment({
-      content: text,   // ✅ بدل text
-      task: task._id,  // ✅ بدل taskId
+      content: text,   
+      task: task._id,  
     }).unwrap();
   } catch (err) {
     console.error("Add comment failed", err);

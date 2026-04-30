@@ -25,13 +25,12 @@ export const workspaceApi = createApi({
       providesTags: ["Workspace"],
     }),
 
-    getWorkspaceTree: builder.query<any, string>({
-      query: () => `${workspaceEndPoint}/tree?companyId=${getCompanyId()}`,
-
-      providesTags: ["Workspace"],
-    }),
+ getWorkspaceTree: builder.query<any, void>({
+  query: () => `${workspaceEndPoint}/tree?companyId=${getCompanyId()}`,
+  providesTags: ["Workspace"],
+}),
     // GET ONE
-    getWorkspaceById: builder.query<any, string>({
+    getWorkspaceById: builder.query<any, void>({
       query: (id) => `${workspaceEndPoint}/${id}?companyId=${getCompanyId()}`,
       providesTags: ["Workspace"],
     }),

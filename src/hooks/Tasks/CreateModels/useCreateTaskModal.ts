@@ -8,9 +8,12 @@ interface FormState {
   description: string;
   status: string;
   priority: string;
-  assignedTo: string;
+  assignedTo: string[]; 
   dueDate?: Date;
+  startDate?: Date;
   tags: string;
+  list: string;
+  workspace: string;
 }
 
 export const useAddTaskModal = ({
@@ -31,8 +34,8 @@ export const useAddTaskModal = ({
     }
   }, []);
 
-  const { data, isError } = useGetAllStaffQuery({
-    directManager: user._id,
+  const { data } = useGetAllStaffQuery({
+    directManager: user?._id,
   });
 
   const [formData, setFormData] = useState<FormState>({
@@ -40,9 +43,12 @@ export const useAddTaskModal = ({
     description: "",
     status: "todo",
     priority: "medium",
-    assignedTo: "",
+    assignedTo: [],
     dueDate: undefined,
+    startDate: undefined,
     tags: "",
+    list: "",
+    workspace: "",
   });
 
   useEffect(() => {
@@ -51,6 +57,21 @@ export const useAddTaskModal = ({
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  const reset = () => {
+    setFormData({
+      title: "",
+      description: "",
+      status: "todo",
+      priority: "medium",
+      assignedTo: [],
+      dueDate: undefined,
+      startDate: undefined,
+      tags: "",
+      list: "",
+      workspace: "",
+    });
+  };
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -65,24 +86,24 @@ export const useAddTaskModal = ({
     }
 
     try {
-      let assignedToFinal: string | null = null;
-
-      if (formData.assignedTo === "me") {
-        assignedToFinal = user._id;
-      } else if (formData.assignedTo) {
-        assignedToFinal = formData.assignedTo;
-      }
-
       const payload = {
         title: formData.title,
         description: formData.description,
         status: formData.status,
         priority: formData.priority,
-        assignedTo: assignedToFinal ? [assignedToFinal] : [],
+
+        assignedTo: formData.assignedTo, 
+
         dueDate: formData.dueDate,
+        startDate: formData.startDate,
+
         tags: formData.tags
           ? formData.tags.split(",").map((t) => t.trim())
           : [],
+
+        list: formData.list,
+        workspace: formData.workspace,
+
         companyId: user.companyId,
         createdBy: user._id,
       };
@@ -94,16 +115,7 @@ export const useAddTaskModal = ({
         description: "Task has been successfully created.",
       });
 
-      setFormData({
-        title: "",
-        description: "",
-        status: "todo",
-        priority: "medium",
-        assignedTo: "",
-        dueDate: undefined,
-        tags: "",
-      });
-
+      reset();
       onClose();
     } catch (error) {
       toast({
@@ -111,6 +123,7 @@ export const useAddTaskModal = ({
         description: "Failed to create task.",
         variant: "destructive",
       });
+
       console.log(error);
     }
   };
@@ -122,4 +135,4 @@ export const useAddTaskModal = ({
     handleSubmit,
     isLoading,
   };
-};
+};  
