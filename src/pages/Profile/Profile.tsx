@@ -12,7 +12,7 @@ import {
   Landmark,
   ShieldAlert,
   GraduationCap,
-  ChevronLeft,
+  LogOut,
 } from "lucide-react";
 import { format } from "date-fns";
 import Layout from "@/components/layout/Layout";
@@ -21,9 +21,13 @@ import PortalCard from "@/components/portal/PortalCard";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ProfileSectionCard from "@/components/profile/ProfileSectionCard";
+import { useHrSignOutMutation } from "@/rtk/Auth/AuthApi";
+import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [signOut, { isLoading: isSigningOut }] = useHrSignOutMutation();
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
   if (!user) {
@@ -43,40 +47,82 @@ const Profile = () => {
 
   const avatarUrl = user.profileImage || null;
 
+  const handleSignOut = async () => {
+    try {
+      await signOut({ email: user.email }).unwrap();
+      toast({ title: "Signed out", description: "You have been signed out." });
+    } catch (error) {
+      toast({
+        title: "Signed out locally",
+        description: "Your local session has been cleared.",
+      });
+    } finally {
+      localStorage.clear();
+      navigate("/login", { replace: true });
+    }
+  };
+
   return (
     <Layout>
       <div className="mx-auto max-w-4xl space-y-5">
         {/* top back area */}
-        <div className="hidden sm:flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild className="rounded-2xl">
-            <Link to="/">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
+        <div className="hidden sm:flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" asChild className="rounded-2xl">
+              <Link to="/">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </Button>
 
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              My Profile
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              View your personal and job information
-            </p>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                My Profile
+              </h1>
+              <p className="mt-1 text-sm text-slate-500">
+                View your personal and job information
+              </p>
+            </div>
           </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className="rounded-2xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <LogOut className="h-4 w-4" />
+            {isSigningOut ? "Signing out..." : "Sign out"}
+          </Button>
         </div>
 
         {/* summary card */}
         <PortalCard className="overflow-hidden">
           <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50/70 p-6 sm:p-7">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-              <Avatar className="h-24 w-24 border-4 border-white shadow-sm ring-1 ring-blue-100">
-                {avatarUrl ? (
-                  <AvatarImage src={avatarUrl} alt={user.fullName} />
-                ) : (
-                  <AvatarFallback className="bg-blue-50 text-2xl font-bold text-blue-700">
-                    {getInitials(user.fullName)}
-                  </AvatarFallback>
-                )}
-              </Avatar>
+              <div className="flex justify-between">
+                <Avatar className="h-24 w-24 border-4 border-white shadow-sm ring-1 ring-blue-100">
+                  {avatarUrl ? (
+                    <AvatarImage src={avatarUrl} alt={user.fullName} />
+                  ) : (
+                    <AvatarFallback className="bg-blue-50 text-2xl font-bold text-blue-700">
+                      {getInitials(user.fullName)}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="flex justify-end sm:hidden">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                    className="rounded-2xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {isSigningOut ? "Signing out..." : "Sign out"}
+                  </Button>
+                </div>
+              </div>
 
               <div className="min-w-0 flex-1">
                 <div className="mb-2 inline-flex items-center rounded-full border border-blue-100 bg-white/80 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -193,7 +239,7 @@ const Profile = () => {
               icon={<Calendar className="h-4 w-4" />}
               label="Contract Period"
               value={`${formatDate(user.contractStartDate)} — ${formatDate(
-                user.contractEndDate
+                user.contractEndDate,
               )}`}
             />
             <InfoRow

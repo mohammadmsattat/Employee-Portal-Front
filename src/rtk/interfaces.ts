@@ -21,7 +21,7 @@ export interface LoginResponse {
 
 // ===== SIGN OUT =====
 export interface SignOutRequest {
-  userId: string;
+  email: string;
 }
 
 export interface SignOutResponse {
