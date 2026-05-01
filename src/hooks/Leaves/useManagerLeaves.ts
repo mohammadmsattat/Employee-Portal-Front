@@ -49,8 +49,10 @@ export const useManagerLeaves = () => {
     page,
     limit: isMobile ? mobileLimit : limit,
     status: statusFilter,
+    startDate: startDateFilter,
+    endDate: endDateFilter,
+    search: searchFilter,
   });
-  console.log(data);
 
   const totalPages = data?.totalPages || 1;
 
@@ -123,6 +125,7 @@ export const useManagerLeaves = () => {
     setStartDateFilter("");
     setEndDateFilter("");
     setSearchInput("");
+    setSearchFilter("");
   };
 
   return {

@@ -87,14 +87,24 @@ export const leaveRequestsApi = createApi({
     }),
     getApprovalRequests: builder.query<
       LeaveRequestsResponse,
-      { page?: number; limit?: number; status?: string }
+      {
+        page?: number;
+        limit?: number;
+        status?: string;
+        startDate?: string;
+        endDate?: string;
+        search?: string;
+      }
     >({
-      query: ({ page = 1, limit = 10, status }) => {
+      query: ({ page = 1, limit = 10, status, startDate, endDate, search }) => {
         const params = new URLSearchParams({
           companyId: getCompanyId()!,
           page: page.toString(),
           limit: limit.toString(),
           ...(status ? { status } : {}),
+          ...(startDate ? { startDate } : {}),
+          ...(endDate ? { endDate } : {}),
+          ...(search ? { search } : {}),
         });
         return `${leaveRequestEndPoint}/my-approvals?${params.toString()}`;
       },

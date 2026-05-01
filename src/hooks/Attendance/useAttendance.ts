@@ -73,7 +73,7 @@ export const useAttendance = () => {
         setLocationLoading(false);
       },
       () => setLocationLoading(false),
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true },
     );
   }, []);
 
@@ -89,10 +89,9 @@ export const useAttendance = () => {
   // ===== Today's Attendance Records =====
   const todayDate = new Date().toLocaleDateString("en-CA");
 
-  const todayRecords = (
-    dailyRecords.find((day) => day.date === todayDate)?.records || []
-  )
-    .sort((a, b) => a.Time.localeCompare(b.Time));
+  const todayRecords = [
+    ...(dailyRecords.find((day) => day?.date === todayDate)?.records || []),
+  ].sort((a, b) => (a?.Time || "").localeCompare(b?.Time || ""));
 
   const lastServerRecord = todayRecords[todayRecords.length - 1];
   const [localLastAction, setLocalLastAction] = useState<{
@@ -143,7 +142,7 @@ export const useAttendance = () => {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ) => {
     const R = 6371000; // Earth radius in meters
     const φ1 = (lat1 * Math.PI) / 180;
@@ -166,16 +165,18 @@ export const useAttendance = () => {
       workLocation.latitude,
       workLocation.longitude,
       currentLocation.latitude,
-      currentLocation.longitude
+      currentLocation.longitude,
     );
     return distance <= 150; // 150 meters radius
   };
 
   // ===== Readiness Check =====
-  const isReady = !isLoading && !locationLoading && !!currentLocation;
+  const isReady =
+    !isLoading && !locationLoading && !!currentLocation && !!workLocation;
 
   // ===== Permissions =====
-  const canAction = isReady && !actionLocked && !isSubmitting && isWithinDistance();
+  const canAction =
+    isReady && !actionLocked && !isSubmitting && isWithinDistance();
   const canCheckIn = canAction && nextAction === "Check-in";
   const canCheckOut = canAction && nextAction === "Check-out";
 
@@ -183,11 +184,20 @@ export const useAttendance = () => {
   const handleAction = async (type: FingerprintType) => {
     if (actionLocked || !isReady) return;
 
+    if (!workLocation || !currentLocation) {
+      toast({
+        title: "Work location unavailable",
+        description: "Please contact HR to configure your work location.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const distance = getDistanceMeters(
-      workLocation!.latitude,
-      workLocation!.longitude,
-      currentLocation!.latitude,
-      currentLocation!.longitude
+      workLocation.latitude,
+      workLocation.longitude,
+      currentLocation.latitude,
+      currentLocation.longitude,
     );
 
     if (distance > 150) {

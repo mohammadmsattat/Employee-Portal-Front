@@ -54,7 +54,7 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center sm:overflow-y-auto">
-      <div className="w-full sm:max-w-3xl">
+      <div className="w-full sm:max-w-4xl">
         <div className="max-h-[88vh] overflow-y-auto rounded-t-[28px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:my-8 sm:max-h-none sm:rounded-[32px]">
           {/* drag handle */}
           <div className="flex justify-center pt-3 sm:hidden">
@@ -122,7 +122,8 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
               {/* Leave Type */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-700">
-                  {t("leaveModal.leaveType")} *
+                  {t("leaveModal.leaveType")}{" "}
+                  <span className="required">*</span>
                 </Label>
                 <Select
                   value={formData.leaveType}
@@ -156,8 +157,9 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
                   <div key={field} className="space-y-2">
                     <Label className="text-sm font-semibold text-slate-700">
                       {field === "startDate"
-                        ? t("leaveModal.startDate") + " *"
-                        : t("leaveModal.endDate") + " *"}
+                        ? t("leaveModal.startDate")
+                        : t("leaveModal.endDate")}{" "}
+                      <span className="required">*</span>
                     </Label>
 
                     <Popover>
@@ -167,15 +169,15 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
                           variant="outline"
                           className={cn(
                             "h-12 w-full justify-start rounded-2xl border-slate-200 bg-white text-left font-medium text-slate-900 shadow-sm hover:bg-slate-50",
-                            !formData[field] && "text-slate-400"
+                            !formData[field] && "text-slate-400",
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
                           {formData[field]
-                            ? format(formData[field], "PPP")
+                            ? format(formData[field], "P")
                             : field === "startDate"
-                            ? t("leaveModal.selectStartDate")
-                            : t("leaveModal.selectEndDate")}
+                              ? t("leaveModal.selectStartDate")
+                              : t("leaveModal.selectEndDate")}
                         </Button>
                       </PopoverTrigger>
 
@@ -200,7 +202,7 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
                                 if (rule.patternType === "SINGLE_DATE")
                                   return isSameDay(
                                     date,
-                                    new Date(rule.startDate)
+                                    new Date(rule.startDate),
                                   );
                                 if (rule.patternType === "RECURRING_WEEKLY") {
                                   const weekDays = [
@@ -213,7 +215,7 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
                                     "Saturday",
                                   ];
                                   return rule.daysOfWeek?.some(
-                                    (day) => weekDays[date.getDay()] === day
+                                    (day) => weekDays[date.getDay()] === day,
                                   );
                                 }
                                 return false;
@@ -230,21 +232,39 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
               </div>
 
               {/* Number of Days */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">
-                  {t("leaveModal.numberOfDays")}
-                </Label>
-                <Input
-                  value={numberOfDays}
-                  readOnly
-                  className="h-12 max-w-[140px] rounded-2xl border-slate-200 bg-slate-50 text-center font-semibold text-slate-900 shadow-sm"
-                />
+              <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm ring-1 ring-blue-100">
+                      <CalendarIcon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-semibold text-slate-700">
+                        {t("leaveModal.numberOfDays")}
+                      </Label>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {formData.startDate && formData.endDate
+                          ? `${format(formData.startDate, "PP")} - ${format(
+                              formData.endDate,
+                              "PP",
+                            )}`
+                          : t("leaveModal.selectStartDate")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Input
+                    value={numberOfDays}
+                    readOnly
+                    className="h-12 w-full rounded-2xl border-slate-200 bg-white text-center text-lg font-bold text-slate-900 shadow-sm sm:w-[120px]"
+                  />
+                </div>
               </div>
 
               {/* Reason */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-700">
-                  {t("leaveModal.reason")} *
+                  {t("leaveModal.reason")} <span className="required">*</span>
                 </Label>
                 <Textarea
                   placeholder={t("leaveModal.provideReason")}
@@ -266,6 +286,13 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
                 <div
                   className="rounded-[24px] border border-dashed border-blue-200 bg-blue-50/40 p-5 text-center transition-colors hover:border-blue-300 hover:bg-blue-50/70 cursor-pointer"
                   onClick={() => document.getElementById("file-input")?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files[0];
+                    if (file)
+                      setFormData((prev) => ({ ...prev, attachment: file }));
+                  }}
                 >
                   <input
                     id="file-input"

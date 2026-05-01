@@ -59,14 +59,7 @@ export const useAddLeaveRequestModal = ({
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ];
 
-  const allowedExtensions = [
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".pdf",
-    ".doc",
-    ".docx",
-  ];
+  const allowedExtensions = [".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx"];
 
   const maxFileSize = 5 * 1024 * 1024; // 5MB
 
@@ -81,8 +74,7 @@ export const useAddLeaveRequestModal = ({
     if (!isMimeValid || !isExtensionValid) {
       toast({
         title: "Invalid File Type",
-        description:
-          "Allowed formats: JPG, PNG, PDF, DOC, DOCX only.",
+        description: "Allowed formats: JPG, PNG, PDF, DOC, DOCX only.",
         variant: "destructive",
       });
       return false;
@@ -109,12 +101,14 @@ export const useAddLeaveRequestModal = ({
     };
   }, [isOpen]);
 
-  const { data: leaveTypesData, isLoading: isLeaveTypesLoading ,error } =
-    useGetAllLeavesQuery(
-      { page: 1, limit: 100, policyId: group?.leavePolicy?._id || "" },
-      { skip: !group?.leavePolicy?._id },
-    );
-console.log(error);
+  const {
+    data: leaveTypesData,
+    isLoading: isLeaveTypesLoading,
+    error,
+  } = useGetAllLeavesQuery(
+    { page: 1, limit: 100, policyId: group?.leavePolicy?._id || "" },
+    { skip: !group?.leavePolicy?._id },
+  );
 
   const { data: leaveLogsData } = useGetMyLeaveLogsQuery({
     page: 1,
@@ -224,7 +218,7 @@ console.log(error);
       !formData.leaveType ||
       !formData.startDate ||
       !formData.endDate ||
-      !formData.reason
+      !formData.reason?.trim()
     ) {
       toast({
         title: "Missing Information",

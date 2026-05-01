@@ -34,8 +34,15 @@ export const advanceRequestApi = createApi({
       AdvanceRequestsResponse,
       { page?: number; limit?: number; status?: string }
     >({
-      query: () =>
-        `${advanceRequestEndPoint}/my-approvals?companyId=${getCompanyId()}`,
+      query: ({ page = 1, limit = 10, status }) => {
+        const params = new URLSearchParams({
+          companyId: getCompanyId()!,
+          page: page.toString(),
+          limit: limit.toString(),
+          ...(status ? { status } : {}),
+        });
+        return `${advanceRequestEndPoint}/my-approvals?${params.toString()}`;
+      },
       providesTags: ["AdvanceRequests"],
     }),
 

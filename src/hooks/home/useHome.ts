@@ -103,9 +103,7 @@ export const useHome = () => {
     if (!navigator.geolocation) return;
 
     // Use previously stored location if available
-    const storedLocation = localStorage.getItem("location");
-    if (storedLocation)
-      console.log("Using stored location:", JSON.parse(storedLocation));
+    // const storedLocation = localStorage.getItem("location");
 
     // Watch position changes
     const watchId = navigator.geolocation.watchPosition(
@@ -115,7 +113,6 @@ export const useHome = () => {
           longitude: Number(pos.coords.longitude.toFixed(6)),
         };
         localStorage.setItem("location", JSON.stringify(location));
-        console.log("Updated user location:", location);
       },
       (err) => console.error("Error getting location:", err),
       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },

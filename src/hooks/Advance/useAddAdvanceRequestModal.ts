@@ -84,10 +84,23 @@ export const useAddAdvanceRequestModal = ({
     if (!user) return;
 
     //  Basic validation
-    if (!formData.advanceTypeId || !formData.amount) {
+    if (
+      !formData?.advanceTypeId ||
+      !formData?.amount ||
+      !formData?.reason?.trim()
+    ) {
       toast({
         title: "Missing Information",
         description: "Please fill required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (Number(formData?.amount) <= 0) {
+      toast({
+        title: "Invalid amount input",
+        description: "Amount must be a positive number",
         variant: "destructive",
       });
       return;
@@ -98,7 +111,8 @@ export const useAddAdvanceRequestModal = ({
 
     //  Policy validations
     if (selectedAdvanceType?.maxPercentageOfSalary) {
-      const maxAllowed = salary * selectedAdvanceType.maxPercentageOfSalary;
+      const maxAllowed =
+        (salary * selectedAdvanceType.maxPercentageOfSalary) / 100;
       if (requestedAmount > maxAllowed) {
         toast({
           title: "Amount Exceeds Limit",
@@ -143,7 +157,7 @@ export const useAddAdvanceRequestModal = ({
 
       if (formData.installments)
         data.append("installments", formData.installments);
-      if (formData.reason) data.append("reason", formData.reason);
+      data.append("reason", formData.reason);
       if (formData.attachment) data.append("attachment", formData.attachment);
 
       await createAdvanceRequest(data).unwrap();

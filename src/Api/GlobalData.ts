@@ -1,7 +1,6 @@
 // src/Api/GlobalData.ts
 
-const baseURL = "http://localhost:8001";
-// const baseURL = "http://192.168.137.1:8001";
+const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8002";
 
 // ================= AUTH =================
 export const HrLogInEndPoint = "/api/hrauth/login";
@@ -42,8 +41,6 @@ export const attachmentEndPoint = "/api/attachments";
 export const workspaceEndPoint = "/api/workspace";
 export const folderEndPoint = "/api/folder";
 export const listEndPoint = "/api/list";
-
-
 
 // ================= EXPORT BASE =================
 export default baseURL;

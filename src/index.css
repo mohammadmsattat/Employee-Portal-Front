@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("./App.css");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 
 /* Employee Portal Design System - Professional Blue Theme */
 
@@ -53,7 +53,7 @@
     --portal-hover: 224 76% 48%; /* #1D4ED8 - blue-700 */
     --portal-light-bg: 214 100% 97%; /* #EFF6FF */
     --portal-card-border: 214 95% 93%; /* #DBEAFE */
-    
+
     /* Status colors */
     --status-pending: 217 91% 60%;
     --status-approved: 142 76% 36%;
