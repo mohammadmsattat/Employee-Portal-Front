@@ -1,5 +1,12 @@
 import { Link } from "react-router-dom";
-import { Wallet, CalendarDays, Clock3, ListTodo } from "lucide-react";
+import {
+  CalendarDays,
+  Clock3,
+  HandCoins,
+  ListTodo,
+  TimerReset,
+  Wallet,
+} from "lucide-react";
 
 interface HomeQuickActionsProps {
   t: (key: string) => string;
@@ -20,6 +27,18 @@ const HomeQuickActions = ({ t }: HomeQuickActionsProps) => {
       to: "/leaves/Leaves",
     },
     {
+      key: "advances",
+      label: t("homePage.advance") || "Advance",
+      icon: HandCoins,
+      to: "/advance/my-advance-requests",
+    },
+    {
+      key: "overtime",
+      label: t("homePage.overtime") || "Overtime",
+      icon: TimerReset,
+      to: "/overtime/my-overtime-requests",
+    },
+    {
       key: "attendance",
       label: t("homePage.attendance") || "Attendance",
       icon: Clock3,
@@ -38,7 +57,7 @@ const HomeQuickActions = ({ t }: HomeQuickActionsProps) => {
       {/* Mobile */}
       <div className="md:hidden">
         <div className="rounded-[28px] bg-white px-2 py-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {actions.map((action) => {
               const Icon = action.icon;
 
@@ -62,7 +81,7 @@ const HomeQuickActions = ({ t }: HomeQuickActionsProps) => {
       </div>
 
       {/* Desktop */}
-      <div className="hidden grid-cols-2 gap-4 md:grid lg:grid-cols-4">
+      <div className="hidden grid-cols-2 gap-4 md:grid lg:grid-cols-3 xl:grid-cols-6">
         {actions.map((action) => {
           const Icon = action.icon;
 

@@ -213,6 +213,12 @@ export interface OvertimeRequestsResponse {
   totalPages: number;
   results: number;
   totalItems: number;
+  summary?: {
+    total: number;
+    approved: number;
+    pending: number;
+    rejected: number;
+  };
   data: OvertimeRequest[];
 }
 
@@ -394,6 +400,12 @@ export interface AdvanceRequestsResponse {
   totalPages?: number;
   results: number;
   totalItems?: number;
+  summary?: {
+    totalAmount: number;
+    approvedAmount: number;
+    pending: number;
+    rejected: number;
+  };
   data: AdvanceRequest[];
 }
 
