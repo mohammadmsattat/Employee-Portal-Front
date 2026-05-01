@@ -20,15 +20,15 @@ const ProfileSectionCard = ({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="rounded-[24px] border border-slate-200/70 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+    <div className="rounded-lg border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50/80 rounded-[24px]"
+        className="flex w-full items-center justify-between gap-4 rounded-lg px-5 py-4 text-left transition hover:bg-slate-50/80"
       >
         <div className="flex items-center gap-3 min-w-0">
           {icon && (
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
               {icon}
             </div>
           )}

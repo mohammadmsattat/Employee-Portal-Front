@@ -99,8 +99,23 @@ const ManagerOvertimeRequests = ({
         )}
 
         {/* Filters */}
-        <PortalCard title={t("managerOvertimeRequestsPage.filters")} icon={<Search className="h-5 w-5" />}>
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 flex-wrap">
+        <PortalCard>
+          <div className="border-b border-slate-200 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                <Search className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-950">
+                  {t("managerOvertimeRequestsPage.filters")}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {t("managerOvertimeRequestsPage.subtitle")}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
@@ -108,7 +123,7 @@ const ManagerOvertimeRequests = ({
                 placeholder={t("managerOvertimeRequestsPage.searchPlaceholder")}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-primary"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
@@ -119,7 +134,7 @@ const ManagerOvertimeRequests = ({
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full border rounded-md px-3 py-2 text-sm"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
                 <option value="">{t("managerOvertimeRequestsPage.allStatus")}</option>
                 <option value="pending">{t("managerOvertimeRequestsPage.pending")}</option>
@@ -133,7 +148,7 @@ const ManagerOvertimeRequests = ({
                 variant="outline"
                 size="sm"
                 onClick={resetFilters}
-                className="flex items-center gap-1"
+                className="h-11 rounded-lg border-slate-200"
               >
                 <X className="h-4 w-4" /> {t("managerOvertimeRequestsPage.reset")}
               </Button>
@@ -143,9 +158,22 @@ const ManagerOvertimeRequests = ({
 
         {/* Desktop Table */}
         <div className="hidden md:block">
-          <PortalCard title={t("managerOvertimeRequestsPage.history")} icon={<FileText className="h-5 w-5" />}>
+          <PortalCard>
+            <div className="mb-4 flex items-center gap-3 px-5 pt-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-950">
+                  {t("managerOvertimeRequestsPage.history")}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {t("managerOvertimeRequestsPage.subtitle")}
+                </p>
+              </div>
+            </div>
             {data?.data?.length ? (
-              <div className="overflow-x-auto -mx-5">
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -158,7 +186,7 @@ const ManagerOvertimeRequests = ({
                   </TableHeader>
                   <TableBody>
                     {data.data.map((req: OvertimeRequest) => (
-                      <TableRow key={req._id} className="hover:bg-gray-50">
+                      <TableRow key={req._id} className="border-slate-100 hover:bg-slate-50">
                         <TableCell>{req.userId?.fullName || "-"}</TableCell>
                         <TableCell>{formatDate(req.workDate || req.createdAt)}</TableCell>
                         <TableCell>{req.hours || "-"}</TableCell>
@@ -168,7 +196,7 @@ const ManagerOvertimeRequests = ({
                         <TableCell className="text-center">
                           <div className="flex justify-center items-center h-full">
                             <Eye
-                              className="w-5 h-5 text-gray-600 hover:text-gray-800 cursor-pointer"
+                              className="h-5 w-5 cursor-pointer text-slate-500 hover:text-slate-900"
                               onClick={() => setSelectedRequest(req)}
                             />
                           </div>
@@ -201,14 +229,14 @@ const ManagerOvertimeRequests = ({
                   onClick={() =>
                     setExpandedMobileCardId(isExpanded ? null : req._id)
                   }
-                  className="overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
+                  className="overflow-hidden rounded-lg border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
                 >
                   <MobileCardHeader
                     noBorder={!isExpanded}
                     className="items-center gap-3 bg-slate-50/80 px-4 py-3"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600 ring-1 ring-blue-100">
                         <TimerReset className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
@@ -253,7 +281,7 @@ const ManagerOvertimeRequests = ({
                           label={t("managerOvertimeRequestsPage.date")}
                           value={formatDate(req.workDate || req.createdAt)}
                         />
-                        <div className="rounded-xl bg-slate-50 p-3">
+                        <div className="rounded-md bg-slate-50 p-3">
                           <MobileCardLabel>
                             {t("managerOvertimeRequestsPage.status")}
                           </MobileCardLabel>
@@ -322,7 +350,7 @@ const InfoTile = ({
   label: string;
   value: string | number;
 }) => (
-  <div className="rounded-xl bg-slate-50 p-3">
+  <div className="rounded-md bg-slate-50 p-3">
     <MobileCardLabel>{label}</MobileCardLabel>
     <MobileCardValue className="mt-1 flex items-center gap-1.5">
       {icon}
@@ -330,3 +358,4 @@ const InfoTile = ({
     </MobileCardValue>
   </div>
 );
+

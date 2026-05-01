@@ -97,7 +97,7 @@ const Bottombar = ({
     <>
       {/* overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-slate-900/20 transition-opacity duration-200 md:hidden ${
+        className={`fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[2px] transition-opacity duration-200 md:hidden ${
           requestsOpen
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
@@ -113,14 +113,14 @@ const Bottombar = ({
             : "pointer-events-none translate-y-3 opacity-0"
         }`}
       >
-        <div className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/95 p-3 shadow-[0_20px_50px_rgba(15,23,42,0.16)] backdrop-blur-xl">
+        <div className="overflow-hidden rounded-lg border border-slate-200/80 bg-white p-3 shadow-[0_20px_50px_rgba(15,23,42,0.18)]">
           <div className="mb-2 flex items-center justify-between px-2 py-1">
             <p className="text-sm font-semibold text-slate-900">
               {t("navigation.requests")}
             </p>
             <button
               onClick={() => setRequestsOpen(false)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
             >
               <X className="h-4 w-4" />
             </button>
@@ -137,10 +137,10 @@ const Bottombar = ({
                     setRequestsOpen(false);
                     setTimeout(() => action.onClick(), 120);
                   }}
-                  className="rounded-[22px] border border-slate-100 bg-slate-50/70 px-3 py-4 text-center transition active:scale-[0.98]"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-4 text-center transition active:scale-[0.98]"
                 >
                   <div
-                    className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl ${action.iconClass}`}
+                    className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg ${action.iconClass}`}
                   >
                     <Icon className="h-5 w-5" />
                   </div>
@@ -156,7 +156,7 @@ const Bottombar = ({
 
       {/* floating nav */}
       <div className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4 md:hidden">
-        <div className="flex w-full max-w-sm items-center justify-between rounded-full border border-slate-200/80 bg-white/90 p-2 shadow-[0_14px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+        <div className="flex w-full max-w-sm items-center justify-between rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-[0_14px_40px_rgba(15,23,42,0.16)] backdrop-blur-xl">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -166,8 +166,8 @@ const Bottombar = ({
               <div
                 className={`flex h-12 items-center transition-all duration-200 ${
                   isActive
-                    ? "rounded-full bg-blue-600 px-4 text-white shadow-[0_10px_20px_rgba(37,99,235,0.28)]"
-                    : "w-12 justify-center rounded-full text-slate-500"
+                    ? "rounded-xl bg-blue-600 px-4 text-white shadow-[0_10px_20px_rgba(37,99,235,0.28)]"
+                    : "w-12 justify-center rounded-xl text-slate-500 hover:bg-slate-50"
                 }`}
               >
                 <Icon className={`h-5 w-5 shrink-0 ${isActive ? "" : ""}`} />

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Bell, Globe, Search } from "lucide-react";
+import { ArrowLeft, Bell, Globe } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTopbar } from "@/hooks/Topbar/useTopbar";
 import logo from "../../../../public/logo.png";
@@ -17,27 +17,17 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
   if (isHomeVariant) {
     return (
       <header className="sticky top-0 z-50 md:hidden">
-        <div className="overflow-hidden rounded-b-[32px] border-b border-white/40 bg-[linear-gradient(135deg,#eaf2ff_0%,#eef2ff_42%,#f8fbff_100%)] shadow-[0_10px_30px_rgba(37,99,235,0.10)]">
-          <div className="relative px-4 pt-4 pb-6">
-            {/* Decorative background */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              <div className="absolute -left-8 top-16 h-28 w-28 rounded-full bg-blue-200/25 blur-2xl" />
-              <div className="absolute right-[-20px] top-[-10px] h-36 w-36 rounded-full bg-violet-200/20 blur-2xl" />
-              <div className="absolute bottom-[-18px] right-10 h-24 w-24 rounded-full bg-sky-200/20 blur-2xl" />
-
-              <div className="absolute right-0 top-0 h-full w-[46%] opacity-[0.08]">
-                <div className="h-full w-full bg-[linear-gradient(to_bottom,transparent_0%,rgba(59,130,246,0.25)_100%)]" />
-              </div>
-            </div>
-
+        <div className="border-b border-blue-100 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+          <div className="relative overflow-hidden px-4 pb-5 pt-4">
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-36" />
+            <div className="pointer-events-none absolute bottom-0 left-0 h-1 w-full bg-[linear-gradient(90deg,#2563eb,#93c5fd,#2563eb)]" />
             <div className="relative">
-              {/* Top Row */}
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   {config.showBrand && (
                     <Link
                       to="/"
-                      className="mb-3 inline-flex items-center gap-2 rounded-2xl bg-white/70 px-3 py-2 shadow-sm ring-1 ring-white/70 backdrop-blur"
+                      className="mb-3 inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 ring-1 ring-blue-100"
                     >
                       <img src={logo} alt="Logo" className="h-6 w-auto" />
                       <span className="text-sm font-semibold text-slate-900">
@@ -46,21 +36,21 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
                     </Link>
                   )}
 
-                  <p className="truncate text-sm font-medium text-slate-500">
+                  {/* <p className="truncate text-sm font-medium text-slate-500">
                     {t("navigation.welcome") || "Welcome back"}
-                  </p>
+                  </p> */}
 
                   <div className="mt-2 flex items-center gap-3">
-                    <Avatar className="h-12 w-12 ring-1 ring-white/70 shadow-sm">
-                      <AvatarImage src="" alt={userName} />
+                    <Avatar className="h-12 w-12 ring-2 ring-blue-100">
+                      <AvatarImage src={logo} alt={userName} />
                       <AvatarFallback className="bg-white text-blue-700 font-semibold">
                         {userInitials}
                       </AvatarFallback>
                     </Avatar>
 
                     <div className="min-w-0">
-                      <h1 className="truncate text-[24px] font-bold tracking-[-0.03em] text-slate-900">
-                        {userName || config.title}
+                      <h1 className="truncate text-[24px] font-bold text-slate-950">
+                        SmartHR
                       </h1>
                     </div>
                   </div>
@@ -68,7 +58,7 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
 
                 <div className="flex items-center gap-2">
                   {config.showLanguage && (
-                    <button className="inline-flex h-11 items-center gap-2 rounded-2xl bg-white/70 px-3 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-white/70 backdrop-blur transition hover:bg-white/80">
+                    <button className="inline-flex h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50">
                       <Globe className="h-4 w-4" />
                       {i18n.language.toUpperCase()}
                     </button>
@@ -77,7 +67,7 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
                   {config.showNotifications && (
                     <button
                       aria-label="Notifications"
-                      className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-slate-800 shadow-sm ring-1 ring-white/70 backdrop-blur transition hover:bg-white/80"
+                      className="relative inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:bg-slate-50"
                     >
                       <Bell className="h-5 w-5" />
                       <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-red-500" />
@@ -89,7 +79,7 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
                       key={action.key}
                       onClick={action.onClick}
                       aria-label={action.ariaLabel}
-                      className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-slate-800 shadow-sm ring-1 ring-white/70 backdrop-blur transition hover:bg-white/80"
+                      className="relative inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:bg-slate-50"
                     >
                       {action.icon}
                       {action.badgeCount ? (
@@ -102,24 +92,24 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
                 </div>
               </div>
 
-              {/* Hero content */}
-              <div className="mt-8">
-                <div className="max-w-[220px]">
-                  <div className="text-[40px] font-bold leading-none tracking-[-0.05em] text-slate-900">
-                    12 <span className="text-slate-400">Days</span>
-                  </div>
-
-                  <p className="mt-2 text-base font-medium text-slate-700">
-                    Available Leave Balance
+              {/* <div className="mt-5 grid grid-cols-[1fr_auto] items-end gap-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-500">
+                    {config.showSubtitle && config.subtitle
+                      ? config.subtitle
+                      : "Employee workspace"}
                   </p>
-
-                  {config.showSubtitle && config.subtitle ? (
-                    <p className="mt-1 text-sm text-slate-500">
-                      {config.subtitle}
-                    </p>
-                  ) : null}
+                  <p className="mt-1 text-3xl font-bold leading-tight text-slate-950">
+                    Smart HR
+                  </p>
                 </div>
-              </div>
+                <div className="rounded-lg bg-blue-600 px-4 py-3 text-right text-white shadow-[0_12px_24px_rgba(37,99,235,0.24)]">
+                  <p className="text-2xl font-bold leading-none">12</p>
+                  <p className="mt-1 text-[11px] font-semibold uppercase text-blue-100">
+                    Days
+                  </p>
+                </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -128,14 +118,14 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl md:hidden">
+    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/95 shadow-sm backdrop-blur-xl md:hidden">
       <div className="px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             {config.showBack ? (
               <button
                 onClick={config.onBack}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 <ArrowLeft
                   className={`h-5 w-5 ${
@@ -148,7 +138,7 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
             {config.showBrand ? (
               <Link
                 to="/"
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm"
+                className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
               >
                 <img src={logo} alt="Logo" className="h-6 w-auto" />
                 <span className="text-sm font-semibold text-slate-900">
@@ -174,14 +164,14 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
             {config.showNotifications && (
               <button
                 aria-label="Notifications"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 <Bell className="h-5 w-5" />
               </button>
             )}
 
             {config.showLanguage && (
-              <button className="inline-flex h-10 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50">
+              <button className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50">
                 <Globe className="h-4 w-4" />
                 {i18n.language.toUpperCase()}
               </button>
@@ -192,7 +182,7 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
                 key={action.key}
                 onClick={action.onClick}
                 aria-label={action.ariaLabel}
-                className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 {action.icon}
                 {action.badgeCount ? (

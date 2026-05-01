@@ -47,7 +47,7 @@ const LeaveRequestModal = ({
   const submitRejection = () => onReject(request, rejectReason);
 
   const FieldRow = ({ label, value }: { label: string; value: any }) => (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3 sm:flex sm:w-full sm:items-start sm:border-0 sm:border-b sm:border-gray-100 sm:bg-transparent sm:px-0">
+    <div className="rounded-md border border-slate-100 bg-slate-50/70 px-3 py-3 sm:flex sm:w-full sm:items-start sm:border-0 sm:border-b sm:border-gray-100 sm:bg-transparent sm:px-0">
       <div className="mb-1 text-xs font-medium uppercase text-gray-500 sm:mb-0 sm:w-1/3 sm:text-sm sm:normal-case">
         {label}
       </div>
@@ -59,7 +59,7 @@ const LeaveRequestModal = ({
 
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-black/50 px-0 pt-8 sm:items-center sm:p-4">
-      <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl border border-gray-200 bg-white p-4 shadow-xl sm:max-h-[90vh] sm:max-w-2xl sm:rounded-2xl sm:p-6">
+      <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl border border-gray-200 bg-white p-4 shadow-xl sm:max-h-[90vh] sm:max-w-2xl sm:rounded-lg sm:p-6">
         <div className="mb-4 flex items-start justify-between gap-3 border-b border-gray-200 pb-4 sm:mb-6 sm:pb-2">
           <div className="min-w-0">
             <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase text-blue-600 sm:hidden">
@@ -75,14 +75,14 @@ const LeaveRequestModal = ({
           </div>
           <button
             onClick={onClose}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-gray-500 transition-colors hover:bg-slate-50 hover:text-gray-700"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 text-gray-500 transition-colors hover:bg-slate-50 hover:text-gray-700"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="mb-4 grid grid-cols-[auto_1fr] gap-3 rounded-2xl bg-slate-50/70 p-4 sm:hidden">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-200">
+        <div className="mb-4 grid grid-cols-[auto_1fr] gap-3 rounded-lg bg-slate-50/70 p-4 sm:hidden">
+          <div className="flex h-11 w-11 items-center justify-center rounded-md bg-gray-200">
             <UserRound className="h-5 w-5" />
           </div>
           <div className="min-w-0">
@@ -97,7 +97,7 @@ const LeaveRequestModal = ({
               </span>
             </div>
           </div>
-          <div className="col-span-2 mt-1 flex items-center gap-2 rounded-xl bg-gray-200 px-3 py-2 text-sm">
+          <div className="col-span-2 mt-1 flex items-center gap-2 rounded-md bg-gray-200 px-3 py-2 text-sm">
             <CalendarDays className="h-4 w-4 shrink-0" />
             <span className="min-w-0">
               {formatDate(request?.startDate)} - {formatDate(request?.endDate)}
@@ -183,7 +183,7 @@ const LeaveRequestModal = ({
           <div className="mt-6 space-y-3">
             <textarea
               placeholder={t("leaveRequestModal.rejectPlaceholder")}
-              className="w-full resize-none rounded-xl border border-slate-200 p-3 text-start text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="w-full resize-none rounded-md border border-slate-200 p-3 text-start text-sm outline-none focus:ring-2 focus:ring-primary"
               rows={4}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
@@ -216,3 +216,4 @@ const LeaveRequestModal = ({
 };
 
 export default LeaveRequestModal;
+

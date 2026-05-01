@@ -106,11 +106,23 @@ const ManagerAdvanceRequests = ({
         )}
 
         {/* Filters */}
-        <PortalCard
-          title={t("managerAdvanceRequestsPage.filters")}
-          icon={<Search className="h-5 w-5" />}
-        >
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between flex-wrap p-4">
+        <PortalCard>
+          <div className="border-b border-slate-200 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                <Search className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-950">
+                  {t("managerAdvanceRequestsPage.filters")}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {t("managerAdvanceRequestsPage.subtitle")}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 p-5 md:flex-row md:items-end md:justify-between">
             <div className="flex flex-col gap-2 w-full md:flex-1 md:min-w-[200px]">
               <label className="text-xs text-muted-foreground">
                 {t("managerLeavesPage.search")}
@@ -124,11 +136,11 @@ const ManagerAdvanceRequests = ({
                   )}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="w-full ps-9 pe-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-primary"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-white ps-9 pe-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-2 w-full md:flex-1 md:min-w-[120px]">
+            <div className="flex w-full flex-col gap-2 md:flex-1 md:min-w-[260px]">
               <label className="text-xs text-muted-foreground mb-1 block">
                 {t("managerAdvanceRequestsPage.status")}
               </label>
@@ -141,14 +153,11 @@ const ManagerAdvanceRequests = ({
                     <button
                       key={item.value}
                       onClick={() => setStatusFilter(item.value)}
-                      className={`
-            px-3 py-1.5 text-sm rounded-full border transition-all duration-200
-            ${
-              isActive
-                ? "bg-primary text-white border-primary shadow-sm"
-                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
-            }
-          `}
+                      className={`rounded-md border px-3 py-2 text-sm font-semibold transition ${
+                        isActive
+                          ? "border-blue-600 bg-blue-600 text-white shadow-sm"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
                     >
                       {item.label}
                     </button>
@@ -164,7 +173,7 @@ const ManagerAdvanceRequests = ({
                   setStatusFilter("");
                   setSearchInput("");
                 }}
-                className="flex items-center gap-1"
+                className="h-11 rounded-lg border-slate-200"
               >
                 <X className="h-4 w-4" />{" "}
                 {t("managerAdvanceRequestsPage.reset")}
@@ -175,12 +184,22 @@ const ManagerAdvanceRequests = ({
 
         {/* Desktop Table */}
         <div className="hidden md:block">
-          <PortalCard
-            title={t("managerAdvanceRequestsPage.history")}
-            icon={<FileText className="h-5 w-5" />}
-          >
+          <PortalCard>
+            <div className="mb-4 flex items-center gap-3 px-5 pt-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-950">
+                  {t("managerAdvanceRequestsPage.history")}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {t("managerAdvanceRequestsPage.subtitle")}
+                </p>
+              </div>
+            </div>
             {data?.data?.length ? (
-              <div className="overflow-x-auto -mx-5">
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -203,7 +222,7 @@ const ManagerAdvanceRequests = ({
                   </TableHeader>
                   <TableBody>
                     {data.data.map((req: AdvanceRequest) => (
-                      <TableRow key={req._id} className="hover:bg-gray-50">
+                      <TableRow key={req._id} className="border-slate-100 hover:bg-slate-50">
                         <TableCell>{req.userId?.fullName || "-"}</TableCell>
                         <TableCell>{formatDate(req.createdAt)}</TableCell>
                         <TableCell>{req.amount || "-"}</TableCell>
@@ -213,7 +232,7 @@ const ManagerAdvanceRequests = ({
                         <TableCell className="text-center">
                           <div className="flex justify-center items-center h-full">
                             <Eye
-                              className="w-5 h-5 text-gray-600 hover:text-gray-800 cursor-pointer"
+                              className="h-5 w-5 cursor-pointer text-slate-500 hover:text-slate-900"
                               onClick={() => setSelectedRequest(req)}
                             />
                           </div>
@@ -246,14 +265,14 @@ const ManagerAdvanceRequests = ({
                   onClick={() =>
                     setExpandedMobileCardId(isExpanded ? null : req._id)
                   }
-                  className="overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
+                  className="overflow-hidden rounded-lg border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
                 >
                   <MobileCardHeader
                     noBorder={!isExpanded}
                     className="items-center gap-3 bg-slate-50/80 px-4 py-3"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600 ring-1 ring-blue-100">
                         <HandCoins className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
@@ -297,7 +316,7 @@ const ManagerAdvanceRequests = ({
                           label={t("managerAdvanceRequestsPage.date")}
                           value={formatDate(req.createdAt)}
                         />
-                        <div className="rounded-xl bg-slate-50 p-3">
+                        <div className="rounded-md bg-slate-50 p-3">
                           <MobileCardLabel>
                             {t("managerAdvanceRequestsPage.status")}
                           </MobileCardLabel>
@@ -365,8 +384,9 @@ const InfoTile = ({
   label: string;
   value: string | number;
 }) => (
-  <div className="rounded-xl bg-slate-50 p-3">
+  <div className="rounded-md bg-slate-50 p-3">
     <MobileCardLabel>{label}</MobileCardLabel>
     <MobileCardValue className="mt-1">{value}</MobileCardValue>
   </div>
 );
+

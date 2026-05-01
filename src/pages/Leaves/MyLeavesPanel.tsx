@@ -81,7 +81,7 @@ const MyLeavesPanel = () => {
         <SummaryCard title={t("myLeavesPage.pending")} value={counts.pending} />
       </div>
 
-      <div className="rounded-[22px] border border-slate-200/70 bg-slate-50 p-1">
+      <div className="rounded-lg border border-slate-200 bg-white p-1 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
         <div className="grid grid-cols-4 gap-1">
           {statusOptions.map((option) => {
             const isActive = statusFilter === option.value;
@@ -91,7 +91,7 @@ const MyLeavesPanel = () => {
                 key={option.value || "all"}
                 type="button"
                 onClick={() => setStatusFilter(option.value)}
-                className={`h-10 rounded-[18px] px-2 text-xs font-semibold transition sm:text-sm ${
+                className={`h-10 rounded-md px-2 text-xs font-semibold transition sm:text-sm ${
                   isActive
                     ? "bg-white text-blue-700 shadow-sm ring-1 ring-slate-200"
                     : "text-slate-500 hover:text-slate-700"
@@ -108,7 +108,7 @@ const MyLeavesPanel = () => {
       <div className="hidden md:block">
         <PortalCard>
           <div className="mb-4 flex items-center gap-3 px-5 pt-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
               <FileText className="h-5 w-5" />
             </div>
             <div>
@@ -176,14 +176,14 @@ const MyLeavesPanel = () => {
                 onClick={() =>
                   setExpandedMobileCardId(isExpanded ? null : r._id)
                 }
-                className="overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
+                className="overflow-hidden rounded-lg border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
               >
                 <MobileCardHeader
                   noBorder={!isExpanded}
-                  className="items-center gap-3 bg-slate-50/80 px-4 py-3"
+                  className="items-center gap-3 bg-white px-4 py-3 border-l-4 border-l-blue-600"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600 ring-1 ring-blue-100">
                       <FileText className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
@@ -210,7 +210,7 @@ const MyLeavesPanel = () => {
 
                 {isExpanded && (
                   <MobileCardContent className="space-y-3 px-4 py-4">
-                    <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="rounded-md border border-slate-200 bg-white p-3">
                       <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
                         <CalendarDays className="h-4 w-4 text-blue-600" />
                         <span>
@@ -229,7 +229,7 @@ const MyLeavesPanel = () => {
                     </div>
 
                     <MobileCardRow className="grid-cols-2">
-                      <div className="rounded-xl bg-slate-50 p-3">
+                      <div className="rounded-md bg-slate-50 p-3">
                         <MobileCardLabel>
                           {t("myLeavesPage.days")}
                         </MobileCardLabel>
@@ -238,7 +238,7 @@ const MyLeavesPanel = () => {
                           <span>{calculateDays(r.startDate, r.endDate)}</span>
                         </MobileCardValue>
                       </div>
-                      <div className="rounded-xl bg-slate-50 p-3">
+                      <div className="rounded-md bg-slate-50 p-3">
                         <MobileCardLabel>
                           {t("myLeavesPage.status")}
                         </MobileCardLabel>
@@ -272,7 +272,7 @@ const MyLeavesPanel = () => {
 export default MyLeavesPanel;
 
 const SummaryCard = ({ title, value }) => (
-  <div className="rounded-[24px] border border-slate-200/70 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+  <div className="rounded-lg border border-slate-200 border-l-4 border-l-blue-600 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
     <p className="text-sm font-medium text-slate-500">{title}</p>
     <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
       {value}
@@ -291,3 +291,5 @@ const EmptyState = ({ t }) => (
     </p>
   </div>
 );
+
+

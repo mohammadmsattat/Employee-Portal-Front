@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/portal/StatusBadge";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { CheckCircle2, TimerReset, X, XCircle } from "lucide-react";
 
 interface Props {
   request: any;
@@ -19,7 +20,7 @@ const ManagerOvertimeRequestModal = ({
   onReject,
   submitting,
 }: Props) => {
-  const{t}=useTranslation();
+  const { t } = useTranslation();
   const [rejectReason, setRejectReason] = useState("");
   const [isRejecting, setIsRejecting] = useState(false);
 
@@ -43,61 +44,63 @@ const ManagerOvertimeRequestModal = ({
   };
 
   const FieldRow = ({ label, value }: any) => (
-    <div className="flex flex-col sm:flex-row py-3 border-b border-gray-100">
-      <div className="sm:w-1/3 text-sm font-medium text-gray-500">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="text-xs font-semibold uppercase text-slate-500">
         {label}
       </div>
-      <div className="sm:w-2/3 text-sm text-gray-800 mt-1 sm:mt-0 break-words">
+      <div className="mt-1 break-words text-sm font-semibold text-slate-900">
         {value || "-"}
       </div>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-6 border border-gray-200">
-
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-portal-header">
-            {t("managerOvertimeRequestModal.title")}
-          </h2>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4">
+      <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-lg border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.22)] sm:max-w-2xl sm:rounded-lg">
+        <div className="flex items-start justify-between gap-4 bg-slate-950 px-5 py-5 text-white">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-orange-500/15 text-orange-100 ring-1 ring-orange-400/30">
+              <TimerReset className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold uppercase text-orange-100">
+                {request.overtimeTypeId?.typeKey || "-"}
+              </p>
+              <h2 className="truncate text-xl font-bold text-white">
+                {t("managerOvertimeRequestModal.title")}
+              </h2>
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-slate-200 transition hover:bg-white/15 hover:text-white"
+            type="button"
           >
-            ✕
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="bg-white rounded-xl border border-gray-100 px-4">
-
+        <div className="grid gap-3 p-5 sm:grid-cols-2">
           <FieldRow
             label={t("managerOvertimeRequestModal.employee")}
             value={request.userId?.fullName}
           />
-
           <FieldRow
             label={t("managerOvertimeRequestModal.overtimeType")}
             value={request.overtimeTypeId?.typeKey}
           />
-
           <FieldRow
             label={t("managerOvertimeRequestModal.workDate")}
             value={safeFormat(request.workDate)}
           />
-
           <FieldRow
             label={t("managerOvertimeRequestModal.startTime")}
             value={safeFormat(request.startTime)}
           />
-
           <FieldRow
             label={t("managerOvertimeRequestModal.endTime")}
             value={safeFormat(request.endTime)}
           />
-
           <FieldRow
             label={t("managerOvertimeRequestModal.totalHours")}
             value={
@@ -106,28 +109,24 @@ const ManagerOvertimeRequestModal = ({
                 : calculateHours(request.startTime, request.endTime)
             }
           />
-
           <FieldRow
             label={t("managerOvertimeRequestModal.status")}
             value={<StatusBadge status={request.status} />}
           />
-
           <FieldRow
             label={t("managerOvertimeRequestModal.reason")}
             value={request.reason}
           />
-
           {request.status === "rejected" && request.rejectionReason && (
             <FieldRow
               label={t("managerOvertimeRequestModal.rejectionReason")}
               value={
-                <span className="text-red-600 font-medium">
+                <span className="font-semibold text-red-600">
                   {request.rejectionReason}
                 </span>
               }
             />
           )}
-
           {request.attachment && (
             <FieldRow
               label={t("managerOvertimeRequestModal.attachment")}
@@ -145,38 +144,41 @@ const ManagerOvertimeRequestModal = ({
           )}
         </div>
 
-        {/* Actions */}
         {request.status === "pending" && !isRejecting && (
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="grid grid-cols-2 gap-3 border-t border-slate-200 px-5 py-4">
             <Button
-              className="bg-green-600 text-white hover:bg-green-700"
+              className="h-11 rounded-lg bg-green-600 text-white hover:bg-green-700"
               onClick={() => onApprove(request)}
               disabled={submitting}
             >
+              <CheckCircle2 className="me-2 h-4 w-4" />
               {t("managerOvertimeRequestModal.approve")}
             </Button>
             <Button
               variant="destructive"
+              className="h-11 rounded-lg"
               onClick={() => setIsRejecting(true)}
               disabled={submitting}
             >
+              <XCircle className="me-2 h-4 w-4" />
               {t("managerOvertimeRequestModal.reject")}
             </Button>
           </div>
         )}
 
         {isRejecting && (
-          <div className="space-y-3 mt-6">
+          <div className="space-y-3 border-t border-slate-200 p-5">
             <textarea
               placeholder={t("managerOvertimeRequestModal.rejectPlaceholder")}
-              className="w-full border rounded-md p-3 text-sm focus:ring-2 focus:ring-primary resize-none"
+              className="w-full resize-none rounded-lg border border-slate-200 p-3 text-sm outline-none focus:ring-2 focus:ring-blue-100"
               rows={3}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
             />
-            <div className="flex justify-end gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <Button
                 variant="outline"
+                className="h-11 rounded-lg"
                 onClick={() => setIsRejecting(false)}
                 disabled={submitting}
               >
@@ -184,6 +186,7 @@ const ManagerOvertimeRequestModal = ({
               </Button>
               <Button
                 variant="destructive"
+                className="h-11 rounded-lg"
                 onClick={() => onReject(request, rejectReason)}
                 disabled={submitting || !rejectReason.trim()}
               >
@@ -192,7 +195,6 @@ const ManagerOvertimeRequestModal = ({
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

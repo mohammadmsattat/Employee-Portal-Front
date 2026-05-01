@@ -54,60 +54,54 @@ const HomeQuickActions = ({ t }: HomeQuickActionsProps) => {
 
   return (
     <section className="relative">
-      {/* Mobile */}
-      <div className="md:hidden">
-        <div className="rounded-[28px] bg-white px-2 py-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
-          <div className="grid grid-cols-4 gap-3">
-            {actions.map((action) => {
-              const Icon = action.icon;
-
-              return (
-                <Link
-                  key={action.key}
-                  to={action.to}
-                  className="flex flex-col items-center justify-center text-center"
-                >
-                  <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-blue-600 shadow-sm ring-1 ring-slate-100 transition active:scale-95">
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <span className="text-[12px] font-semibold leading-4 tracking-[-0.01em] text-slate-500 capitalize">
-                    {action.label}
-                  </span>
-                </Link>
-              );
-            })}
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-[0_16px_38px_rgba(15,23,42,0.06)]">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-950">
+              {t("homePage.quickActions") || "Quick actions"}
+            </h2>
+            <p className="text-sm text-slate-500">
+              {t("homePage.startHere") || "Jump into the workflow you need"}
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Desktop */}
-      <div className="hidden grid-cols-2 gap-4 md:grid lg:grid-cols-4">
-        {actions.map((action) => {
-          const Icon = action.icon;
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          {actions.map((action, index) => {
+            const Icon = action.icon;
 
-          return (
-            <Link
-              key={action.key}
-              to={action.to}
-              className="group rounded-2xl border border-slate-200/70 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)]"
-            >
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition group-hover:bg-blue-100">
+            return (
+              <Link
+                key={action.key}
+                to={action.to}
+                className={`group min-h-[118px] rounded-lg border p-4 transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.09)] ${
+                  index === 0
+                    ? "border-blue-200 bg-blue-600 text-white md:col-span-1"
+                    : "border-slate-200 bg-slate-50 text-slate-950 hover:bg-white"
+                }`}
+              >
+                <div
+                  className={`mb-5 flex h-10 w-10 items-center justify-center rounded-md ${
+                    index === 0
+                      ? "bg-white/15 text-white ring-1 ring-white/20"
+                      : "bg-white text-blue-600 ring-1 ring-slate-200"
+                  }`}
+                >
                   <Icon className="h-5 w-5" />
                 </div>
 
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {action.label}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {t("home.quickAccess") || "Quick access"}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+                <p className="text-sm font-bold">{action.label}</p>
+                <p
+                  className={`mt-1 text-xs ${
+                    index === 0 ? "text-blue-100" : "text-slate-500"
+                  }`}
+                >
+                  {t("home.quickAccess") || "Quick access"}
+                </p>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

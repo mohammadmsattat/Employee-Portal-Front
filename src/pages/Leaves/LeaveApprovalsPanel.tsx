@@ -115,7 +115,7 @@ const LeaveApprovalsPanel = () => {
           onClick={() => setShowFilters((prev) => !prev)}
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
               <Search className="h-5 w-5" />
             </div>
             <div>
@@ -147,7 +147,7 @@ const LeaveApprovalsPanel = () => {
                   placeholder={t("managerLeavesPage.searchPlaceholder")}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="h-11 w-full rounded-2xl border border-slate-200 bg-white ps-9 pe-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-white ps-9 pe-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
             </div>
@@ -159,7 +159,7 @@ const LeaveApprovalsPanel = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
                 <option value="">{t("managerLeavesPage.allStatus")}</option>
                 <option value="pending">
@@ -182,7 +182,7 @@ const LeaveApprovalsPanel = () => {
                 type="date"
                 value={startDateFilter}
                 onChange={(e) => setStartDateFilter(e.target.value)}
-                className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
@@ -194,7 +194,7 @@ const LeaveApprovalsPanel = () => {
                 type="date"
                 value={endDateFilter}
                 onChange={(e) => setEndDateFilter(e.target.value)}
-                className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
           </div>
@@ -204,7 +204,7 @@ const LeaveApprovalsPanel = () => {
               variant="outline"
               size="sm"
               onClick={resetFilters}
-              className="rounded-2xl"
+              className="rounded-lg"
             >
               <X className="me-2 h-4 w-4" />
               {t("managerLeavesPage.reset")}
@@ -217,7 +217,7 @@ const LeaveApprovalsPanel = () => {
       <div className="hidden md:block">
         <PortalCard>
           <div className="mb-4 flex items-center gap-3 px-5 pt-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
@@ -267,7 +267,7 @@ const LeaveApprovalsPanel = () => {
                       <TableCell className="text-center">
                         <button
                           onClick={() => setSelectedRequest(req)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
                         >
                           <Eye className="h-5 w-5" />
                         </button>
@@ -300,14 +300,14 @@ const LeaveApprovalsPanel = () => {
                 onClick={() =>
                   setExpandedMobileCardId(isExpanded ? null : req._id)
                 }
-                className="overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
+                className="overflow-hidden rounded-lg border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
               >
                 <MobileCardHeader
                   noBorder={!isExpanded}
-                  className="items-center gap-3 bg-slate-50/80 px-4 py-3"
+                  className="items-center gap-3 bg-white px-4 py-3 border-l-4 border-l-blue-600"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600 ring-1 ring-blue-100">
                       <UserRound className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
@@ -334,7 +334,7 @@ const LeaveApprovalsPanel = () => {
 
                 {isExpanded && (
                   <MobileCardContent className="space-y-3 px-4 py-4">
-                    <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="rounded-md border border-slate-200 bg-white p-3">
                       <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
                         <CalendarDays className="h-4 w-4 text-blue-600" />
                         <span>
@@ -354,7 +354,7 @@ const LeaveApprovalsPanel = () => {
                     </div>
 
                     <MobileCardRow className="grid-cols-2">
-                      <div className="rounded-xl bg-slate-50 p-3">
+                      <div className="rounded-md bg-slate-50 p-3">
                         <MobileCardLabel>
                           {t("managerLeavesPage.days")}
                         </MobileCardLabel>
@@ -365,7 +365,7 @@ const LeaveApprovalsPanel = () => {
                           </span>
                         </MobileCardValue>
                       </div>
-                      <div className="rounded-xl bg-slate-50 p-3">
+                      <div className="rounded-md bg-slate-50 p-3">
                         <MobileCardLabel>
                           {t("managerLeavesPage.status")}
                         </MobileCardLabel>
@@ -382,7 +382,7 @@ const LeaveApprovalsPanel = () => {
                           event.stopPropagation();
                           setSelectedRequest(req);
                         }}
-                        className="h-11 w-full rounded-xl text-white"
+                        className="h-11 w-full rounded-md text-white"
                       >
                         <Eye className="me-2 h-4 w-4" />
                         {t("managerLeavesPage.view")}
@@ -425,10 +425,12 @@ const LeaveApprovalsPanel = () => {
 export default LeaveApprovalsPanel;
 
 const SummaryCard = ({ title, value }) => (
-  <div className="rounded-[24px] border border-slate-200/70 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+  <div className="rounded-lg border border-slate-200 border-l-4 border-l-blue-600 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
     <p className="text-sm font-medium text-slate-500">{title}</p>
     <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
       {value}
     </p>
   </div>
 );
+
+

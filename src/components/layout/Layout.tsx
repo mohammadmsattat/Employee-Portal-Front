@@ -46,11 +46,12 @@ const Layout = ({ children }: LayoutProps) => {
   } = useAttendance();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f4f7fb] text-slate-950">
       <AppHeader />
 
-      <main className="container mx-auto bg-white px-4 py-8 pb-28">
-        {children}
+      <main className="relative mx-auto min-h-screen w-full px-4 pb-28 pt-5 sm:px-6 md:ml-[104px] md:w-[calc(100%-104px)] md:px-8 md:pb-10 md:pt-8 xl:px-10">
+        <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-80 bg-[linear-gradient(180deg,rgba(37,99,235,0.12),rgba(244,247,251,0))]" />
+        <div className="mx-auto max-w-7xl">{children}</div>
       </main>
 
       <Bottombar

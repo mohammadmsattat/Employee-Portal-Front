@@ -88,7 +88,7 @@ const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
                 variant="ghost"
                 size="icon"
                 asChild
-                className="rounded-2xl hidden md:block"
+                className="rounded-lg hidden md:block"
               >
                 <Link to="/">
                   <ArrowLeft className="h-5 w-5" />
@@ -107,7 +107,7 @@ const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
 
             <Button
               onClick={() => setModalOpen(true)}
-              className="h-11 rounded-2xl bg-blue-600 px-5 font-semibold text-white shadow-[0_12px_24px_rgba(37,99,235,0.22)] hover:bg-blue-700"
+              className="h-11 rounded-lg bg-blue-600 px-5 font-semibold text-white shadow-[0_12px_24px_rgba(37,99,235,0.22)] hover:bg-blue-700"
             >
               <Plus className="h-4 w-4" />
               {t("myAdvanceRequestsPage.newRequest")}
@@ -143,7 +143,7 @@ const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
         <div className="hidden md:block">
           <PortalCard>
             <div className="mb-4 flex items-center gap-3 px-5 pt-5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
                 <FileText className="h-5 w-5" />
               </div>
               <div>
@@ -212,14 +212,14 @@ const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
                   onClick={() =>
                     setExpandedMobileCardId(isExpanded ? null : request._id)
                   }
-                  className="overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
+                  className="overflow-hidden rounded-lg border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
                 >
                   <MobileCardHeader
                     noBorder={!isExpanded}
-                    className="items-center gap-3 bg-slate-50/80 px-4 py-3"
+                    className="items-center gap-3 bg-white px-4 py-3 border-l-4 border-l-blue-600"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600 ring-1 ring-blue-100">
                         <HandCoins className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
@@ -263,7 +263,7 @@ const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
                           label={t("myAdvanceRequestsPage.createdAt")}
                           value={FormatTime(request.createdAt)}
                         />
-                        <div className="rounded-xl bg-slate-50 p-3">
+                        <div className="rounded-md bg-slate-50 p-3">
                           <MobileCardLabel>
                             {t("myAdvanceRequestsPage.status")}
                           </MobileCardLabel>
@@ -307,7 +307,7 @@ const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
 export default MyAdvanceRequests;
 
 const SummaryCard = ({ title, value }: { title: string; value: number }) => (
-  <div className="rounded-[24px] border border-slate-200/70 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+  <div className="rounded-lg border border-slate-200 border-l-4 border-l-blue-600 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
     <p className="text-sm font-medium text-slate-500">{title}</p>
     <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
       {value}
@@ -324,7 +324,7 @@ const StatusFilter = ({
   value: RequestStatus;
   onChange: (value: RequestStatus) => void;
 }) => (
-  <div className="rounded-[22px] border border-slate-200/70 bg-slate-50 p-1">
+  <div className="rounded-lg border border-slate-200 bg-white p-1 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
     <div className="grid grid-cols-4 gap-1">
       {options.map((option) => {
         const isActive = value === option.value;
@@ -334,7 +334,7 @@ const StatusFilter = ({
             key={option.value || "all"}
             type="button"
             onClick={() => onChange(option.value)}
-            className={`h-10 rounded-[18px] px-2 text-xs font-semibold transition sm:text-sm ${
+            className={`h-10 rounded-md px-2 text-xs font-semibold transition sm:text-sm ${
               isActive
                 ? "bg-white text-blue-700 shadow-sm ring-1 ring-slate-200"
                 : "text-slate-500 hover:text-slate-700"
@@ -355,7 +355,7 @@ const InfoTile = ({
   label: string;
   value: string | number;
 }) => (
-  <div className="rounded-xl bg-slate-50 p-3">
+  <div className="rounded-md bg-slate-50 p-3">
     <MobileCardLabel>{label}</MobileCardLabel>
     <MobileCardValue className="mt-1">{value}</MobileCardValue>
   </div>
@@ -372,3 +372,5 @@ const EmptyState = ({ t }: { t: TFunction }) => (
     </p>
   </div>
 );
+
+
