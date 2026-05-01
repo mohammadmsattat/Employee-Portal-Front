@@ -146,6 +146,12 @@ export interface LeaveRequestsResponse {
   totalPages: number;
   results: number;
   totalItems: number;
+  summary?: {
+    totalBalance: number;
+    used: number;
+    remaining: number;
+    pending: number;
+  };
   data: LeaveRequest[];
 }
 

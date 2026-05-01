@@ -43,9 +43,21 @@ const MyLeavesPanel = () => {
     setPage,
     limit,
     setLimit,
+    statusFilter,
+    setStatusFilter,
     totalPages,
     t,
   } = useMyLeaves();
+
+  const statusOptions: Array<{
+    value: "" | "pending" | "approved" | "rejected";
+    label: string;
+  }> = [
+    { value: "", label: "All" },
+    { value: "pending", label: t("myLeavesPage.pending") },
+    { value: "approved", label: "Approved" },
+    { value: "rejected", label: "Rejected" },
+  ];
 
   if (isLoading) {
     return (
@@ -67,6 +79,29 @@ const MyLeavesPanel = () => {
           value={counts.remaining}
         />
         <SummaryCard title={t("myLeavesPage.pending")} value={counts.pending} />
+      </div>
+
+      <div className="rounded-[22px] border border-slate-200/70 bg-slate-50 p-1">
+        <div className="grid grid-cols-4 gap-1">
+          {statusOptions.map((option) => {
+            const isActive = statusFilter === option.value;
+
+            return (
+              <button
+                key={option.value || "all"}
+                type="button"
+                onClick={() => setStatusFilter(option.value)}
+                className={`h-10 rounded-[18px] px-2 text-xs font-semibold transition sm:text-sm ${
+                  isActive
+                    ? "bg-white text-blue-700 shadow-sm ring-1 ring-slate-200"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Desktop */}
@@ -252,7 +287,7 @@ const EmptyState = ({ t }) => (
       {t("myLeavesPage.noRequests")}
     </h3>
     <p className="mx-auto max-w-md text-sm text-slate-500">
-      {t("myLeavesPage.noRequestsDesc")}
+      {t("myLeavesPage.noRequestsMatchFilters")}
     </p>
   </div>
 );

@@ -168,7 +168,8 @@
     "status": "Status",
     "noRequests": "No requests yet",
     "noRequestsDesc": "You haven't submitted any leave requests",
-    "submitFirst": "Submit Your First Request"
+    "submitFirst": "Submit Your First Request",
+    "noRequestsMatchFilters": "No requests match filters"
   },
   "managerLeavesPage": {
     "title": "Team Leave Requests",
@@ -313,15 +314,15 @@
     "submitRejection": "Submit Rejection"
   },
   "tasks": {
-  "newTask": "New Task",
-  "createTask": "Create Task",
-  "fillDetails": "Fill in the details below to create a new task",
-  "title": "Title",
-  "description": "Description",
-  "status": "Status",
-  "priority": "Priority",
-  "assignTo": "Assign To",
-  "dueDate": "Due Date",
-  "tags": "Tags"
-}
+    "newTask": "New Task",
+    "createTask": "Create Task",
+    "fillDetails": "Fill in the details below to create a new task",
+    "title": "Title",
+    "description": "Description",
+    "status": "Status",
+    "priority": "Priority",
+    "assignTo": "Assign To",
+    "dueDate": "Due Date",
+    "tags": "Tags"
+  }
 }

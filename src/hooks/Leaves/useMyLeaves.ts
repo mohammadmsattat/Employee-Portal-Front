@@ -1,17 +1,21 @@
 import { useState, useEffect } from "react";
 import { useGetMyLeaveRequestsQuery } from "@/rtk/leaves/leaveRequestsApi";
-import { LeaveRequest } from "@/rtk/interfaces";
+import { LeaveRequest, LeaveStatus } from "@/rtk/interfaces";
 import { differenceInCalendarDays, format } from "date-fns";
 import { useTranslation } from "react-i18next";
+
+type StatusFilter = "" | LeaveStatus;
 
 export const useMyLeaves = () => {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
 
   const { data, isLoading } = useGetMyLeaveRequestsQuery({
     page,
     limit,
+    status: statusFilter,
   });
 
   const [isLeaveModalOpen, setLeaveModalOpen] = useState(false);
@@ -28,27 +32,19 @@ export const useMyLeaves = () => {
       : "-";
 
   const counts = {
-    total: requests.length,
-    used: requests
-      .filter((r) => r.status === "approved")
-      .reduce(
-        (acc, r) =>
-          acc +
-          (r.startDate && r.endDate
-            ? differenceInCalendarDays(
-                new Date(r.endDate),
-                new Date(r.startDate),
-              ) + 1
-            : 0),
-        0,
-      ),
-    remaining: 0,
-    pending: requests.filter((r) => r.status === "pending").length,
+    total: data?.summary?.totalBalance ?? 0,
+    used: data?.summary?.used ?? 0,
+    remaining: data?.summary?.remaining ?? 0,
+    pending: data?.summary?.pending ?? 0,
   };
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [totalPages]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
 
   return {
     requests,
@@ -62,6 +58,8 @@ export const useMyLeaves = () => {
     setPage,
     limit,
     setLimit,
+    statusFilter,
+    setStatusFilter,
     totalPages,
     t,
   };

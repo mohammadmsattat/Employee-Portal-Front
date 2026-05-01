@@ -166,7 +166,8 @@
     "status": "الحالة",
     "noRequests": "لا توجد طلبات بعد",
     "noRequestsDesc": "لم تقم بتقديم أي طلب إجازة",
-    "submitFirst": "قدّم أول طلب"
+    "submitFirst": "قدّم أول طلب",
+    "noRequestsMatchFilters": "لا يوجد طلبات بهذه التصفيات"
   },
   "managerLeavesPage": {
     "title": "طلبات إجازات الفريق",
