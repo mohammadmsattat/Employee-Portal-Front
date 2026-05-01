@@ -40,6 +40,7 @@ export const useManagerAdvances = () => {
     page,
     limit: isMobile ? mobileLimit : limit,
     status: statusFilter,
+    search: searchFilter,
   });
 
   const totalPages = data?.totalPages || 1;

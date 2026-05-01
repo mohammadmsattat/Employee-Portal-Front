@@ -34,10 +34,15 @@ import FormatTime from "@/lib/FormatTime";
 import { useMyOvertimes } from "@/hooks/Overtime/useMyOvertimes";
 import UnifiedPagination from "@/components/ui/pagination";
 import LoadingFull from "@/components/ui/LoadingSkeleton";
+import type { TFunction } from "i18next";
 
 type RequestStatus = "" | "pending" | "approved" | "rejected";
 
-const MyOvertimeRequests = () => {
+interface MyOvertimeRequestsProps {
+  embedded?: boolean;
+}
+
+const MyOvertimeRequests = ({ embedded = false }: MyOvertimeRequestsProps) => {
   const {
     requests,
     counts,
@@ -69,63 +74,65 @@ const MyOvertimeRequests = () => {
   const closeModal = () => setOvertimeModalOpen(false);
 
   if (isLoading) {
-    return (
-      <Layout>
-        <LoadingFull titleLines={1} cardLines={4} className="min-h-[40vh]" />
-      </Layout>
+    const loader = (
+      <LoadingFull titleLines={1} cardLines={4} className="min-h-[40vh]" />
     );
+
+    return embedded ? loader : <Layout>{loader}</Layout>;
   }
 
-  return (
-    <Layout>
+  const content = (
+    <>
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="rounded-2xl hidden md:block"
-            >
-              <Link to="/">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                {t("myOvertimeRequestsPage.title")}
-              </h1>
-              <p className="mt-1 text-sm text-slate-500">
-                {t("myOvertimeRequestsPage.subtitle")}
-              </p>
+        {!embedded && (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
+                className="rounded-2xl hidden md:block"
+              >
+                <Link to="/">
+                  <ArrowLeft className="h-5 w-5" />
+                </Link>
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                  {t("myOvertimeRequestsPage.title")}
+                </h1>
+                <p className="mt-1 text-sm text-slate-500">
+                  {t("myOvertimeRequestsPage.subtitle")}
+                </p>
+              </div>
             </div>
-          </div>
 
-          <Button
-            onClick={openModal}
-            className="h-11 rounded-2xl bg-blue-600 px-5 font-semibold text-white shadow-[0_12px_24px_rgba(37,99,235,0.22)] hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4" />
-            {t("buttons.newOvertimeRequest")}
-          </Button>
-        </div>
+            <Button
+              onClick={openModal}
+              className="h-11 rounded-2xl bg-blue-600 px-5 font-semibold text-white shadow-[0_12px_24px_rgba(37,99,235,0.22)] hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" />
+              {t("buttons.newOvertimeRequest")}
+            </Button>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <SummaryCard
             title={t("myOvertimeRequestsPage.totalHours")}
-            value={counts.total}
+            value={counts.total?.toFixed(2)}
           />
           <SummaryCard
             title={t("myOvertimeRequestsPage.approved")}
-            value={counts.approved}
+            value={counts.approved?.toFixed(2)}
           />
           <SummaryCard
             title={t("myOvertimeRequestsPage.pending")}
-            value={counts.pending}
+            value={counts.pending?.toFixed(2)}
           />
           <SummaryCard
             title={t("myOvertimeRequestsPage.rejected")}
-            value={counts.rejected}
+            value={counts.rejected?.toFixed(2)}
           />
         </div>
 
@@ -182,7 +189,7 @@ const MyOvertimeRequests = () => {
                           {FormatTime(request.endTime, true)}
                         </TableCell>
                         <TableCell className="text-center">
-                          {request.hours ?? "-"}
+                          {request.hours?.toFixed(2) ?? "-"}
                         </TableCell>
                         <TableCell className="text-end">
                           <StatusBadge status={request.status} />
@@ -193,7 +200,7 @@ const MyOvertimeRequests = () => {
                 </Table>
               </div>
             ) : (
-              <EmptyState onSubmit={openModal} t={t} />
+              <EmptyState t={t} />
             )}
           </PortalCard>
         </div>
@@ -254,7 +261,7 @@ const MyOvertimeRequests = () => {
                         />
                         <InfoTile
                           label={t("overtimeModal.hours")}
-                          value={request.hours ?? "-"}
+                          value={request.hours?.toFixed(2) ?? "-"}
                           icon={<Clock3 className="h-4 w-4 text-slate-400" />}
                         />
                       </MobileCardRow>
@@ -289,19 +296,27 @@ const MyOvertimeRequests = () => {
         />
       </div>
 
-      {isOvertimeModalOpen && (
+      {!embedded && isOvertimeModalOpen && (
         <AddOvertimeRequestModal
           isOpen={isOvertimeModalOpen}
           onClose={closeModal}
         />
       )}
-    </Layout>
+    </>
   );
+
+  return embedded ? content : <Layout>{content}</Layout>;
 };
 
 export default MyOvertimeRequests;
 
-const SummaryCard = ({ title, value }: { title: string; value: number }) => (
+const SummaryCard = ({
+  title,
+  value,
+}: {
+  title: string;
+  value: number | string;
+}) => (
   <div className="rounded-[24px] border border-slate-200/70 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
     <p className="text-sm font-medium text-slate-500">{title}</p>
     <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
@@ -361,7 +376,7 @@ const InfoTile = ({
   </div>
 );
 
-const EmptyState = ({ t }: { t: any }) => (
+const EmptyState = ({ t }: { t: TFunction }) => (
   <div className="px-5 py-12 text-center">
     <FileText className="mx-auto mb-4 h-12 w-12 text-slate-300" />
     <h3 className="mb-2 text-lg font-semibold text-slate-900">

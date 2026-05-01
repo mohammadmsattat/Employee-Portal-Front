@@ -32,14 +32,15 @@ export const advanceRequestApi = createApi({
 
     getMyApprovalRequests: builder.query<
       AdvanceRequestsResponse,
-      { page?: number; limit?: number; status?: string }
+      { page?: number; limit?: number; status?: string; search?: string }
     >({
-      query: ({ page = 1, limit = 10, status }) => {
+      query: ({ page = 1, limit = 10, status, search }) => {
         const params = new URLSearchParams({
           companyId: getCompanyId()!,
           page: page.toString(),
           limit: limit.toString(),
           ...(status ? { status } : {}),
+          ...(search ? { search } : {}),
         });
         return `${advanceRequestEndPoint}/my-approvals?${params.toString()}`;
       },

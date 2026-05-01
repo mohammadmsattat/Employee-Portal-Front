@@ -57,7 +57,7 @@ const HomeQuickActions = ({ t }: HomeQuickActionsProps) => {
       {/* Mobile */}
       <div className="md:hidden">
         <div className="rounded-[28px] bg-white px-2 py-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] ring-1 ring-slate-100">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-3">
             {actions.map((action) => {
               const Icon = action.icon;
 
@@ -81,7 +81,7 @@ const HomeQuickActions = ({ t }: HomeQuickActionsProps) => {
       </div>
 
       {/* Desktop */}
-      <div className="hidden grid-cols-2 gap-4 md:grid lg:grid-cols-3 xl:grid-cols-6">
+      <div className="hidden grid-cols-2 gap-4 md:grid lg:grid-cols-4">
         {actions.map((action) => {
           const Icon = action.icon;
 

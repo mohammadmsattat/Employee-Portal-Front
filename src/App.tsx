@@ -16,13 +16,11 @@ import { ForgotPassword } from "./pages/Auth/ForgotPassword";
 import { VerifyCode } from "./pages/Auth/VerifyCode";
 import { NewPassword } from "./pages/Auth/NewPassword";
 import ManagerLeaveRequests from "./pages/Leaves/ManagerLeaveRequests";
-import MyOvertimeRequests from "./pages/Overtime/MyOvertimeRequests";
-import MyAdvanceRequestsPage from "./pages/Advance/MyAdvanceRequestsPage";
-import ManagerOvertimeRequests from "./pages/Overtime/ManagerOvertimeRequests";
-import ManagerAdvanceRequests from "./pages/Advance/ManagerAdvanceRequests";
 import PrivateRoute from "./providers/PrivateRoute";
 import LeavesPage from "./pages/Leaves/LeavesPage";
 import TasksPage from "./pages/Tasks/TasksPage";
+import OvertimePage from "./pages/Overtime/OvertimePage";
+import AdvancePage from "./pages/Advance/AdvancePage";
 
 const queryClient = new QueryClient();
 
@@ -50,19 +48,11 @@ const App = () => (
               />
               <Route
                 path="/overtime/my-overtime-requests"
-                element={<MyOvertimeRequests />}
-              />
-              <Route
-                path="/overtime/manager-overtime-requests"
-                element={<ManagerOvertimeRequests />}
+                element={<OvertimePage />}
               />
               <Route
                 path="/advance/my-advance-requests"
-                element={<MyAdvanceRequestsPage />}
-              />
-              <Route
-                path="/advance/manager-advance-requests"
-                element={<ManagerAdvanceRequests />}
+                element={<AdvancePage />}
               />
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/profile" element={<Profile />} />

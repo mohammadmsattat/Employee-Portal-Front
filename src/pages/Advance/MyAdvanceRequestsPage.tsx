@@ -32,10 +32,15 @@ import AddAdvanceRequestModal from "./AddAdvanceRequestModal";
 import FormatTime from "@/lib/FormatTime";
 import UnifiedPagination from "@/components/ui/pagination";
 import LoadingFull from "@/components/ui/LoadingSkeleton";
+import type { TFunction } from "i18next";
 
 type RequestStatus = "" | "pending" | "approved" | "rejected";
 
-const MyAdvanceRequests = () => {
+interface MyAdvanceRequestsProps {
+  embedded?: boolean;
+}
+
+const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
   const {
     requests,
     isLoading,
@@ -66,47 +71,49 @@ const MyAdvanceRequests = () => {
   ];
 
   if (isLoading) {
-    return (
-      <Layout>
-        <LoadingFull titleLines={1} cardLines={4} className="min-h-[40vh]" />
-      </Layout>
+    const loader = (
+      <LoadingFull titleLines={1} cardLines={4} className="min-h-[40vh]" />
     );
+
+    return embedded ? loader : <Layout>{loader}</Layout>;
   }
 
-  return (
-    <Layout>
+  const content = (
+    <>
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="rounded-2xl hidden md:block"
-            >
-              <Link to="/">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
+        {!embedded && (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
+                className="rounded-2xl hidden md:block"
+              >
+                <Link to="/">
+                  <ArrowLeft className="h-5 w-5" />
+                </Link>
+              </Button>
 
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                {t("myAdvanceRequestsPage.title")}
-              </h1>
-              <p className="mt-1 text-sm text-slate-500">
-                {t("myAdvanceRequestsPage.subtitle")}
-              </p>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                  {t("myAdvanceRequestsPage.title")}
+                </h1>
+                <p className="mt-1 text-sm text-slate-500">
+                  {t("myAdvanceRequestsPage.subtitle")}
+                </p>
+              </div>
             </div>
-          </div>
 
-          <Button
-            onClick={() => setModalOpen(true)}
-            className="h-11 rounded-2xl bg-blue-600 px-5 font-semibold text-white shadow-[0_12px_24px_rgba(37,99,235,0.22)] hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4" />
-            {t("myAdvanceRequestsPage.newRequest")}
-          </Button>
-        </div>
+            <Button
+              onClick={() => setModalOpen(true)}
+              className="h-11 rounded-2xl bg-blue-600 px-5 font-semibold text-white shadow-[0_12px_24px_rgba(37,99,235,0.22)] hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" />
+              {t("myAdvanceRequestsPage.newRequest")}
+            </Button>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <SummaryCard
@@ -186,7 +193,7 @@ const MyAdvanceRequests = () => {
                 </Table>
               </div>
             ) : (
-              <EmptyState onSubmit={() => setModalOpen(true)} t={t} />
+              <EmptyState t={t} />
             )}
           </PortalCard>
         </div>
@@ -285,14 +292,16 @@ const MyAdvanceRequests = () => {
         />
       </div>
 
-      {isModalOpen && (
+      {!embedded && isModalOpen && (
         <AddAdvanceRequestModal
           isOpen={isModalOpen}
           onClose={() => setModalOpen(false)}
         />
       )}
-    </Layout>
+    </>
   );
+
+  return embedded ? content : <Layout>{content}</Layout>;
 };
 
 export default MyAdvanceRequests;
@@ -352,7 +361,7 @@ const InfoTile = ({
   </div>
 );
 
-const EmptyState = ({ t }: { t: any }) => (
+const EmptyState = ({ t }: { t: TFunction }) => (
   <div className="px-5 py-12 text-center">
     <FileText className="mx-auto mb-4 h-12 w-12 text-slate-300" />
     <h3 className="mb-2 text-lg font-semibold text-slate-900">

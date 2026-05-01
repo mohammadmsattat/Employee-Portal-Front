@@ -1,6 +1,16 @@
 import { format } from "date-fns";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Search, X, Eye } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  Clock3,
+  Eye,
+  FileText,
+  Search,
+  TimerReset,
+  X,
+} from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import PortalCard from "@/components/portal/PortalCard";
 import StatusBadge from "@/components/portal/StatusBadge";
@@ -24,8 +34,19 @@ import {
   MobileCardValue,
 } from "@/components/ui/MobileCard";
 import { useManagerOvertimeRequests } from "@/hooks/Overtime/useManagerOvertimeRequests";
+import type { OvertimeRequest } from "@/rtk/interfaces";
 
-const ManagerOvertimeRequests = () => {
+interface ManagerOvertimeRequestsProps {
+  embedded?: boolean;
+}
+
+const ManagerOvertimeRequests = ({
+  embedded = false,
+}: ManagerOvertimeRequestsProps) => {
+  const [expandedMobileCardId, setExpandedMobileCardId] = useState<
+    string | null
+  >(null);
+
   const {
     page,
     setPage,
@@ -55,23 +76,27 @@ const ManagerOvertimeRequests = () => {
     return format(parsed, "PPP");
   };
 
-  if (isLoading)
-    return (
+  if (isLoading) {
+    const loader = (
       <LoadingFull titleLines={2} cardLines={4} className="min-h-[60vh]" />
     );
 
-  return (
-    <Layout>
+    return embedded ? loader : <Layout>{loader}</Layout>;
+  }
+
+  const content = (
+    <>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-portal-header">
-            {t("managerOvertimeRequestsPage.title")}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {t("managerOvertimeRequestsPage.subtitle")}
-          </p>
-        </div>
+        {!embedded && (
+          <div>
+            <h1 className="text-2xl font-bold text-portal-header">
+              {t("managerOvertimeRequestsPage.title")}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {t("managerOvertimeRequestsPage.subtitle")}
+            </p>
+          </div>
+        )}
 
         {/* Filters */}
         <PortalCard title={t("managerOvertimeRequestsPage.filters")} icon={<Search className="h-5 w-5" />}>
@@ -132,7 +157,7 @@ const ManagerOvertimeRequests = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.data.map((req: any) => (
+                    {data.data.map((req: OvertimeRequest) => (
                       <TableRow key={req._id} className="hover:bg-gray-50">
                         <TableCell>{req.userId?.fullName || "-"}</TableCell>
                         <TableCell>{formatDate(req.workDate || req.createdAt)}</TableCell>
@@ -162,43 +187,98 @@ const ManagerOvertimeRequests = () => {
         </div>
 
         {/* Mobile Cards */}
-        <div className="md:hidden space-y-4">
+        <div className="space-y-3 md:hidden">
           {data?.data?.length ? (
-            data.data.map((req: any) => (
-              <MobileCard key={req._id}>
-                <MobileCardHeader>
-                  <div>
-                    <MobileCardLabel>{t("managerOvertimeRequestsPage.employee")}</MobileCardLabel>
-                    <MobileCardValue>{req.userId?.fullName || "-"}</MobileCardValue>
-                  </div>
-                  <StatusBadge status={req.status} />
-                </MobileCardHeader>
+            data.data.map((req: OvertimeRequest) => {
+              const isExpanded = expandedMobileCardId === req._id;
 
-                <MobileCardContent>
-                  <MobileCardRow>
-                    <div>
-                      <MobileCardLabel>{t("managerOvertimeRequestsPage.date")}</MobileCardLabel>
-                      <MobileCardValue>{formatDate(req.workDate || req.createdAt)}</MobileCardValue>
+              return (
+                <MobileCard
+                  key={req._id}
+                  compact
+                  interactive
+                  aria-expanded={isExpanded}
+                  onClick={() =>
+                    setExpandedMobileCardId(isExpanded ? null : req._id)
+                  }
+                  className="overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
+                >
+                  <MobileCardHeader
+                    noBorder={!isExpanded}
+                    className="items-center gap-3 bg-slate-50/80 px-4 py-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                        <TimerReset className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <MobileCardValue className="truncate leading-tight">
+                          {req.userId?.fullName || "-"}
+                        </MobileCardValue>
+                        <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+                          <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">
+                            {formatDate(req.workDate || req.createdAt)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </MobileCardRow>
 
-                  <MobileCardRow>
-                    <div>
-                      <MobileCardLabel>{t("managerOvertimeRequestsPage.hours")}</MobileCardLabel>
-                      <MobileCardValue>{req.hours || "-"}</MobileCardValue>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <StatusBadge status={req.status} />
+                      <ChevronDown
+                        className={`h-4 w-4 text-slate-400 transition-transform ${
+                          isExpanded ? "rotate-180" : ""
+                        }`}
+                      />
                     </div>
-                  </MobileCardRow>
+                  </MobileCardHeader>
 
-                  <MobileCardRow>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => setSelectedRequest(req)}>
+                  {isExpanded && (
+                    <MobileCardContent className="space-y-3 px-4 py-4">
+                      <MobileCardRow className="grid-cols-2">
+                        <InfoTile
+                          label={t("managerOvertimeRequestsPage.employee")}
+                          value={req.userId?.fullName || "-"}
+                        />
+                        <InfoTile
+                          label={t("managerOvertimeRequestsPage.hours")}
+                          value={req.hours || "-"}
+                          icon={<Clock3 className="h-4 w-4 text-slate-400" />}
+                        />
+                      </MobileCardRow>
+
+                      <MobileCardRow className="grid-cols-2">
+                        <InfoTile
+                          label={t("managerOvertimeRequestsPage.date")}
+                          value={formatDate(req.workDate || req.createdAt)}
+                        />
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <MobileCardLabel>
+                            {t("managerOvertimeRequestsPage.status")}
+                          </MobileCardLabel>
+                          <div className="mt-2">
+                            <StatusBadge status={req.status} />
+                          </div>
+                        </div>
+                      </MobileCardRow>
+
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedRequest(req);
+                        }}
+                      >
+                        <Eye className="me-2 h-4 w-4" />
                         {t("managerOvertimeRequestsPage.view")}
                       </Button>
-                    </div>
-                  </MobileCardRow>
-                </MobileCardContent>
-              </MobileCard>
-            ))
+                    </MobileCardContent>
+                  )}
+                </MobileCard>
+              );
+            })
           ) : (
             <div className="p-6 text-center text-muted-foreground">
               {t("managerOvertimeRequestsPage.noRequests")}
@@ -225,8 +305,28 @@ const ManagerOvertimeRequests = () => {
         setPerPage={setLimit}
         className="mt-4"
       />
-    </Layout>
+    </>
   );
+
+  return embedded ? content : <Layout>{content}</Layout>;
 };
 
 export default ManagerOvertimeRequests;
+
+const InfoTile = ({
+  icon,
+  label,
+  value,
+}: {
+  icon?: JSX.Element;
+  label: string;
+  value: string | number;
+}) => (
+  <div className="rounded-xl bg-slate-50 p-3">
+    <MobileCardLabel>{label}</MobileCardLabel>
+    <MobileCardValue className="mt-1 flex items-center gap-1.5">
+      {icon}
+      <span>{value}</span>
+    </MobileCardValue>
+  </div>
+);

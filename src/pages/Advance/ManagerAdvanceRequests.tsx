@@ -1,4 +1,5 @@
 // pages/ManagerAdvanceRequests.tsx
+import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import PortalCard from "@/components/portal/PortalCard";
 import StatusBadge from "@/components/portal/StatusBadge";
@@ -11,7 +12,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { FileText, Search, X, Eye } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  Eye,
+  FileText,
+  HandCoins,
+  Search,
+  X,
+} from "lucide-react";
 import LoadingFull from "@/components/ui/LoadingSkeleton";
 import ManagerAdvanceRequestModal from "./ManagerAdvanceRequestModal";
 import UnifiedPagination from "@/components/ui/pagination";
@@ -25,8 +34,19 @@ import {
 } from "@/components/ui/MobileCard";
 import { useManagerAdvances } from "@/hooks/Advance/useManagerAdvances";
 import { format } from "date-fns";
+import type { AdvanceRequest } from "@/rtk/interfaces";
 
-const ManagerAdvanceRequests = () => {
+interface ManagerAdvanceRequestsProps {
+  embedded?: boolean;
+}
+
+const ManagerAdvanceRequests = ({
+  embedded = false,
+}: ManagerAdvanceRequestsProps) => {
+  const [expandedMobileCardId, setExpandedMobileCardId] = useState<
+    string | null
+  >(null);
+
   const {
     data,
     isLoading,
@@ -53,65 +73,88 @@ const ManagerAdvanceRequests = () => {
     if (!date) return "-";
     const parsed = new Date(date);
     if (isNaN(parsed.getTime())) return "-";
-    return format(parsed, "PPP");
+    return format(parsed, "P");
   };
 
-  if (isLoading)
-    return (
+  const statuses = [
+    { value: "", label: "All" },
+    { value: "pending", label: "Pending" },
+    { value: "approved", label: "Approved" },
+    { value: "rejected", label: "Rejected" },
+  ];
+
+  if (isLoading) {
+    const loader = (
       <LoadingFull titleLines={2} cardLines={4} className="min-h-[60vh]" />
     );
 
-  return (
-    <Layout>
+    return embedded ? loader : <Layout>{loader}</Layout>;
+  }
+
+  const content = (
+    <>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-portal-header">
-            {t("managerAdvanceRequestsPage.title")}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {t("managerAdvanceRequestsPage.subtitle")}
-          </p>
-        </div>
+        {!embedded && (
+          <div>
+            <h1 className="text-2xl font-bold text-portal-header">
+              {t("managerAdvanceRequestsPage.title")}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {t("managerAdvanceRequestsPage.subtitle")}
+            </p>
+          </div>
+        )}
 
         {/* Filters */}
         <PortalCard
           title={t("managerAdvanceRequestsPage.filters")}
           icon={<Search className="h-5 w-5" />}
         >
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 flex-wrap">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder={t("managerAdvanceRequestsPage.searchPlaceholder")}
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-primary"
-              />
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between flex-wrap p-4">
+            <div className="flex flex-col gap-2 w-full md:flex-1 md:min-w-[200px]">
+              <label className="text-xs text-muted-foreground">
+                {t("managerLeavesPage.search")}
+              </label>
+              <div className="relative">
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={t(
+                    "managerAdvanceRequestsPage.searchPlaceholder",
+                  )}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="w-full ps-9 pe-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-primary"
+                />
+              </div>
             </div>
-            <div className="flex-1 min-w-[120px]">
+            <div className="flex flex-col gap-2 w-full md:flex-1 md:min-w-[120px]">
               <label className="text-xs text-muted-foreground mb-1 block">
                 {t("managerAdvanceRequestsPage.status")}
               </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full border rounded-md px-3 py-2 text-sm"
-              >
-                <option value="">
-                  {t("managerAdvanceRequestsPage.allStatus")}
-                </option>
-                <option value="pending">
-                  {t("managerAdvanceRequestsPage.pending")}
-                </option>
-                <option value="approved">
-                  {t("managerAdvanceRequestsPage.approved")}
-                </option>
-                <option value="rejected">
-                  {t("managerAdvanceRequestsPage.rejected")}
-                </option>
-              </select>
+
+              <div className="flex flex-wrap gap-2">
+                {statuses.map((item) => {
+                  const isActive = statusFilter === item.value;
+
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => setStatusFilter(item.value)}
+                      className={`
+            px-3 py-1.5 text-sm rounded-full border transition-all duration-200
+            ${
+              isActive
+                ? "bg-primary text-white border-primary shadow-sm"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+            }
+          `}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="flex items-end">
               <Button
@@ -159,7 +202,7 @@ const ManagerAdvanceRequests = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.data.map((req: any) => (
+                    {data.data.map((req: AdvanceRequest) => (
                       <TableRow key={req._id} className="hover:bg-gray-50">
                         <TableCell>{req.userId?.fullName || "-"}</TableCell>
                         <TableCell>{formatDate(req.createdAt)}</TableCell>
@@ -189,53 +232,97 @@ const ManagerAdvanceRequests = () => {
         </div>
 
         {/* Mobile Cards */}
-        <div className="md:hidden space-y-4 mt-4">
+        <div className="mt-4 space-y-3 md:hidden">
           {data?.data?.length ? (
-            data.data.map((req: any) => (
-              <MobileCard key={req._id}>
-                <MobileCardHeader>
-                  <div>
-                    <MobileCardLabel>
-                      {t("managerAdvanceRequestsPage.employee")}
-                    </MobileCardLabel>
-                    <MobileCardValue>
-                      {req.userId?.fullName || "-"}
-                    </MobileCardValue>
-                  </div>
-                  <StatusBadge status={req.status} />
-                </MobileCardHeader>
+            data.data.map((req: AdvanceRequest) => {
+              const isExpanded = expandedMobileCardId === req._id;
 
-                <MobileCardContent>
-                  <MobileCardRow>
-                    <div>
-                      <MobileCardLabel>
-                        {t("managerAdvanceRequestsPage.date")}
-                      </MobileCardLabel>
-                      <MobileCardValue>
-                        {formatDate(req.createdAt)}
-                      </MobileCardValue>
+              return (
+                <MobileCard
+                  key={req._id}
+                  compact
+                  interactive
+                  aria-expanded={isExpanded}
+                  onClick={() =>
+                    setExpandedMobileCardId(isExpanded ? null : req._id)
+                  }
+                  className="overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
+                >
+                  <MobileCardHeader
+                    noBorder={!isExpanded}
+                    className="items-center gap-3 bg-slate-50/80 px-4 py-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                        <HandCoins className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <MobileCardValue className="truncate leading-tight">
+                          {req.userId?.fullName || "-"}
+                        </MobileCardValue>
+                        <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+                          <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">
+                            {formatDate(req.createdAt)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </MobileCardRow>
 
-                  <MobileCardRow>
-                    <div>
-                      <MobileCardLabel>
-                        {t("managerAdvanceRequestsPage.amount")}
-                      </MobileCardLabel>
-                      <MobileCardValue>{req.amount || "-"}</MobileCardValue>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <StatusBadge status={req.status} />
+                      <ChevronDown
+                        className={`h-4 w-4 text-slate-400 transition-transform ${
+                          isExpanded ? "rotate-180" : ""
+                        }`}
+                      />
                     </div>
-                  </MobileCardRow>
+                  </MobileCardHeader>
 
-                  <MobileCardRow>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => setSelectedRequest(req)}>
+                  {isExpanded && (
+                    <MobileCardContent className="space-y-3 px-4 py-4">
+                      <MobileCardRow className="grid-cols-2">
+                        <InfoTile
+                          label={t("managerAdvanceRequestsPage.employee")}
+                          value={req.userId?.fullName || "-"}
+                        />
+                        <InfoTile
+                          label={t("managerAdvanceRequestsPage.amount")}
+                          value={req.amount || "-"}
+                        />
+                      </MobileCardRow>
+
+                      <MobileCardRow className="grid-cols-2">
+                        <InfoTile
+                          label={t("managerAdvanceRequestsPage.date")}
+                          value={formatDate(req.createdAt)}
+                        />
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <MobileCardLabel>
+                            {t("managerAdvanceRequestsPage.status")}
+                          </MobileCardLabel>
+                          <div className="mt-2">
+                            <StatusBadge status={req.status} />
+                          </div>
+                        </div>
+                      </MobileCardRow>
+
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedRequest(req);
+                        }}
+                      >
+                        <Eye className="me-2 h-4 w-4" />
                         {t("managerAdvanceRequestsPage.view")}
                       </Button>
-                    </div>
-                  </MobileCardRow>
-                </MobileCardContent>
-              </MobileCard>
-            ))
+                    </MobileCardContent>
+                  )}
+                </MobileCard>
+              );
+            })
           ) : (
             <div className="p-6 text-center text-muted-foreground">
               {t("managerAdvanceRequestsPage.noRequests")}
@@ -252,20 +339,34 @@ const ManagerAdvanceRequests = () => {
           setPerPage={isMobile ? undefined : setLimit}
           className="mt-4"
         />
-
       </div>
-        {/* Modal */}
-        {selectedRequest && (
-          <ManagerAdvanceRequestModal
-            request={selectedRequest}
-            onClose={() => setSelectedRequest(null)}
-            onApprove={handleApprove}
-            onReject={handleReject}
-            submitting={updating}
-          />
-        )}
-    </Layout>
+      {/* Modal */}
+      {selectedRequest && (
+        <ManagerAdvanceRequestModal
+          request={selectedRequest}
+          onClose={() => setSelectedRequest(null)}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          submitting={updating}
+        />
+      )}
+    </>
   );
+
+  return embedded ? content : <Layout>{content}</Layout>;
 };
 
 export default ManagerAdvanceRequests;
+
+const InfoTile = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) => (
+  <div className="rounded-xl bg-slate-50 p-3">
+    <MobileCardLabel>{label}</MobileCardLabel>
+    <MobileCardValue className="mt-1">{value}</MobileCardValue>
+  </div>
+);

@@ -36,8 +36,8 @@ export const useManagerOvertimeRequests = () => {
     page,
     limit: isMobile ? mobileLimit : limit,
     status: statusFilter,
+    search: searchFilter,
   });
-console.log(data);
 
   const totalPages = data?.totalPages || 1;
 
