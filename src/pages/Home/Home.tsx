@@ -5,33 +5,19 @@ import HomeQuickActions from "@/components/home/HomeQuickActions.tsx";
 import { CalendarDays, Clock3, FileText, MapPin } from "lucide-react";
 
 const Home = () => {
-  // Custom hooks for home page logic
-  const {
-    user,
-    leaveBalances,
-    pendingRequests,
-    activeTab,
-    setActiveTab,
-    navigate,
-    t,
-  } = useHome();
+  const { user, leaveBalances, pendingRequests, navigate, t } = useHome();
 
-  // Custom hook for attendance logic
   const {
     lastCheckIn,
     lastCheckOut,
     workedTimeText,
     locationLoading,
-    currentLocation,
     isWithinDistance,
     canAction,
     handleFingerprint,
     mode,
-    setMode,
-    status,
   } = useAttendance();
 
-  // Redirect to login if not authenticated
   if (!user) navigate("/login");
 
   return (
