@@ -169,12 +169,12 @@ const MyLeavesPanel = () => {
 
             return (
               <MobileCard
-                key={r._id}
+                key={r?._id}
                 compact
                 interactive
                 aria-expanded={isExpanded}
                 onClick={() =>
-                  setExpandedMobileCardId(isExpanded ? null : r._id)
+                  setExpandedMobileCardId(isExpanded ? null : r?._id)
                 }
                 className="overflow-hidden rounded-lg border-slate-200 bg-white p-0 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
               >
@@ -188,18 +188,18 @@ const MyLeavesPanel = () => {
                     </div>
                     <div className="min-w-0">
                       <MobileCardValue className="truncate leading-tight">
-                        {r.leaveType?.typeKey || "-"}
+                        {r?.leaveType?.typeKey || "-"}
                       </MobileCardValue>
                       <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
                         <CalendarDays className="h-3.5 w-3.5 shrink-0" />
                         <span className="truncate">
-                          {formatDate(r.startDate)} - {formatDate(r.endDate)}
+                          {formatDate(r?.startDate)} - {formatDate(r?.endDate)}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <StatusBadge status={r.status} />
+                    <StatusBadge status={r?.status} />
                     <ChevronDown
                       className={`h-4 w-4 text-slate-400 transition-transform ${
                         isExpanded ? "rotate-180" : ""
@@ -219,11 +219,11 @@ const MyLeavesPanel = () => {
                       </div>
                       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                         <p className="min-w-0 text-sm font-semibold leading-snug text-slate-900">
-                          {formatDate(r.startDate)}
+                          {formatDate(r?.startDate)}
                         </p>
                         <ArrowRight className="h-4 w-4 text-slate-400" />
                         <p className="min-w-0 text-end text-sm font-semibold leading-snug text-slate-900">
-                          {formatDate(r.endDate)}
+                          {formatDate(r?.endDate)}
                         </p>
                       </div>
                     </div>
@@ -235,7 +235,7 @@ const MyLeavesPanel = () => {
                         </MobileCardLabel>
                         <MobileCardValue className="mt-1 flex items-center gap-1.5">
                           <Clock3 className="h-4 w-4 text-slate-400" />
-                          <span>{calculateDays(r.startDate, r.endDate)}</span>
+                          <span>{calculateDays(r?.startDate, r?.endDate)}</span>
                         </MobileCardValue>
                       </div>
                       <div className="rounded-md bg-slate-50 p-3">
@@ -243,10 +243,23 @@ const MyLeavesPanel = () => {
                           {t("myLeavesPage.status")}
                         </MobileCardLabel>
                         <div className="mt-2">
-                          <StatusBadge status={r.status} />
+                          <StatusBadge status={r?.status} />
                         </div>
                       </div>
                     </MobileCardRow>
+
+                    {r?.status === "rejected" && (
+                      <div className="rounded-md bg-slate-50 p-3">
+                        <MobileCardLabel>
+                          {t("leaveRequestModal.rejectionReason")}
+                        </MobileCardLabel>
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                            {r?.reason}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </MobileCardContent>
                 )}
               </MobileCard>
@@ -291,5 +304,3 @@ const EmptyState = ({ t }) => (
     </p>
   </div>
 );
-
-

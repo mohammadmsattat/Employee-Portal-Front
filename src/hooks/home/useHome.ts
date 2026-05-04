@@ -40,10 +40,21 @@ export const useHome = () => {
     return storedGroup ? JSON.parse(storedGroup) : null;
   }, []);
 
+  const leavePolicyId =
+    group?.leavePolicy?._id ||
+    group?.leavePolicy ||
+    group?.policiesSnapshot?.leavePolicy?._id ||
+    group?.policiesSnapshot?.leavePolicy ||
+    user?.groupId?.leavePolicy?._id ||
+    user?.groupId?.leavePolicy ||
+    user?.payrollGroupId?.policiesSnapshot?.leavePolicy?._id ||
+    user?.payrollGroupId?.policiesSnapshot?.leavePolicy ||
+    "";
+
   // ===== Leave Data =====
   const { data: leaveTypesData } = useGetAllLeavesQuery(
-    { page: 1, limit: 100, policyId: group?.leavePolicy?._id || "" },
-    { skip: !group?.leavePolicy?._id },
+    { page: 1, limit: 100, policyId: leavePolicyId },
+    { skip: !leavePolicyId },
   );
 
   const { data: leaveLogsData } = useGetMyLeaveLogsQuery({

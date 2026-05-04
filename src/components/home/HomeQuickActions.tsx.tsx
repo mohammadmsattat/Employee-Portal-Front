@@ -74,28 +74,16 @@ const HomeQuickActions = ({ t }: HomeQuickActionsProps) => {
               <Link
                 key={action.key}
                 to={action.to}
-                className={`group min-h-[118px] rounded-lg border p-4 transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.09)] ${
-                  index === 0
-                    ? "border-blue-200 bg-blue-600 text-white md:col-span-1"
-                    : "border-slate-200 bg-slate-50 text-slate-950 hover:bg-white"
-                }`}
+                className={`group min-h-[118px] rounded-lg border p-4 transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.09)] border-slate-200 bg-slate-50 text-slate-950 hover:bg-white`}
               >
                 <div
-                  className={`mb-5 flex h-10 w-10 items-center justify-center rounded-md ${
-                    index === 0
-                      ? "bg-white/15 text-white ring-1 ring-white/20"
-                      : "bg-white text-blue-600 ring-1 ring-slate-200"
-                  }`}
+                  className={`mb-5 flex h-10 w-10 items-center justify-center rounded-md bg-white text-blue-600 ring-1 ring-slate-200`}
                 >
                   <Icon className="h-5 w-5" />
                 </div>
 
                 <p className="text-sm font-bold">{action.label}</p>
-                <p
-                  className={`mt-1 text-xs ${
-                    index === 0 ? "text-blue-100" : "text-slate-500"
-                  }`}
-                >
+                <p className={`mt-1 text-xs text-slate-500`}>
                   {t("home.quickAccess") || "Quick access"}
                 </p>
               </Link>

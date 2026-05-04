@@ -14,20 +14,31 @@ export const calculateLeaveBalances = (
   leaveTypes: PolicyLeaveType[] = [],
   leaveLogs: LeaveLog[] = []
 ): LeaveBalance[] => {
+  const toNumber = (value: unknown) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const getLeaveTypeId = (leaveType: unknown) => {
+    if (!leaveType) return "";
+    if (typeof leaveType === "string") return leaveType;
+    return (leaveType as { _id?: string })._id || "";
+  };
+
   return leaveTypes.map((leaveType) => {
     let totalAllowed = 0;
 
     switch (leaveType.typeKey) {
       case "annual":
         if (leaveType.annualRules?.length) {
-          totalAllowed = leaveType.annualRules[0].days;
+          totalAllowed = toNumber(leaveType.annualRules[0].days);
         }
         break;
 
       case "sick":
         if (leaveType.sickRules?.length) {
           totalAllowed = leaveType.sickRules.reduce(
-            (acc, rule) => acc + rule.days,
+            (acc, rule) => acc + toNumber(rule.days),
             0
           );
         }
@@ -36,20 +47,20 @@ export const calculateLeaveBalances = (
       case "maternity":
         if (leaveType.maternityRules?.length) {
           totalAllowed = leaveType.maternityRules.reduce(
-            (acc, rule) => acc + rule.days,
+            (acc, rule) => acc + toNumber(rule.days),
             0
           );
         }
         break;
 
       default:
-        totalAllowed = leaveType.singleRules?.days ?? 0;
+        totalAllowed = toNumber(leaveType.singleRules?.days);
         break;
     }
 
     const usedDays = leaveLogs
-      .filter((log) => log.leaveType?._id === leaveType?._id)
-      .reduce((acc, log) => acc + log.days, 0);
+      .filter((log) => getLeaveTypeId(log.leaveType) === leaveType?._id)
+      .reduce((acc, log) => acc + toNumber(log.days), 0);
 
     return {
       _id: leaveType._id,

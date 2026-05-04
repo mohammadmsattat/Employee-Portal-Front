@@ -55,7 +55,7 @@ const ManagerOvertimeRequestModal = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4">
       <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-lg border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.22)] sm:max-w-2xl sm:rounded-lg">
         <div className="flex items-start justify-between gap-4 bg-slate-950 px-5 py-5 text-white">
           <div className="flex min-w-0 items-center gap-3">

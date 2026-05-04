@@ -1,7 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { differenceInDays, isBefore, isAfter, isSameDay } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateLeaveRequestMutation } from "@/rtk/leaves/leaveRequestsApi";
+import {
+  useCreateLeaveRequestMutation,
+  useGetMyLeaveRequestsQuery,
+} from "@/rtk/leaves/leaveRequestsApi";
 import { useGetAllLeavesQuery } from "@/rtk/leaves/LeavesApi";
 import { useGetMyLeaveLogsQuery } from "@/rtk/leaves/LeaveLogsApi";
 import { calculateLeaveBalances } from "@/lib/leaveBalance";
@@ -39,6 +42,17 @@ export const useAddLeaveRequestModal = ({
       return null;
     }
   }, []);
+
+  const leavePolicyId =
+    group?.leavePolicy?._id ||
+    group?.leavePolicy ||
+    group?.policiesSnapshot?.leavePolicy?._id ||
+    group?.policiesSnapshot?.leavePolicy ||
+    user?.groupId?.leavePolicy?._id ||
+    user?.groupId?.leavePolicy ||
+    user?.payrollGroupId?.policiesSnapshot?.leavePolicy?._id ||
+    user?.payrollGroupId?.policiesSnapshot?.leavePolicy ||
+    "";
 
   const [formData, setFormData] = useState<FormState>({
     leaveType: "",
@@ -106,13 +120,18 @@ export const useAddLeaveRequestModal = ({
     isLoading: isLeaveTypesLoading,
     error,
   } = useGetAllLeavesQuery(
-    { page: 1, limit: 100, policyId: group?.leavePolicy?._id || "" },
-    { skip: !group?.leavePolicy?._id },
+    { page: 1, limit: 100, policyId: leavePolicyId },
+    { skip: !leavePolicyId },
   );
 
   const { data: leaveLogsData } = useGetMyLeaveLogsQuery({
     page: 1,
     limit: 200,
+  });
+
+  const { data: myLeaveRequestsData } = useGetMyLeaveRequestsQuery({
+    page: 1,
+    limit: 1,
   });
 
   const leaveBalances = useMemo(() => {
@@ -211,7 +230,8 @@ export const useAddLeaveRequestModal = ({
       (lb: any) => lb._id === formData.leaveType,
     );
 
-    const remainingDays = selectedLeave?.remainingDays || 0;
+    const remainingDays =
+      selectedLeave?.remainingDays ?? myLeaveRequestsData?.summary?.remaining ?? 0;
     const requiresAttachment = selectedLeave?.requiresAttachment || false;
 
     if (
@@ -310,6 +330,29 @@ export const useAddLeaveRequestModal = ({
     (lb: any) => lb._id === formData.leaveType,
   );
 
+  const effectiveSelectedLeave = selectedLeave
+    ? {
+        ...selectedLeave,
+        remainingDays:
+          selectedLeave.remainingDays ??
+          myLeaveRequestsData?.summary?.remaining ??
+          0,
+      }
+    : formData.leaveType && myLeaveRequestsData?.summary
+      ? {
+          _id: formData.leaveType,
+          typeKey:
+            leaveTypesData?.data?.find((type: any) => type._id === formData.leaveType)
+              ?.typeKey || "Leave",
+          totalAllowed: myLeaveRequestsData.summary.totalBalance,
+          usedDays: myLeaveRequestsData.summary.used,
+          remainingDays: myLeaveRequestsData.summary.remaining,
+          requiresAttachment:
+            leaveTypesData?.data?.find((type: any) => type._id === formData.leaveType)
+              ?.requiresAttachment || false,
+        }
+      : selectedLeave;
+
   return {
     formData,
     setFormData,
@@ -322,7 +365,7 @@ export const useAddLeaveRequestModal = ({
     handleSubmit,
     isHoliday,
     group,
-    selectedLeave,
+    selectedLeave: effectiveSelectedLeave,
     getLeaveTypeName,
   };
 };
