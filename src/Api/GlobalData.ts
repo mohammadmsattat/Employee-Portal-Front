@@ -1,6 +1,6 @@
 // src/Api/GlobalData.ts
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8002";
+const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
 
 // ================= AUTH =================
 export const HrLogInEndPoint = "/api/hrauth/login";
@@ -40,7 +40,20 @@ export const attachmentEndPoint = "/api/attachments";
 
 export const workspaceEndPoint = "/api/workspace";
 export const folderEndPoint = "/api/folder";
-export const listEndPoint = "/api/list";
+export const buildListUrl = (workspaceId: string) =>
+  `/api/workspaces/${workspaceId}/lists`;
 
+export const buildFolderUrl = (workspaceId: string) =>
+  `/api/workspaces/${workspaceId}/folders`;
+export const buildTaskUrl = (workspaceId: string) =>
+  `/api/workspaces/${workspaceId}/tasks`;
+
+
+export const buildSubTaskUrl = (
+  workspaceId: string,
+  taskId: string,
+) => `/api/workspaces/${workspaceId}/tasks/${taskId}/subtasks`;
+
+export const timeTrackingEndPoint = "/api/time-tracking";
 // ================= EXPORT BASE =================
 export default baseURL;

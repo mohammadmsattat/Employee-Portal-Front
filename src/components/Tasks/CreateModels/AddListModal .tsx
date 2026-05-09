@@ -8,7 +8,7 @@ import {
   type Role,
 } from "@/hooks/Tasks/CreateModels/useCreateList ";
 
-export const AddListModal = ({ isOpen, onClose, workspaceId, folderId }) => {
+export const AddListModal = ({ isOpen, onClose, workspaceId, folderId , refetchTree }) => {
   const {
     name,
     setName,
@@ -22,11 +22,11 @@ export const AddListModal = ({ isOpen, onClose, workspaceId, folderId }) => {
     staffData,
     addMember,
     submit,
-    isLoading,
+    isLoading,removeMember
   } = useCreateList({
     workspaceId,
     folderId,
-    onClose,
+    onClose,  refetchTree,
   });
 
   if (!isOpen) return null;
@@ -117,8 +117,8 @@ export const AddListModal = ({ isOpen, onClose, workspaceId, folderId }) => {
                     className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm"
                   >
                     <option value="viewer">viewer</option>
-                    <option value="editor">editor</option>
-                    <option value="admin">admin</option>
+                    <option value="member">member</option>
+                    <option value="manager">manager</option>
                   </select>
 
                   <Button
@@ -128,6 +128,48 @@ export const AddListModal = ({ isOpen, onClose, workspaceId, folderId }) => {
                     +
                   </Button>
                 </div>
+                {/* LIST */}
+                {isPrivate && members.length > 0 && (
+                  <div className="space-y-2 max-h-32 overflow-auto">
+                    {members.map((m) => {
+                      const user = staffData?.find((u) => u._id === m.user);
+
+                      return (
+                        <div
+                          key={m.user}
+                          className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100"
+                        >
+                          {/* LEFT */}
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700">
+                              {(user?.fullName || user?.email || "?")
+                                .charAt(0)
+                                .toUpperCase()}
+                            </div>
+
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-slate-800">
+                                {user?.fullName || user?.email}
+                              </span>
+
+                              <span className="text-xs text-slate-500">
+                                {m.role}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* REMOVE */}
+                          <button
+                          onClick={() => removeMember(m.user)}
+                            className="text-red-500 hover:text-red-600 text-xl"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>

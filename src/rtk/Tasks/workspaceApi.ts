@@ -25,10 +25,10 @@ export const workspaceApi = createApi({
       providesTags: ["Workspace"],
     }),
 
- getWorkspaceTree: builder.query<any, void>({
-  query: () => `${workspaceEndPoint}/tree?companyId=${getCompanyId()}`,
-  providesTags: ["Workspace"],
-}),
+    getWorkspaceTree: builder.query<any, void>({
+      query: () => `${workspaceEndPoint}/tree?companyId=${getCompanyId()}`,
+      providesTags: ["Workspace"],
+    }),
     // GET ONE
     getWorkspaceById: builder.query<any, void>({
       query: (id) => `${workspaceEndPoint}/${id}?companyId=${getCompanyId()}`,
@@ -49,7 +49,7 @@ export const workspaceApi = createApi({
     updateWorkspace: builder.mutation<any, { id: string; data: any }>({
       query: ({ id, data }) => ({
         url: `${workspaceEndPoint}/${id}?companyId=${getCompanyId()}`,
-        method: "PUT",
+        method: "PATCH",
         body: data,
       }),
       invalidatesTags: ["Workspace"],

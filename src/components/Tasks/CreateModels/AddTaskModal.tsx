@@ -1,15 +1,16 @@
 import { useTranslation } from "react-i18next";
 import { X, Plus } from "lucide-react";
 import { useAddTaskModal } from "@/hooks/Tasks/CreateModels/useCreateTaskModal";
-import TaskForm from "../TaskForm";
+import TaskForm from "./TaskForm";
 
-const AddTaskModal = ({ isOpen, onClose, listId, workspaceId }) => {
+const AddTaskModal = ({ isOpen, onClose, listId, workspaceId  }) => {
   const { t } = useTranslation();
 
   const { data, formData, setFormData, handleSubmit, isLoading } =
     useAddTaskModal({
       isOpen,
       onClose,
+      workspaceId
     });
 
   if (!isOpen) return null;

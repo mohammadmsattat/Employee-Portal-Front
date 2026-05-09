@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import baseURL, { folderEndPoint } from "@/Api/GlobalData";
+import baseURL, { buildFolderUrl } from "@/Api/GlobalData";
 
 const getJWT = () => localStorage.getItem("token");
 const getCompanyId = () => localStorage.getItem("company");
@@ -20,42 +20,41 @@ export const folderApi = createApi({
 
   endpoints: (builder) => ({
 
-    // GET BY WORKSPACE
+    // GET FOLDERS (by workspace)
     getFolders: builder.query<any, string>({
       query: (workspaceId) =>
-        `${folderEndPoint}/workspace/${workspaceId}?companyId=${getCompanyId()}`,
+        `${buildFolderUrl(workspaceId)}?companyId=${getCompanyId()}`,
       providesTags: ["Folder"],
     }),
 
-    // CREATE
+    // CREATE FOLDER
     createFolder: builder.mutation<any, any>({
-      query: (data) => ({
-        url: `${folderEndPoint}?companyId=${getCompanyId()}`,
+      query: ({ data, workspaceId }) => ({
+        url: `${buildFolderUrl(workspaceId)}?companyId=${getCompanyId()}`,
         method: "POST",
         body: data,
       }),
       invalidatesTags: ["Folder"],
     }),
 
-    // UPDATE
-    updateFolder: builder.mutation<any, { id: string; data: any }>({
-      query: ({ id, data }) => ({
-        url: `${folderEndPoint}/${id}?companyId=${getCompanyId()}`,
-        method: "PUT",
+    // UPDATE FOLDER
+    updateFolder: builder.mutation<any, { workspaceId: string; id: string; data: any }>({
+      query: ({ workspaceId, id, data }) => ({
+        url: `${buildFolderUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
+        method: "PATCH",
         body: data,
       }),
       invalidatesTags: ["Folder"],
     }),
 
-    // DELETE
-    deleteFolder: builder.mutation<any, string>({
-      query: (id) => ({
-        url: `${folderEndPoint}/${id}?companyId=${getCompanyId()}`,
+    // DELETE FOLDER
+    deleteFolder: builder.mutation<any, { workspaceId: string; id: string }>({
+      query: ({ workspaceId, id }) => ({
+        url: `${buildFolderUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Folder"],
     }),
-
   }),
 });
 

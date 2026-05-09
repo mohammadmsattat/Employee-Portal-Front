@@ -10,7 +10,7 @@ import {
   useAddAttachmentMutation,
 } from "@/rtk/Tasks/attachmentsApi";
 
-export const useTaskDetailsModal = ({ task, onClose }) => {
+export const useTaskDetailsModal = ({ task, onClose ,workspaceId }) => {
   const taskId = task?._id;
   console.log(task);
 
@@ -81,6 +81,7 @@ export const useTaskDetailsModal = ({ task, onClose }) => {
     await updateTask({
       id: taskId,
       data: form,
+      workspaceId,
     });
     onClose();
   };

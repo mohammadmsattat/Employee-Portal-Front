@@ -1,14 +1,23 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
 import Layout from "@/components/layout/Layout";
 import TasksTableView from "@/components/Tasks/TasksTableView";
-import FolderSidebar from "@/components/Tasks/FolderSidebar";
 import TaskFilters from "@/components/Tasks/TaskFilters";
+
 import { useGetAllTasksQuery } from "@/rtk/Tasks/tasksApi";
 import { useGetWorkspaceTreeQuery } from "@/rtk/Tasks/workspaceApi";
+
 import AddTaskModal from "@/components/Tasks/CreateModels/AddTaskModal";
-import { Loader2, AlertTriangle, Inbox } from "lucide-react";
 import TaskDetailsModal from "@/components/Tasks/DetailsModels/TaskDetailsModal";
+
 import { Button } from "@/components/ui/button";
+
+import FolderSidebar from "@/components/Tasks/FolderSidebar";
+
+import { AlertTriangle, Inbox } from "lucide-react";
+
+import { hasPermission } from "@/lib/permissions";
+import AddSubTaskModal from "@/components/Tasks/CreateModels/AddSubTaskModal";
 
 /* =========================
    SKELETONS
@@ -46,6 +55,7 @@ const EmptyState = ({ text }) => (
 const ErrorState = ({ text, onRetry }) => (
   <div className="flex flex-col items-center justify-center py-16 text-red-500">
     <AlertTriangle className="h-10 w-10 mb-3" />
+
     <p className="text-sm mb-3">{text}</p>
 
     {onRetry && (
@@ -59,32 +69,53 @@ const ErrorState = ({ text, onRetry }) => (
   </div>
 );
 
-const LoadingState = () => (
-  <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-    <Loader2 className="h-8 w-8 animate-spin mb-3" />
-    <p className="text-sm">Loading...</p>
-  </div>
-);
-
 /* =========================
    PAGE
 ========================= */
 
 const TasksPage = () => {
-  const [selectedTask, setSelectedTask] = useState(null);
+  /* =========================
+     MAIN STATE
+  ========================= */
+
   const [selectedList, setSelectedList] = useState(null);
-  const [openTaskModal, setOpenTaskModal] = useState(false);
+
+  const [selectedContext, setSelectedContext] = useState(null);
+
   const [filters, setFilters] = useState({});
 
-  /* WORKSPACE */
+  /* =========================
+     MODALS STATE
+  ========================= */
+
+  // create task / subtask
+  const [openTaskModal, setOpenTaskModal] = useState(false);
+
+  // subtask parent
+  const [subTaskParent, setSubTaskParent] = useState(null);
+
+  // edit modal
+  const [editTask, setEditTask] = useState(null);
+
+  // preview/details modal
+  const [detailsTask, setDetailsTask] = useState(null);
+
+  /* =========================
+     WORKSPACE
+  ========================= */
+
   const {
     data: workspaceTree,
     isLoading: wsLoading,
     error: wsError,
+    refetch: refetchTree,
     refetch: refetchWorkspace,
   } = useGetWorkspaceTreeQuery();
 
-  /* TASKS */
+  /* =========================
+     TASKS
+  ========================= */
+
   const {
     data: tasksData,
     isLoading: tasksLoading,
@@ -93,6 +124,7 @@ const TasksPage = () => {
   } = useGetAllTasksQuery(
     {
       listId: selectedList?._id,
+      workspaceId: selectedContext?.workspace?._id,
       ...filters,
     },
     {
@@ -101,14 +133,67 @@ const TasksPage = () => {
   );
 
   const tasks = tasksData?.data || [];
+
   const isFirstLoad = wsLoading && !workspaceTree;
+
+  /* =========================
+     LIST ROLE
+  ========================= */
+
+  const listRole = selectedContext?.listRole || "viewer";
+
+  const permissions = useMemo(() => {
+    return {
+      canCreateTask: hasPermission(listRole, "create:task"),
+
+      canUpdateTask: hasPermission(listRole, "update:task"),
+
+      canDeleteTask: hasPermission(listRole, "delete:task"),
+
+      canManageMembers: hasPermission(listRole, "manage:members"),
+    };
+  }, [listRole]);
+
+  /* =========================
+     TABLE ACTIONS
+  ========================= */
+
+  // click row
+  const handleSelectTask = (task) => {
+    if (!permissions?.canUpdateTask) return;
+
+    setEditTask(task);
+  };
+
+  // add subtask
+  const handleAddSubTask = (task) => {
+    if (!permissions?.canCreateTask) return;
+
+    setSubTaskParent(task);
+
+    setOpenTaskModal(true);
+  };
+
+  // open edit
+  const handleOpenEdit = (task) => {
+    if (!permissions?.canUpdateTask) return;
+
+    setEditTask(task);
+  };
+
+  // open preview/details
+  const handleOpenDetails = (task) => {
+    setDetailsTask(task);
+  };
+
+  /* =========================
+     RENDER
+  ========================= */
 
   return (
     <Layout>
       <div className="flex h-full gap-4">
-        {/* =========================
-           SIDEBAR
-        ========================= */}
+        {/* SIDEBAR */}
         <div className="shrink-0">
           {isFirstLoad && <SidebarSkeleton />}
 
@@ -122,21 +207,30 @@ const TasksPage = () => {
           {!isFirstLoad && !wsError && (
             <FolderSidebar
               onSelectList={setSelectedList}
+              onSelectContext={setSelectedContext}
               workspaceTree={workspaceTree}
+              refetchTree={refetchTree}
             />
           )}
         </div>
 
-        {/* =========================
-           CONTENT
-        ========================= */}
+        {/* CONTENT */}
         <div className="flex-1 space-y-4">
           {/* HEADER */}
-          {selectedList && (
-            <div className="flex justify-end    px-4 py-3 ">
-              <Button onClick={() => setOpenTaskModal(true)}>+ Add Task</Button>
+          {selectedList && permissions.canCreateTask && (
+            <div className="flex justify-end px-4 py-3">
+              <Button
+                onClick={() => {
+                  setSubTaskParent(null);
+
+                  setOpenTaskModal(true);
+                }}
+              >
+                + Add Task
+              </Button>
             </div>
           )}
+
           {/* FILTERS */}
           <TaskFilters onChange={setFilters} />
 
@@ -163,31 +257,65 @@ const TasksPage = () => {
             !tasksError &&
             tasks.length === 0 && (
               <div className="bg-white border rounded-2xl min-h-[400px] flex flex-col justify-center">
-                <EmptyState text="No tasks yet — create your first task " />
+                <EmptyState text="No tasks yet — create your first task" />
               </div>
             )}
 
-          {/* DATA */}
+          {/* TABLE */}
           {selectedList && !tasksLoading && !tasksError && tasks.length > 0 && (
-            <TasksTableView tasks={tasks} onSelectTask={setSelectedTask} />
+            <TasksTableView
+              tasks={tasks}
+              permissions={permissions}
+              onSelectTask={handleSelectTask}
+              onAddSubTask={handleAddSubTask}
+              onOpenEditModal={handleOpenEdit}
+              onOpenDetailsModal={handleOpenDetails}
+            />
           )}
         </div>
       </div>
+      {/* // ========================= // CREATE TASK / SUBTASK //
+      ========================= */}
+      {!subTaskParent ? (
+        <AddTaskModal
+          isOpen={openTaskModal}
+          onClose={() => {
+            setOpenTaskModal(false);
 
-      {/* MODAL */}
-      <AddTaskModal
-        isOpen={openTaskModal}
-        onClose={() => setOpenTaskModal(false)}
-        listId={selectedList?._id}
-        workspaceId={selectedList?.workspace}
-      />
+            setSubTaskParent(null);
+          }}
+          listId={selectedList?._id}
+          workspaceId={selectedContext?.workspace?._id}
+        />
+      ) : (
+        <AddSubTaskModal
+          isOpen={openTaskModal}
+          onClose={() => {
+            setOpenTaskModal(false);
 
+            setSubTaskParent(null);
+          }}
+          taskId={subTaskParent?._id}
+          workspaceId={selectedContext?.workspace?._id}
+        />
+      )}
+      {/* =========================
+          EDIT TASK
+      ========================= */}
       <TaskDetailsModal
-        task={selectedTask}
-        isOpen={!!selectedTask}
-        onClose={() => setSelectedTask(null)}
-        listName={selectedList?.name}
+        task={editTask}
+        isOpen={!!editTask}
+        onClose={() => setEditTask(null)}
+        workspace={selectedContext?.workspace}
+        folderName={selectedContext?.folder?.name}
+        listName={selectedContext?.list?.name}
+        permissions={permissions}
       />
+      {/* =========================
+          PREVIEW TASK
+          (Future Modal)
+      ========================= */}
+      {detailsTask && <div className="hidden">Future Preview Modal</div>}
     </Layout>
   );
 };

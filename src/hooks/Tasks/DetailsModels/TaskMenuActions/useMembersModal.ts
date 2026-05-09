@@ -3,7 +3,7 @@ import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateTaskMutation } from "@/rtk/Tasks/tasksApi";
 
-export const useMembersModal = ({ isOpen, onClose, task }) => {
+export const useMembersModal = ({ isOpen, onClose, task, workspaceId }) => {
   const { toast } = useToast();
 
   const [updateMembers, { isLoading }] = useUpdateTaskMutation();
@@ -43,27 +43,26 @@ export const useMembersModal = ({ isOpen, onClose, task }) => {
 
   const toggleMember = (id) => {
     setSelectedMembers((prev) =>
-      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id],
     );
   };
 
   const addMember = (id) => {
-    setSelectedMembers((prev) =>
-      prev.includes(id) ? prev : [...prev, id]
-    );
+    setSelectedMembers((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
 
   const removeMember = (id) => {
-    setSelectedMembers((prev) =>
-      prev.filter((m) => m !== id)
-    );
+    setSelectedMembers((prev) => prev.filter((m) => m !== id));
   };
 
   const handleSave = async () => {
     try {
       await updateMembers({
+        workspaceId,
         id: task._id,
-        assignedTo: selectedMembers,
+        data: {
+          assignedTo: selectedMembers,
+        },
       }).unwrap();
 
       toast({

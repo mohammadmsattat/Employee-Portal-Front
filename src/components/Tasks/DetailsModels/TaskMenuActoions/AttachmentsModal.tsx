@@ -1,4 +1,4 @@
-import { useAttachmentsModal } from "@/hooks/Tasks/TaskMenuActions/useAttachmentsModal ";
+import { useAttachmentsModal } from "@/hooks/Tasks/DetailsModels/TaskMenuActions/useAttachmentsModal ";
 import { Task } from "@/interfaces/tasks";
 import { useState } from "react";
 
@@ -6,6 +6,7 @@ const UpdateTaskAttachmentsModal = ({
   task,
   isOpen,
   onClose,
+  
 }: {
   task: Task;
   isOpen: boolean;
@@ -33,7 +34,7 @@ const UpdateTaskAttachmentsModal = ({
             No attachments yet
           </p>
         )}
-{/* 
+        {/* 
         {attachments?.map((a: any) => (
           <div
             key={a._id}

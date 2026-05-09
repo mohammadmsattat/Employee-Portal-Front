@@ -1,4 +1,4 @@
-import { useStatusModal } from "@/hooks/Tasks/TaskMenuActions/useStatusModal ";
+import { useStatusModal } from "@/hooks/Tasks/DetailsModels/TaskMenuActions/useStatusModal ";
 import { Task, TaskStatus } from "@/interfaces/tasks";
 import { X } from "lucide-react";
 
@@ -13,13 +13,14 @@ const UpdateTaskStatusModal = ({
   task,
   isOpen,
   onClose,
+  workspaceId,
 }: {
   task: Task;
   isOpen: boolean;
   onClose: () => void;
+  workspaceId: string;
 }) => {
-  const { status, setStatus, handleSave } =
-    useStatusModal({ task, onClose });
+  const { status, setStatus, handleSave } = useStatusModal({ task, onClose , workspaceId });
 
   if (!isOpen) return null;
 

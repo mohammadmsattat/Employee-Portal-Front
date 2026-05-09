@@ -207,7 +207,7 @@ const TaskForm = ({
       </div>
 
       {/* TAGS */}
-      {mode === "task" && (
+      {/* {mode === "task" && (
         <div className="space-y-2">
           <Label>{t("tasks.tags")}</Label>
           <Input
@@ -218,7 +218,7 @@ const TaskForm = ({
             }
           />
         </div>
-      )}
+      )} */}
 
       {/* ACTIONS */}
       <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">

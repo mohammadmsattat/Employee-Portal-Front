@@ -7,10 +7,10 @@ import {
   Clock,
 } from "lucide-react";
 
-import UpdateTaskMembersModal from "../TaskMenuActoions/MembersModal";
-import UpdateTaskStatusModal from "../TaskMenuActoions/StatusModal ";
-import UpdateTaskDatesModal from "../TaskMenuActoions/DatesModal ";
-import UpdateTaskTimeLogModal from "../TaskMenuActoions/TimeLogModal";
+import UpdateTaskMembersModal from "./TaskMenuActoions/MembersModal";
+import UpdateTaskStatusModal from "./TaskMenuActoions/StatusModal ";
+import UpdateTaskDatesModal from "./TaskMenuActoions/DatesModal ";
+import UpdateTaskTimeLogModal from "./TaskMenuActoions/TimeLogModal";
 
 export default function TaskEditor({
   form,
@@ -21,8 +21,8 @@ export default function TaskEditor({
   handleOpen,
   popoverStyle,
   closeSubModal,
+  workspaceId,
 }) {
-    
   const actionBtn =
     "flex items-center gap-2 px-3 py-2 text-sm rounded-2xl bg-white/80 border border-slate-200/60 text-slate-700 hover:bg-white hover:shadow-sm transition backdrop-blur-sm";
 
@@ -40,25 +40,41 @@ export default function TaskEditor({
       {/* ACTIONS */}
       <div className="px-6 pb-4 flex gap-2 flex-wrap border-b border-slate-200/50">
         <div>
-          <button className={actionBtn} onClick={(e) => handleOpen(e, "status")}>
+          <button
+            className={actionBtn}
+            onClick={(e) => handleOpen(e, "status")}
+          >
             <ArrowRight className="w-4 h-4" /> Move
           </button>
 
           {openPanel === "status" && (
             <div style={popoverStyle()}>
-              <UpdateTaskStatusModal task={task} isOpen onClose={closeSubModal} />
+              <UpdateTaskStatusModal
+                task={task}
+                isOpen
+                onClose={closeSubModal}
+                workspaceId={workspaceId}
+              />
             </div>
           )}
         </div>
 
         <div>
-          <button className={actionBtn} onClick={(e) => handleOpen(e, "members")}>
+          <button
+            className={actionBtn}
+            onClick={(e) => handleOpen(e, "members")}
+          >
             <Users className="w-4 h-4" /> Members
           </button>
 
           {openPanel === "members" && (
             <div style={popoverStyle()}>
-              <UpdateTaskMembersModal task={task} isOpen onClose={closeSubModal} />
+              <UpdateTaskMembersModal
+                task={task}
+                isOpen
+                onClose={closeSubModal}
+                workspaceId={workspaceId}
+              />
             </div>
           )}
         </div>
@@ -70,7 +86,12 @@ export default function TaskEditor({
 
           {openPanel === "dates" && (
             <div style={popoverStyle()}>
-              <UpdateTaskDatesModal task={task} isOpen onClose={closeSubModal} />
+              <UpdateTaskDatesModal
+                task={task}
+                isOpen
+                onClose={closeSubModal}
+                workspaceId={workspaceId}
+              />
             </div>
           )}
         </div>
@@ -82,7 +103,12 @@ export default function TaskEditor({
 
           {openPanel === "time" && (
             <div style={popoverStyle()}>
-              <UpdateTaskTimeLogModal task={task} isOpen onClose={closeSubModal} />
+              <UpdateTaskTimeLogModal
+                task={task}
+                isOpen
+                onClose={closeSubModal}
+                workspaceId={workspaceId}
+              />
             </div>
           )}
         </div>

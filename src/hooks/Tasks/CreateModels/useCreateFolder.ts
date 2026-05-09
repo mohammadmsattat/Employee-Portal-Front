@@ -1,37 +1,45 @@
-    import { useState } from "react";
-    import { useCreateFolderMutation } from "@/rtk/Tasks/folderApi";
+import { useState } from "react";
+import { useCreateFolderMutation } from "@/rtk/Tasks/folderApi";
 
-    interface Props {
-    workspaceId: string | null;
-    onClose?: () => void;
-    }
+interface Props {
+  workspaceId: string | null;
+  onClose?: () => void;
+  refetchTree?: () => void;
+}
 
-    export const useCreateFolder = ({ workspaceId, onClose }: Props) => {
-    const [createFolder, { isLoading }] = useCreateFolderMutation();
+export const useCreateFolder = ({
+  workspaceId,
+  onClose,
+  refetchTree,
+}: Props) => {
+  const [createFolder, { isLoading }] = useCreateFolderMutation();
 
-    const [name, setName] = useState("");
+  const [name, setName] = useState("");
 
-    const reset = () => {
-        setName("");
-    };
+  const reset = () => {
+    setName("");
+  };
 
-    const submit = async () => {
-        if (!name.trim() || !workspaceId) return;
+  const submit = async () => {
+    if (!name.trim() || !workspaceId) return;
 
-        await createFolder({
+    await createFolder({
+      data: {
         name: name.trim(),
         workspace: workspaceId,
-        }).unwrap();
+      },
+      workspaceId,
+    }).unwrap();
+    await refetchTree();
+    reset();
+    onClose?.();
+  };
 
-        reset();
-        onClose?.();
-    };
-
-    return {
-        name,
-        setName,
-        submit,
-        isLoading,
-        reset,
-    };
-    };
+  return {
+    name,
+    setName,
+    submit,
+    isLoading,
+    reset,
+  };
+};

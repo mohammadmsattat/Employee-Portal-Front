@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import baseURL, { listEndPoint } from "@/Api/GlobalData";
+import baseURL, { buildListUrl } from "@/Api/GlobalData";
 
 const getJWT = () => localStorage.getItem("token");
 const getCompanyId = () => localStorage.getItem("company");
@@ -20,58 +20,106 @@ export const listApi = createApi({
 
   endpoints: (builder) => ({
 
-    // GET BY WORKSPACE
-    getLists: builder.query<any, string>({
-      query: (workspaceId) =>
-        `${listEndPoint}/workspace/${workspaceId}?companyId=${getCompanyId()}`,
+    // =========================
+    // GET LISTS BY WORKSPACE
+    // GET /api/workspaces/:workspaceId/lists
+    // =========================
+    getLists: builder.query<any, { workspaceId: string }>({
+      query: ({ workspaceId }) =>
+        `${buildListUrl(workspaceId)}?companyId=${getCompanyId()}`,
       providesTags: ["List"],
     }),
 
-    // GET ONE
-    getListById: builder.query<any, string>({
-      query: (id) => `${listEndPoint}/${id}?companyId=${getCompanyId()}`,
+    // =========================
+    // GET ONE LIST
+    // GET /api/workspaces/:workspaceId/lists/:id
+    // =========================
+    getListById: builder.query<
+      any,
+      { workspaceId: string; id: string }
+    >({
+      query: ({ workspaceId, id }) =>
+        `${buildListUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
       providesTags: ["List"],
     }),
 
-    // CREATE
-    createList: builder.mutation<any, any>({
-      query: (data) => ({
-        url: `${listEndPoint}?companyId=${getCompanyId()}`,
+    // =========================
+    // CREATE LIST
+    // POST /api/workspaces/:workspaceId/lists
+    // =========================
+    createList: builder.mutation<
+      any,
+      { workspaceId: string; data: any }
+    >({
+      query: ({ workspaceId, data }) => ({
+        url: `${buildListUrl(workspaceId)}?companyId=${getCompanyId()}`,
         method: "POST",
         body: data,
       }),
       invalidatesTags: ["List"],
     }),
 
-    // UPDATE
-    updateList: builder.mutation<any, { id: string; data: any }>({
-      query: ({ id, data }) => ({
-        url: `${listEndPoint}/${id}?companyId=${getCompanyId()}`,
-        method: "PUT",
+    // =========================
+    // UPDATE LIST
+    // PATCH /api/workspaces/:workspaceId/lists/:id
+    // =========================
+    updateList: builder.mutation<
+      any,
+      { workspaceId: string; id: string; data: any }
+    >({
+      query: ({ workspaceId, id, data }) => ({
+        url: `${buildListUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
+        method: "PATCH",
         body: data,
       }),
       invalidatesTags: ["List"],
     }),
 
-    // DELETE
-    deleteList: builder.mutation<any, string>({
-      query: (id) => ({
-        url: `${listEndPoint}/${id}?companyId=${getCompanyId()}`,
+    // =========================
+    // DELETE LIST
+    // DELETE /api/workspaces/:workspaceId/lists/:id
+    // =========================
+    deleteList: builder.mutation<
+      any,
+      { workspaceId: string; id: string }
+    >({
+      query: ({ workspaceId, id }) => ({
+        url: `${buildListUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
         method: "DELETE",
       }),
       invalidatesTags: ["List"],
     }),
 
+    // =========================
     // ADD MEMBER
-    addListMember: builder.mutation<any, { id: string; userId: string; role: string }>({
-      query: ({ id, userId, role }) => ({
-        url: `${listEndPoint}/${id}/members?companyId=${getCompanyId()}`,
+    // POST /api/workspaces/:workspaceId/lists/:id/members
+    // =========================
+    addListMember: builder.mutation<
+      any,
+      { workspaceId: string; id: string; userId: string; role: string }
+    >({
+      query: ({ workspaceId, id, userId, role }) => ({
+        url: `${buildListUrl(workspaceId)}/${id}/members?companyId=${getCompanyId()}`,
         method: "POST",
         body: { userId, role },
       }),
       invalidatesTags: ["List"],
     }),
 
+    // =========================
+    // REMOVE MEMBER
+    // DELETE /api/workspaces/:workspaceId/lists/:id/members/:userId
+    // =========================
+    removeListMember: builder.mutation<
+      any,
+      { workspaceId: string; id: string; userId: string }
+    >({
+      query: ({ workspaceId, id, userId }) => ({
+        url: `${buildListUrl(workspaceId)}/${id}/members/${userId}?companyId=${getCompanyId()}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["List"],
+    }),
   }),
 });
 
@@ -82,4 +130,5 @@ export const {
   useUpdateListMutation,
   useDeleteListMutation,
   useAddListMemberMutation,
-} = listApi; 
+  useRemoveListMemberMutation,
+} = listApi;

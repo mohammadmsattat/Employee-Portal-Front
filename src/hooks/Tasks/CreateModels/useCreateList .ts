@@ -21,6 +21,7 @@ interface Props {
   workspaceId: string | null;
   folderId: string | null;
   onClose?: () => void;
+  refetchTree?: () => void;
 }
 
 /* =========================
@@ -31,6 +32,7 @@ export const useCreateList = ({
   workspaceId,
   folderId,
   onClose,
+  refetchTree,
 }: Props) => {
   const [createList, { isLoading }] = useCreateListMutation();
 
@@ -62,7 +64,13 @@ export const useCreateList = ({
     const exists = members.some((m) => m.user === selectedUser);
     if (exists) return;
 
-    setMembers((prev) => [...prev, { user: selectedUser, role }]);
+    setMembers((prev) => [
+      ...prev,
+      {
+        user: selectedUser,
+        role,
+      },
+    ]);
 
     setSelectedUser("");
     setRole("viewer");
@@ -74,15 +82,19 @@ export const useCreateList = ({
 
   const submit = async () => {
     if (!name.trim() || !workspaceId || !folderId) return;
+    console.log(workspaceId);
 
     await createList({
-      name: name.trim(),
-      workspace: workspaceId,
-      folder: folderId,
-      visibility,
-      members: visibility === "private" ? members : [],
+      workspaceId,
+      data: {
+        name: name.trim(),
+        workspace: workspaceId,
+        folder: folderId,
+        visibility,
+        members: visibility === "private" ? members : [],
+      },
     }).unwrap();
-
+    await refetchTree();
     reset();
     onClose?.();
   };

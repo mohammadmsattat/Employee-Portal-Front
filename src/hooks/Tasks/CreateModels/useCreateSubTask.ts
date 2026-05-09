@@ -1,12 +1,25 @@
 // hooks/SubTasks/useCreateSubTask.ts
+
 import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
 import { useCreateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
 
-export const useCreateSubTask = (taskId: string, onClose: () => void) => {
+type Props = {
+  taskId: string;
+  workspaceId: string;
+  onClose: () => void;
+};
+
+export const useCreateSubTask = ({
+  taskId,
+  workspaceId,
+  onClose,
+}: Props) => {
   const { toast } = useToast();
-  const [createSubTask, { isLoading }] = useCreateSubTaskMutation();
+
+  const [createSubTask, { isLoading }] =
+    useCreateSubTaskMutation();
 
   const user = useMemo(() => {
     try {
@@ -38,6 +51,7 @@ export const useCreateSubTask = (taskId: string, onClose: () => void) => {
         description: "SubTask title is required",
         variant: "destructive",
       });
+
       return;
     }
 
@@ -55,15 +69,17 @@ export const useCreateSubTask = (taskId: string, onClose: () => void) => {
         description: formData.description,
         status: formData.status,
         priority: formData.priority,
-        assignedTo: assignedToFinal ? [assignedToFinal] : [],
+        assignedTo: assignedToFinal
+          ? [assignedToFinal]
+          : [],
         dueDate: formData.dueDate,
-        task: taskId, 
-        companyId: user.companyId,
-        createdBy: user._id,
-        missionType: "task",
       };
 
-      await createSubTask(payload).unwrap();
+      await createSubTask({
+        workspaceId,
+        taskId,
+        data: payload,
+      }).unwrap();
 
       toast({
         title: "SubTask Created",

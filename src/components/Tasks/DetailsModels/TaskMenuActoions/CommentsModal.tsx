@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCommentsModal } from "@/hooks/Tasks/TaskMenuActions/useCommentsModal ";
+import { useCommentsModal } from "@/hooks/Tasks/DetailsModels/TaskMenuActions/useCommentsModal ";
 import { Task } from "@/interfaces/tasks";
 
 interface Props {
@@ -9,9 +9,8 @@ interface Props {
 }
 
 const UpdateTaskCommentsModal = ({ task, isOpen, onClose }: Props) => {
-  const { comments, addComment, removeComment } =
-    useCommentsModal({ task });
-console.log("111111",comments);
+  const { comments, addComment, removeComment } = useCommentsModal({ task });
+  console.log("111111", comments);
 
   const [text, setText] = useState("");
 
@@ -21,9 +20,7 @@ console.log("111111",comments);
     <div className="flex flex-col h-80 w-full">
       {/* HEADER */}
       <div className="border-b pb-2 mb-2">
-        <h2 className="text-sm font-semibold text-slate-700">
-          Comments
-        </h2>
+        <h2 className="text-sm font-semibold text-slate-700">Comments</h2>
       </div>
 
       {/* COMMENTS LIST */}
@@ -42,15 +39,11 @@ console.log("111111",comments);
             {/* USER + DATE */}
             <div className="flex justify-between text-[10px] text-slate-500 mb-1">
               <span>{c.createdBy?.fullName}</span>
-              <span>
-                {new Date(c.createdAt).toLocaleDateString()}
-              </span>
+              <span>{new Date(c.createdAt).toLocaleDateString()}</span>
             </div>
 
             {/* CONTENT */}
-            <div className="text-slate-700">
-              {c.content}
-            </div>
+            <div className="text-slate-700">{c.content}</div>
 
             {/* DELETE */}
             {/* <button

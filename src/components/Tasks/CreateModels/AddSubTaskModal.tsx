@@ -1,15 +1,21 @@
 // components/SubTasks/AddSubTaskModal.tsx
+
 import { useCreateSubTask } from "@/hooks/Tasks/CreateModels/useCreateSubTask";
 import { X, Plus } from "lucide-react";
-import TaskForm from "../TaskForm";
+import TaskForm from "./TaskForm";
 import { useTranslation } from "react-i18next";
 
-const AddSubTaskModal = ({ isOpen, onClose, taskId }) => {
-  if (!isOpen || !taskId) return null;
+const AddSubTaskModal = ({ isOpen, onClose, taskId, workspaceId }) => {
+  if (!isOpen || !taskId || !workspaceId) return null;
+
   const { t } = useTranslation();
 
   const { data, formData, setFormData, handleSubmit, isLoading } =
-    useCreateSubTask(taskId, onClose);
+    useCreateSubTask({
+      taskId,
+      workspaceId,
+      onClose,
+    });
 
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">

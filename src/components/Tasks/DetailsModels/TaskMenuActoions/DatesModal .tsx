@@ -1,15 +1,22 @@
-import { useDatesModal } from "@/hooks/Tasks/TaskMenuActions/useDatesModal";
+import { useDatesModal } from "@/hooks/Tasks/DetailsModels/TaskMenuActions/useDatesModal";
 import { Task } from "@/interfaces/tasks";
 import { X } from "lucide-react";
 
-const UpdateTaskDatesModal = ({ task, isOpen, onClose }: {
+const UpdateTaskDatesModal = ({
+  task,
+  isOpen,
+  onClose,
+  workspaceId,
+}: {
   task: Task;
   isOpen: boolean;
   onClose: () => void;
+  workspaceId: string;
 }) => {
   const { dates, setDates, handleSave } = useDatesModal({
     task,
     onClose,
+    workspaceId
   });
 
   if (!isOpen) return null;
@@ -39,9 +46,7 @@ const UpdateTaskDatesModal = ({ task, isOpen, onClose }: {
         <input
           type="date"
           value={dates.dueDate}
-          onChange={(e) =>
-            setDates((p) => ({ ...p, dueDate: e.target.value }))
-          }
+          onChange={(e) => setDates((p) => ({ ...p, dueDate: e.target.value }))}
           className="w-full border rounded-md p-2 text-xs"
         />
       </div>

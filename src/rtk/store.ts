@@ -25,6 +25,7 @@ import { staffApi } from "./Staff/StaffApi";
 import { workspaceApi } from "./Tasks/workspaceApi";
 import { folderApi } from "./Tasks/folderApi";
 import { listApi } from "./Tasks/listApi";
+import { timeTrackingApi } from "./Tasks/timeTrackingApi";
 
 export const store = configureStore({
   reducer: {
@@ -52,6 +53,7 @@ export const store = configureStore({
     [subTaskApi.reducerPath]: subTaskApi.reducer,
     [commentApi.reducerPath]: commentApi.reducer,
     [attachmentApi.reducerPath]: attachmentApi.reducer,
+    [timeTrackingApi.reducerPath]: timeTrackingApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -70,6 +72,7 @@ export const store = configureStore({
       .concat(advanceLogsApi.middleware)
       .concat(NotificationsApi.middleware)
       .concat(staffApi.middleware)
+      .concat(timeTrackingApi.middleware)
 
 
       .concat(workspaceApi.middleware)

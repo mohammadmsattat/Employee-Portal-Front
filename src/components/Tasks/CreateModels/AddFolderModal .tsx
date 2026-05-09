@@ -3,10 +3,11 @@ import { X, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCreateFolder } from "@/hooks/Tasks/CreateModels/useCreateFolder";
 
-export const AddFolderModal = ({ isOpen, onClose, workspaceId }) => {
+export const AddFolderModal = ({ isOpen, onClose, workspaceId, refetchTree }) => {
   const { name, setName, submit, isLoading, reset } = useCreateFolder({
     workspaceId,
     onClose,
+    refetchTree,
   });
 
   useEffect(() => {

@@ -19,9 +19,11 @@ interface FormState {
 export const useAddTaskModal = ({
   isOpen,
   onClose,
+  workspaceId
 }: {
   isOpen: boolean;
   onClose: () => void;
+  workspaceId: string;
 }) => {
   const { toast } = useToast();
   const [createTask, { isLoading }] = useCreateTaskMutation();
@@ -108,7 +110,7 @@ export const useAddTaskModal = ({
         createdBy: user._id,
       };
 
-      await createTask(payload).unwrap();
+      await createTask({workspaceId, data: payload }).unwrap();
 
       toast({
         title: "Task Created",

@@ -5,9 +5,10 @@ import { Task } from "@/interfaces/tasks";
 interface Props {
   task: Task;
   onClose: () => void;
+  workspaceId: string;
 }
 
-export const useDatesModal = ({ task, onClose }: Props) => {
+export const useDatesModal = ({ task, onClose ,workspaceId}: Props) => {
   const [updateTask] = useUpdateTaskMutation();
 
   const [dates, setDates] = useState({
@@ -31,6 +32,7 @@ export const useDatesModal = ({ task, onClose }: Props) => {
   const handleSave = async () => {
     try {
       await updateTask({
+        workspaceId,
         id: task._id,
         data: {
           startDate: dates.startDate,

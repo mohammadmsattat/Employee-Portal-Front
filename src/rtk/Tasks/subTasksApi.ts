@@ -1,64 +1,116 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import baseURL, { subTaskEndPoint } from "@/Api/GlobalData";
+
+import baseURL, { buildSubTaskUrl } from "@/Api/GlobalData";
 
 const getJWT = () => localStorage.getItem("token");
 const getCompanyId = () => localStorage.getItem("company");
 
+
+type GetSubTasksArgs = {
+  workspaceId: string;
+  taskId: string;
+};
+
+type GetSubTaskArgs = {
+  workspaceId: string;
+  taskId: string;
+  subTaskId: string;
+};
+
+type CreateSubTaskArgs = {
+  workspaceId: string;
+  taskId: string;
+  data: any;
+};
+
+type UpdateSubTaskArgs = {
+  workspaceId: string;
+  taskId: string;
+  subTaskId: string;
+  data: any;
+};
+
+type DeleteSubTaskArgs = {
+  workspaceId: string;
+  taskId: string;
+  subTaskId: string;
+};
+
 export const subTaskApi = createApi({
   reducerPath: "subTaskApi",
+
   baseQuery: fetchBaseQuery({
     baseUrl: baseURL,
+
     prepareHeaders: (headers) => {
       const jwt = getJWT();
-      if (jwt) headers.set("Authorization", `Bearer ${jwt}`);
+
+      if (jwt) {
+        headers.set("Authorization", `Bearer ${jwt}`);
+      }
+
       return headers;
     },
   }),
+
   tagTypes: ["SubTasks"],
 
   endpoints: (builder) => ({
-    getAllSubTasks: builder.query<any, string | void>({
-      query: (taskId) => {
-        const params = new URLSearchParams({
-          companyId: getCompanyId()!,
-        });
+    /* =========================
+       GET ALL
+    ========================= */
+    getAllSubTasks: builder.query<any, GetSubTasksArgs>({
+      query: ({ workspaceId, taskId }) =>
+        buildSubTaskUrl(workspaceId, taskId),
 
-        if (taskId) params.append("taskId", taskId);
-
-        return `${subTaskEndPoint}?${params.toString()}`;
-      },
       providesTags: ["SubTasks"],
     }),
 
-    getSubTaskById: builder.query<any, string>({
-      query: (id) =>
-        `${subTaskEndPoint}/${id}?companyId=${getCompanyId()}`,
+    /* =========================
+       GET BY ID
+    ========================= */
+    getSubTaskById: builder.query<any, GetSubTaskArgs>({
+      query: ({ workspaceId, taskId, subTaskId }) =>
+        `${buildSubTaskUrl(workspaceId, taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
+
       providesTags: ["SubTasks"],
     }),
 
-    createSubTask: builder.mutation<any, any>({
-      query: (data) => ({
-        url: `${subTaskEndPoint}?companyId=${getCompanyId()}`,
+    /* =========================
+       CREATE
+    ========================= */
+    createSubTask: builder.mutation<any, CreateSubTaskArgs>({
+      query: ({ workspaceId, taskId, data }) => ({
+        url: `${buildSubTaskUrl(workspaceId, taskId)}?companyId=${getCompanyId()}`,
         method: "POST",
         body: data,
       }),
+
       invalidatesTags: ["SubTasks"],
     }),
 
-    updateSubTask: builder.mutation<any, { id: string; data: any }>({
-      query: ({ id, data }) => ({
-        url: `${subTaskEndPoint}/${id}?companyId=${getCompanyId()}`,
+    /* =========================
+       UPDATE
+    ========================= */
+    updateSubTask: builder.mutation<any, UpdateSubTaskArgs>({
+      query: ({ workspaceId, taskId, subTaskId, data }) => ({
+        url: `${buildSubTaskUrl(workspaceId, taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
         method: "PUT",
         body: data,
       }),
+
       invalidatesTags: ["SubTasks"],
     }),
 
-    deleteSubTask: builder.mutation<any, string>({
-      query: (id) => ({
-        url: `${subTaskEndPoint}/${id}?companyId=${getCompanyId()}`,
+    /* =========================
+       DELETE
+    ========================= */
+    deleteSubTask: builder.mutation<any, DeleteSubTaskArgs>({
+      query: ({ workspaceId, taskId, subTaskId }) => ({
+        url: `${buildSubTaskUrl(workspaceId, taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
         method: "DELETE",
       }),
+
       invalidatesTags: ["SubTasks"],
     }),
   }),
