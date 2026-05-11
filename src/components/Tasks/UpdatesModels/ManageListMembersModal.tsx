@@ -40,7 +40,7 @@ export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
   if (!isOpen) return null;
 
   const members = data?.data?.members || [];
-console.log(members);
+  console.log(members);
 
   const handleAdd = async () => {
     if (!selectedUser || !workspace?._id) return;
@@ -127,6 +127,8 @@ console.log(members);
                 onChange={(e) => setRole(e.target.value)}
                 className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm"
               >
+                {" "}
+                <option value="viewer">viewer</option>
                 <option value="member">member</option>
                 <option value="manager">manager</option>
               </select>
@@ -148,7 +150,7 @@ console.log(members);
             <div className="space-y-2 max-h-64 overflow-auto">
               {members?.map((m) => {
                 const user = m.user;
-                
+
                 return (
                   <div
                     key={user?._id}

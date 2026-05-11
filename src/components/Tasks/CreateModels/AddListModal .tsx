@@ -7,11 +7,21 @@ import {
   type Visibility,
   type Role,
 } from "@/hooks/Tasks/CreateModels/useCreateList ";
+import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
 
-export const AddListModal = ({ isOpen, onClose, workspaceId, folderId , refetchTree }) => {
+export const AddListModal = ({
+  isOpen,
+  onClose,
+  workspaceId,
+  folderId,
+  refetchTree,
+}) => {
   const {
     name,
     setName,
+    search,
+    setSearch,
+    filteredStaff,
     visibility,
     setVisibility,
     members,
@@ -22,11 +32,13 @@ export const AddListModal = ({ isOpen, onClose, workspaceId, folderId , refetchT
     staffData,
     addMember,
     submit,
-    isLoading,removeMember
+    isLoading,
+    removeMember,
   } = useCreateList({
     workspaceId,
     folderId,
-    onClose,  refetchTree,
+    onClose,
+    refetchTree,
   });
 
   if (!isOpen) return null;
@@ -36,7 +48,8 @@ export const AddListModal = ({ isOpen, onClose, workspaceId, folderId , refetchT
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">
       <div className="w-full sm:max-w-lg">
-        <div className="max-h-[88vh] overflow-y-auto rounded-t-[28px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:rounded-[32px]">
+        <div className="rounded-t-[28px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:rounded-[32px]">
+          {" "}
           {/* HEADER */}
           <div className="p-5 border-b border-slate-200/70">
             <div className="mb-2 inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold tracking-wide text-blue-700">
@@ -59,19 +72,18 @@ export const AddListModal = ({ isOpen, onClose, workspaceId, folderId , refetchT
               <X className="h-4 w-4" />
             </button>
           </div>
-
           {/* BODY */}
-          <div className="p-5 space-y-4">
+          <div className="max-h-[60vh]  p-5 space-y-4">
+            {" "}
             {/* NAME */}
             <div>
               <label className="text-xs text-slate-500">List name </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:shadow-md"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
               />
             </div>
-
             {/* VISIBILITY */}
             <div>
               <label className="text-xs text-slate-500">Visibility</label>
@@ -87,7 +99,6 @@ export const AddListModal = ({ isOpen, onClose, workspaceId, folderId , refetchT
                 ))}
               </select>
             </div>
-
             {/* MEMBERS */}
             {isPrivate && (
               <div className="space-y-2">
@@ -97,19 +108,12 @@ export const AddListModal = ({ isOpen, onClose, workspaceId, folderId , refetchT
                 </label>
 
                 <div className="flex gap-2">
-                  <select
-                    value={selectedUser}
-                    onChange={(e) => setSelectedUser(e.target.value)}
-                    className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                  >
-                    <option value="">Select user</option>
-
-                    {staffData?.map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.fullName || u.email}
-                      </option>
-                    ))}
-                  </select>
+                  <MemberSearchSelect
+                    options={staffData || []}
+                    selectedValue={selectedUser}
+                    onChange={setSelectedUser}
+                    placeholder="Search employee..."
+                  />
 
                   <select
                     value={role}
@@ -160,7 +164,7 @@ export const AddListModal = ({ isOpen, onClose, workspaceId, folderId , refetchT
 
                           {/* REMOVE */}
                           <button
-                          onClick={() => removeMember(m.user)}
+                            onClick={() => removeMember(m.user)}
                             className="text-red-500 hover:text-red-600 text-xl"
                           >
                             ×
@@ -173,7 +177,6 @@ export const AddListModal = ({ isOpen, onClose, workspaceId, folderId , refetchT
               </div>
             )}
           </div>
-
           {/* FOOTER */}
           <div className="flex justify-end gap-2 p-5 border-t border-slate-200/70">
             <Button onClick={onClose} variant="outline">

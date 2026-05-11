@@ -31,13 +31,36 @@ export const taskApi = createApi({
     // =========================
     getAllTasks: builder.query<
       any,
-      { workspaceId: string; listId?: string }
+      {
+        workspaceId: string;
+        listId?: string;
+        status?: string;
+        priority?: string;
+        assignedTo?: string;
+        due?: string;
+      }
     >({
-      query: ({ workspaceId, listId }) => {
+      query: ({ workspaceId, listId, status, priority, assignedTo, due }) => {
         const params = new URLSearchParams();
 
         if (listId) {
           params.append("listId", listId);
+        }
+
+        if (status) {
+          params.append("status", status);
+        }
+
+        if (priority) {
+          params.append("priority", priority);
+        }
+
+        if (assignedTo) {
+          params.append("assignedTo", assignedTo);
+        }
+
+        if (due) {
+          params.append("due", due);
         }
 
         params.append("companyId", getCompanyId() || "");
@@ -47,15 +70,11 @@ export const taskApi = createApi({
 
       providesTags: ["Tasks"],
     }),
-
     // =========================
     // GET TASK BY ID
     // /api/workspaces/:workspaceId/tasks/:id
     // =========================
-    getTaskById: builder.query<
-      any,
-      { workspaceId: string; id: string }
-    >({
+    getTaskById: builder.query<any, { workspaceId: string; id: string }>({
       query: ({ workspaceId, id }) =>
         `${buildTaskUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
 
@@ -66,10 +85,7 @@ export const taskApi = createApi({
     // CREATE TASK
     // /api/workspaces/:workspaceId/tasks
     // =========================
-    createTask: builder.mutation<
-      any,
-      { workspaceId: string; data: any }
-    >({
+    createTask: builder.mutation<any, { workspaceId: string; data: any }>({
       query: ({ workspaceId, data }) => ({
         url: `${buildTaskUrl(workspaceId)}?companyId=${getCompanyId()}`,
         method: "POST",
@@ -100,10 +116,7 @@ export const taskApi = createApi({
     // DELETE TASK
     // /api/workspaces/:workspaceId/tasks/:id
     // =========================
-    deleteTask: builder.mutation<
-      any,
-      { workspaceId: string; id: string }
-    >({
+    deleteTask: builder.mutation<any, { workspaceId: string; id: string }>({
       query: ({ workspaceId, id }) => ({
         url: `${buildTaskUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
         method: "DELETE",

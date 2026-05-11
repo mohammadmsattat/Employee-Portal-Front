@@ -186,86 +186,86 @@ const TasksTableView = ({
                   </td>
                 </tr>
 
-             {/* SUBTASKS */}
-{isOpen &&
-  subTasks.map((sub) => (
-    <tr
-      key={sub._id}
-      className="group bg-slate-50 border-t text-sm hover:bg-slate-100 transition"
-    >
-      <td className="px-4 py-2 pl-10">
-        <div className="flex items-center gap-2">
-          {sub.status === "done" ? (
-            <CheckCircle2 className="h-4 w-4 text-blue-600" />
-          ) : (
-            <Circle className="h-4 w-4 text-slate-300" />
-          )}
+                {/* SUBTASKS */}
+                {isOpen &&
+                  subTasks.map((sub) => (
+                    <tr
+                      key={sub._id}
+                      className="group bg-slate-50 border-t text-sm hover:bg-slate-100 transition"
+                    >
+                      <td className="px-4 py-2 pl-10">
+                        <div className="flex items-center gap-2">
+                          {sub.status === "done" ? (
+                            <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                          ) : (
+                            <Circle className="h-4 w-4 text-slate-300" />
+                          )}
 
-          {/* TITLE + ACTIONS */}
-          <div className="flex items-center gap-2">
-            <span
-              className={
-                sub.status === "done"
-                  ? "line-through text-slate-400"
-                  : "text-slate-700"
-              }
-            >
-              {sub.title}
-            </span>
+                          {/* TITLE + ACTIONS */}
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={
+                                sub.status === "done"
+                                  ? "line-through text-slate-400"
+                                  : "text-slate-700"
+                              }
+                            >
+                              {sub.title}
+                            </span>
 
-            {/* HOVER ACTIONS */}
-            <div className="opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
-              {/* EDIT MODAL */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                            {/* HOVER ACTIONS */}
+                            <div className="opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
+                              {/* EDIT MODAL */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
 
-                  onOpenEditModal?.(sub);
-                }}
-                className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-blue-600 transition"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+                                  onOpenEditModal?.(sub);
+                                }}
+                                className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-blue-600 transition"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
 
-              {/* DETAILS MODAL */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                              {/* DETAILS MODAL */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
 
-                  onOpenDetailsModal?.(sub);
-                }}
-                className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-blue-600 transition"
-              >
-                <Eye className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </td>
+                                  onOpenDetailsModal?.(sub);
+                                }}
+                                className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-blue-600 transition"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
 
-      <td className="px-4 py-2 capitalize text-slate-500">
-        {sub.status}
-      </td>
+                      <td className="px-4 py-2 capitalize text-slate-500">
+                        {sub.status}
+                      </td>
 
-      <td className="px-4 py-2 capitalize text-slate-500">
-        {sub.priority || "—"}
-      </td>
+                      <td className="px-4 py-2 capitalize text-slate-500">
+                        {sub.priority || "—"}
+                      </td>
 
-      <td className="px-4 py-2 text-slate-400">—</td>
+                      <td className="px-4 py-2 text-slate-400">—</td>
 
-      <td className="px-4 py-2 text-slate-500">
-        {formatDate(sub.startDate)}
-      </td>
+                      <td className="px-4 py-2 text-slate-500">
+                        {formatDate(sub.startDate)}
+                      </td>
 
-      <td className="px-4 py-2 text-slate-500">
-        {formatDate(sub.dueDate)}
-      </td>
+                      <td className="px-4 py-2 text-slate-500">
+                        {formatDate(sub.dueDate)}
+                      </td>
 
-      <td className="px-4 py-2 text-slate-500">
-        {sub.assignedTo?.length || 0}
-      </td>
-    </tr>
-  ))}
+                      <td className="px-4 py-2 text-slate-500">
+                        {sub.assignedTo?.length || 0}
+                      </td>
+                    </tr>
+                  ))}
               </>
             );
           })}

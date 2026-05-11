@@ -1,6 +1,7 @@
 import { X, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCreateWorkspace } from "@/hooks/Tasks/CreateModels/useCreateWorkspace";
+import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
 
 /* =========================
    TYPES
@@ -40,7 +41,7 @@ export const AddWorkspaceModal = ({ isOpen, onClose }: Props) => {
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">
       <div className="w-full sm:max-w-xl">
-        <div className="max-h-[88vh] overflow-y-auto rounded-t-[28px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:rounded-[32px]">
+        <div className="rounded-t-[28px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:rounded-[32px]">
           {/* HEADER */}
           <div className="p-5 border-b border-slate-200/70">
             <div className="mb-2 inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold tracking-wide text-blue-700">
@@ -73,7 +74,7 @@ export const AddWorkspaceModal = ({ isOpen, onClose }: Props) => {
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
               />
             </div>
 
@@ -85,24 +86,17 @@ export const AddWorkspaceModal = ({ isOpen, onClose }: Props) => {
               </label>
 
               <div className="flex gap-2">
-                <select
-                  value={selectedUser}
-                  onChange={(e) => setSelectedUser(e.target.value)}
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                >
-                  <option value="">Select user</option>
-
-                  {staffData?.data?.map((u) => (
-                    <option key={u._id} value={u._id}>
-                      {u.fullName || u.email}
-                    </option>
-                  ))}
-                </select>
+                <MemberSearchSelect
+                  options={staffData?.data || []}
+                  selectedValue={selectedUser}
+                  onChange={setSelectedUser}
+                  placeholder="Search employee..."
+                />
 
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as WorkspaceRole)}
-                  className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm"
+                  className=" rounded-xl border border-slate-200 bg-white px-3py-2.5text-sm outline-none transition focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                 >
                   <option value="viewer">viewer</option>
                   <option value="member">member</option>

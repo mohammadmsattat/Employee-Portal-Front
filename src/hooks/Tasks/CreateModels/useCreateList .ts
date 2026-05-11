@@ -50,6 +50,18 @@ export const useCreateList = ({
 
   const [role, setRole] = useState<Role>("viewer");
 
+
+const [search, setSearch] = useState("");
+
+const filteredStaff = useMemo(() => {
+  if (!search.trim()) return staffData;
+
+  return staffData.filter((u) =>
+    `${u.fullName || ""} ${u.email || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+}, [search, staffData]);
   const reset = () => {
     setName("");
     setVisibility("private");
@@ -102,7 +114,9 @@ export const useCreateList = ({
   return {
     name,
     setName,
-
+search,
+setSearch,
+filteredStaff,
     visibility,
     setVisibility,
 

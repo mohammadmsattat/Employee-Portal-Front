@@ -135,6 +135,7 @@ const TasksPage = () => {
   const tasks = tasksData?.data || [];
 
   const isFirstLoad = wsLoading && !workspaceTree;
+  console.log(tasksData);
 
   /* =========================
      LIST ROLE
@@ -274,7 +275,9 @@ const TasksPage = () => {
           )}
         </div>
       </div>
-      {/* // ========================= // CREATE TASK / SUBTASK //
+
+      {/* // =========================
+      //  // CREATE TASK / SUBTASK //
       ========================= */}
       {!subTaskParent ? (
         <AddTaskModal
