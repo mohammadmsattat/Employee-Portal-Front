@@ -9,17 +9,18 @@ type Props = {
   taskId: string;
   workspaceId: string;
   onClose: () => void;
+  refetchTasks: () => void;
 };
 
 export const useCreateSubTask = ({
   taskId,
   workspaceId,
   onClose,
+  refetchTasks,
 }: Props) => {
   const { toast } = useToast();
 
-  const [createSubTask, { isLoading }] =
-    useCreateSubTaskMutation();
+  const [createSubTask, { isLoading }] = useCreateSubTaskMutation();
 
   const user = useMemo(() => {
     try {
@@ -29,9 +30,7 @@ export const useCreateSubTask = ({
     }
   }, []);
 
-  const { data } = useGetAllStaffQuery({
-    directManager: user?._id,
-  });
+  const { data } = useGetAllStaffQuery({});
 
   const [formData, setFormData] = useState({
     title: "",
@@ -69,9 +68,7 @@ export const useCreateSubTask = ({
         description: formData.description,
         status: formData.status,
         priority: formData.priority,
-        assignedTo: assignedToFinal
-          ? [assignedToFinal]
-          : [],
+        assignedTo: assignedToFinal ? [assignedToFinal] : [],
         dueDate: formData.dueDate,
       };
 
@@ -94,7 +91,7 @@ export const useCreateSubTask = ({
         assignedTo: "",
         dueDate: null,
       });
-
+      refetchTasks();
       onClose();
     } catch (error) {
       toast({

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Layout from "@/components/layout/Layout";
 import TasksTableView from "@/components/Tasks/TasksTableView";
@@ -18,6 +18,8 @@ import { AlertTriangle, Inbox } from "lucide-react";
 
 import { hasPermission } from "@/lib/permissions";
 import AddSubTaskModal from "@/components/Tasks/CreateModels/AddSubTaskModal";
+import TaskChecklistModal from "@/components/Tasks/DetailsModels/TaskChecklistModal";
+import GlobalTaskTimer from "@/components/Tasks/GlobalTaskTimer";
 
 /* =========================
    SKELETONS
@@ -100,6 +102,7 @@ const TasksPage = () => {
   // preview/details modal
   const [detailsTask, setDetailsTask] = useState(null);
 
+  const [checklistTask, setChecklistTask] = useState(null);
   /* =========================
      WORKSPACE
   ========================= */
@@ -187,6 +190,31 @@ const TasksPage = () => {
     setDetailsTask(task);
   };
 
+  const [activeTimers, setActiveTimers] = useState([]);
+
+  useEffect(() => {
+    const sync = () => {
+      const timers = JSON.parse(
+        localStorage.getItem("active-task-timers") || "{}",
+      );
+
+      const runningTimers = Object.entries(timers)
+        .filter(([_, value]) => value.isRunning)
+        .map(([taskId, value]) => ({
+          taskId,
+          from: value.from,
+        }));
+
+      setActiveTimers(runningTimers);
+    };
+
+    sync();
+
+    window.addEventListener("storage", sync);
+
+    return () => window.removeEventListener("storage", sync);
+  }, []);
+
   /* =========================
      RENDER
   ========================= */
@@ -271,11 +299,11 @@ const TasksPage = () => {
               onAddSubTask={handleAddSubTask}
               onOpenEditModal={handleOpenEdit}
               onOpenDetailsModal={handleOpenDetails}
+              onOpenChecklistModal={setChecklistTask}
             />
           )}
         </div>
       </div>
-
       {/* // =========================
       //  // CREATE TASK / SUBTASK //
       ========================= */}
@@ -300,20 +328,33 @@ const TasksPage = () => {
           }}
           taskId={subTaskParent?._id}
           workspaceId={selectedContext?.workspace?._id}
+          refetchTasks={refetchTasks}
         />
       )}
       {/* =========================
           EDIT TASK
       ========================= */}
       <TaskDetailsModal
-        task={editTask}
+        entity={editTask}
         isOpen={!!editTask}
         onClose={() => setEditTask(null)}
         workspace={selectedContext?.workspace}
         folderName={selectedContext?.folder?.name}
         listName={selectedContext?.list?.name}
         permissions={permissions}
+        refetchTasks={refetchTasks}
       />
+      <TaskChecklistModal
+        isOpen={!!checklistTask}
+        task={checklistTask}
+        onClose={() => setChecklistTask(null)}
+      />
+      {activeTimers.map((t) => (
+        <GlobalTaskTimer
+          timers={activeTimers}
+          tasksMap={Object.fromEntries(tasks.map((t) => [t._id, t.title]))}
+        />
+      ))}
       {/* =========================
           PREVIEW TASK
           (Future Modal)

@@ -6,13 +6,14 @@ import TaskEditor from "./TaskEditor";
 import TaskActivity from "./TaskActivity";
 
 export default function TaskDetailsModal({
-  task,
+  entity,
   isOpen,
   onClose,
   workspace,
   folderName,
   listName,
   permissions,
+  refetchTasks,
 }) {
   const {
     form,
@@ -27,12 +28,11 @@ export default function TaskDetailsModal({
     activityLoading,
     activityError,
     refetchActivity,
-  } = useTaskDetailsModal({ task, onClose,workspaceId: workspace?._id });
-  console.log(task);
+  } = useTaskDetailsModal({ entity, onClose, workspaceId: workspace?._id });
 
   const [commentText, setCommentText] = useState("");
 
-  if (!isOpen || !task) return null;
+  if (!isOpen || !entity) return null;
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/30 backdrop-blur-sm p-4">
@@ -62,16 +62,16 @@ export default function TaskDetailsModal({
             form={form}
             updateField={updateField}
             saveTask={saveTask}
-            task={task}
+            entity={entity}
             openPanel={openPanel}
             handleOpen={handleOpen}
             popoverStyle={popoverStyle}
             closeSubModal={closeSubModal}
             workspaceId={workspace?._id}
+            refetchTasks={refetchTasks}
           />
 
           <TaskActivity
-            key={task._id}
             activity={activity}
             commentText={commentText}
             setCommentText={setCommentText}

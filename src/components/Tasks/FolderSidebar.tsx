@@ -108,7 +108,7 @@ const FolderSidebar = ({
 
       if (type === "folder") {
         await updateFolder({
-          workspaceId: id,
+          workspaceId,
           id,
           data: { name },
         }).unwrap();

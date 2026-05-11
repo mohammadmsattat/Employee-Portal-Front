@@ -34,48 +34,33 @@ export const usePersistentTaskTimer = (taskId) => {
     to: "",
   });
 
-  /* =========================
-     LOAD
-  ========================= */
+  /* LOAD */
   useEffect(() => {
     if (!taskId) return;
 
     const timers = getAllTimers();
-    if (timers[taskId]) {
-      setTimerData(timers[taskId]);
-    }
+    if (timers[taskId]) setTimerData(timers[taskId]);
   }, [taskId]);
 
-  /* =========================
-     STORAGE SYNC
-  ========================= */
+  /* SYNC */
   useEffect(() => {
     const sync = () => {
       const timers = getAllTimers();
-      if (timers[taskId]) {
-        setTimerData(timers[taskId]);
-      }
+      if (timers[taskId]) setTimerData(timers[taskId]);
     };
 
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
   }, [taskId]);
 
-  /* =========================
-     GLOBAL TICK
-  ========================= */
+  /* TICK */
   useEffect(() => {
     const interval = setInterval(() => setTick(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  /* =========================
-     ELAPSED TIME
-  ========================= */
   const elapsedSeconds = useMemo(() => {
     if (!timerData.isRunning) return timerData.pausedSeconds;
-
-    if (!timerData.startedAt) return timerData.pausedSeconds;
 
     return (
       timerData.pausedSeconds +
@@ -83,9 +68,6 @@ export const usePersistentTaskTimer = (taskId) => {
     );
   }, [tick, timerData]);
 
-  /* =========================
-     SAVE
-  ========================= */
   const updateStorage = (newData) => {
     const timers = getAllTimers();
     timers[taskId] = newData;
@@ -93,9 +75,6 @@ export const usePersistentTaskTimer = (taskId) => {
     setTimerData(newData);
   };
 
-  /* =========================
-     START
-  ========================= */
   const start = () => {
     if (timerData.isRunning) return;
 
@@ -107,12 +86,7 @@ export const usePersistentTaskTimer = (taskId) => {
     });
   };
 
-  /* =========================
-     PAUSE
-  ========================= */
   const pause = () => {
-    if (!timerData.startedAt) return;
-
     const total =
       timerData.pausedSeconds +
       Math.floor((Date.now() - timerData.startedAt) / 1000);
@@ -126,9 +100,6 @@ export const usePersistentTaskTimer = (taskId) => {
     });
   };
 
-  /* =========================
-     RESET
-  ========================= */
   const reset = () => {
     const timers = getAllTimers();
     delete timers[taskId];
@@ -143,17 +114,12 @@ export const usePersistentTaskTimer = (taskId) => {
     });
   };
 
-  /* =========================
-     FORMAT
-  ========================= */
   const formattedTime = useMemo(() => {
     const h = Math.floor(elapsedSeconds / 3600);
     const m = Math.floor((elapsedSeconds % 3600) / 60);
     const s = elapsedSeconds % 60;
 
-    return [h, m, s]
-      .map((v) => String(v).padStart(2, "0"))
-      .join(":");
+    return [h, m, s].map((v) => String(v).padStart(2, "0")).join(":");
   }, [elapsedSeconds]);
 
   return {

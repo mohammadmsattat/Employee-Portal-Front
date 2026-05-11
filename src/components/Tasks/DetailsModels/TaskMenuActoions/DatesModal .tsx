@@ -1,25 +1,22 @@
 import { useDatesModal } from "@/hooks/Tasks/DetailsModels/TaskMenuActions/useDatesModal";
-import { Task } from "@/interfaces/tasks";
 import { X } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 const UpdateTaskDatesModal = ({
-  task,
+  entity,
   isOpen,
   onClose,
   workspaceId,
-}: {
-  task: Task;
-  isOpen: boolean;
-  onClose: () => void;
-  workspaceId: string;
+  refetchTasks,
 }) => {
   const { dates, setDates, handleSave } = useDatesModal({
-    task,
+    entity,
     onClose,
-    workspaceId
+    workspaceId,
+    refetchTasks,
   });
 
-  if (!isOpen) return null;
+  if (!isOpen || !entity) return null;
 
   return (
     <div className="w-[320px] bg-white border rounded-2xl shadow-xl p-4">
@@ -32,23 +29,34 @@ const UpdateTaskDatesModal = ({
         </button>
       </div>
 
-      {/* INPUTS */}
-      <div className="space-y-3">
-        <input
-          type="date"
-          value={dates.startDate}
-          onChange={(e) =>
-            setDates((p) => ({ ...p, startDate: e.target.value }))
-          }
-          className="w-full border rounded-md p-2 text-xs"
-        />
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* START DATE */}
+          <div className="space-y-2">
+            <Label>Start Date</Label>
+            <input
+              type="date"
+              value={dates.startDate}
+              onChange={(e) =>
+                setDates((p) => ({ ...p, startDate: e.target.value }))
+              }
+              className="w-full border rounded-md p-2 text-xs"
+            />
+          </div>
 
-        <input
-          type="date"
-          value={dates.dueDate}
-          onChange={(e) => setDates((p) => ({ ...p, dueDate: e.target.value }))}
-          className="w-full border rounded-md p-2 text-xs"
-        />
+          {/* DUE DATE */}
+          <div className="space-y-2">
+            <Label>Due Date</Label>
+            <input
+              type="date"
+              value={dates.dueDate}
+              onChange={(e) =>
+                setDates((p) => ({ ...p, dueDate: e.target.value }))
+              }
+              className="w-full border rounded-md p-2 text-xs"
+            />
+          </div>
+        </div>
       </div>
 
       {/* ACTIONS */}

@@ -5,7 +5,6 @@ import baseURL, { buildSubTaskUrl } from "@/Api/GlobalData";
 const getJWT = () => localStorage.getItem("token");
 const getCompanyId = () => localStorage.getItem("company");
 
-
 type GetSubTasksArgs = {
   workspaceId: string;
   taskId: string;
@@ -60,8 +59,7 @@ export const subTaskApi = createApi({
        GET ALL
     ========================= */
     getAllSubTasks: builder.query<any, GetSubTasksArgs>({
-      query: ({ workspaceId, taskId }) =>
-        buildSubTaskUrl(workspaceId, taskId),
+      query: ({ workspaceId, taskId }) => buildSubTaskUrl(workspaceId, taskId),
 
       providesTags: ["SubTasks"],
     }),
@@ -95,7 +93,7 @@ export const subTaskApi = createApi({
     updateSubTask: builder.mutation<any, UpdateSubTaskArgs>({
       query: ({ workspaceId, taskId, subTaskId, data }) => ({
         url: `${buildSubTaskUrl(workspaceId, taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
-        method: "PUT",
+        method: "PATCH",
         body: data,
       }),
 

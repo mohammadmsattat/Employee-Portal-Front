@@ -8,7 +8,7 @@ interface FormState {
   description: string;
   status: string;
   priority: string;
-  assignedTo: string[]; 
+  assignedTo: string[];
   dueDate?: Date;
   startDate?: Date;
   tags: string;
@@ -19,7 +19,7 @@ interface FormState {
 export const useAddTaskModal = ({
   isOpen,
   onClose,
-  workspaceId
+  workspaceId,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -36,9 +36,7 @@ export const useAddTaskModal = ({
     }
   }, []);
 
-  const { data } = useGetAllStaffQuery({
-    directManager: user?._id,
-  });
+  const { data } = useGetAllStaffQuery({});
 
   const [formData, setFormData] = useState<FormState>({
     title: "",
@@ -94,7 +92,7 @@ export const useAddTaskModal = ({
         status: formData.status,
         priority: formData.priority,
 
-        assignedTo: formData.assignedTo, 
+        assignedTo: formData.assignedTo,
 
         dueDate: formData.dueDate,
         startDate: formData.startDate,
@@ -110,7 +108,7 @@ export const useAddTaskModal = ({
         createdBy: user._id,
       };
 
-      await createTask({workspaceId, data: payload }).unwrap();
+      await createTask({ workspaceId, data: payload }).unwrap();
 
       toast({
         title: "Task Created",
@@ -137,4 +135,4 @@ export const useAddTaskModal = ({
     handleSubmit,
     isLoading,
   };
-};  
+};

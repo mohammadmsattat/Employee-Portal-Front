@@ -77,7 +77,8 @@ export const timeTrackingApi = createApi({
     createTimeLog: builder.mutation<
       any,
       {
-        task: string;
+        task?: string;
+        subTask?: string;
         from: string;
         to: string;
         note?: string;
@@ -86,9 +87,7 @@ export const timeTrackingApi = createApi({
     >({
       query: (data) => ({
         url: `${timeTrackingEndPoint}?companyId=${getCompanyId()}`,
-
         method: "POST",
-
         body: data,
       }),
 

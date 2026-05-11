@@ -1,33 +1,49 @@
 import { useState } from "react";
 import { useUpdateTaskMutation } from "@/rtk/Tasks/tasksApi";
-import { Task, TaskStatus } from "@/interfaces/tasks";
+import { useUpdateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
 
 export const useStatusModal = ({
-  task,
+  entity,
   onClose,
-  // onCloseModal,
   workspaceId,
+  refetchTasks
 }: {
-  task: Task;
+  entity: any;
   onClose: () => void;
-  // onCloseModal: () => void;
   workspaceId: string;
+  refetchTasks: () => void;
 }) => {
   const [updateTask] = useUpdateTaskMutation();
-  const [status, setStatus] = useState<TaskStatus>(task.status);
+  const [updateSubTask] = useUpdateSubTaskMutation();
+
+  const data = entity?.data;
+console.log(data);
+
+  const [status, setStatus] = useState(data?.status);
 
   const handleSave = async () => {
     try {
-      await updateTask({
-        workspaceId,
-        id: task._id,
-        data: {
-          status,
-        },
-      }).unwrap();
+      if (entity.type === "task") {
+        await updateTask({
+          workspaceId,
+          id: data._id,
+          data: { status },
+        }).unwrap();
+        refetchTasks();
+      }
+
+      if (entity.type === "subtask") {
+        await updateSubTask({
+          workspaceId,
+          taskId: entity.parentTaskId,
+          subTaskId: data._id,
+          data: { status },
+        }).unwrap();
+
+        refetchTasks();
+      }
 
       onClose();
-      // onCloseModal()
     } catch (err) {
       console.error("Failed to update status", err);
     }

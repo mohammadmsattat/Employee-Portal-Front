@@ -5,7 +5,7 @@ import { X, Plus } from "lucide-react";
 import TaskForm from "./TaskForm";
 import { useTranslation } from "react-i18next";
 
-const AddSubTaskModal = ({ isOpen, onClose, taskId, workspaceId }) => {
+const AddSubTaskModal = ({ isOpen, onClose, taskId, workspaceId ,refetchTasks }) => {
   if (!isOpen || !taskId || !workspaceId) return null;
 
   const { t } = useTranslation();
@@ -15,6 +15,7 @@ const AddSubTaskModal = ({ isOpen, onClose, taskId, workspaceId }) => {
       taskId,
       workspaceId,
       onClose,
+      refetchTasks,
     });
 
   return (
@@ -31,7 +32,7 @@ const AddSubTaskModal = ({ isOpen, onClose, taskId, workspaceId }) => {
                 </div>
 
                 <h3 className="text-xl font-bold text-slate-900 sm:text-2xl">
-                  {t("tasks.createTask")}
+                  {t("tasks.createSubTask")}
                 </h3>
 
                 <p className="mt-1 text-sm text-slate-500">

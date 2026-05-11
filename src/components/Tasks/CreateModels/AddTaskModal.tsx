@@ -31,7 +31,7 @@ const AddTaskModal = ({ isOpen, onClose, listId, workspaceId  }) => {
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">
       <div className="w-full sm:max-w-3xl">
-        <div className="max-h-[88vh] overflow-y-auto rounded-t-[28px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:my-8 sm:max-h-none sm:rounded-[32px]">
+        <div className="max-h-[88vh]  rounded-t-[28px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:my-8 sm:max-h-none sm:rounded-[32px]">
           {/* HEADER */}
           <div className="p-5 sm:p-6 lg:p-7">
             <div className="mb-6 flex items-start justify-between gap-4 border-b border-slate-200/70 pb-4">

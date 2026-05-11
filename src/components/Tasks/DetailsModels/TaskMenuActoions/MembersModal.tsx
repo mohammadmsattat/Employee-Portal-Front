@@ -1,27 +1,32 @@
 import { useMembersModal } from "@/hooks/Tasks/DetailsModels/TaskMenuActions/useMembersModal";
 import { X, UserMinus } from "lucide-react";
 
-const UpdateTaskMembersModal = ({ isOpen, onClose, task ,workspaceId}) => {
-  //hook
+const UpdateTaskMembersModal = ({ isOpen, onClose, entity, workspaceId,refetchTasks }) => {
   const {
     staff,
     selectedMembers,
     addMember,
     removeMember,
     handleSave,
-    isLoading,
   } = useMembersModal({
     isOpen,
     onClose,
-    task,
-    workspaceId
+    entity,
+    workspaceId,
+    refetchTasks
   });
-  console.log(selectedMembers);
+
+  const task = entity?.data;
 
   if (!isOpen || !task) return null;
 
-  const selectedStaff = staff.filter((u) => selectedMembers.includes(u._id));
-  const availableStaff = staff.filter((u) => !selectedMembers.includes(u._id));
+  const selectedStaff = staff.filter((u) =>
+    selectedMembers.includes(u._id)
+  );
+
+  const availableStaff = staff.filter(
+    (u) => !selectedMembers.includes(u._id)
+  );
 
   return (
     <div className="w-[320px] bg-white border rounded-2xl shadow-xl p-4">
@@ -88,7 +93,6 @@ const UpdateTaskMembersModal = ({ isOpen, onClose, task ,workspaceId}) => {
       <div className="mt-4 flex gap-2">
         <button
           onClick={handleSave}
-          disabled={isLoading}
           className="flex-1 bg-blue-600 text-white py-2 text-xs rounded-md"
         >
           Save

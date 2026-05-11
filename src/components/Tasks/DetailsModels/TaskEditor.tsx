@@ -16,12 +16,13 @@ export default function TaskEditor({
   form,
   updateField,
   saveTask,
-  task,
+  entity,
   openPanel,
   handleOpen,
   popoverStyle,
   closeSubModal,
   workspaceId,
+  refetchTasks,
 }) {
   const actionBtn =
     "flex items-center gap-2 px-3 py-2 text-sm rounded-2xl bg-white/80 border border-slate-200/60 text-slate-700 hover:bg-white hover:shadow-sm transition backdrop-blur-sm";
@@ -50,10 +51,11 @@ export default function TaskEditor({
           {openPanel === "status" && (
             <div style={popoverStyle()}>
               <UpdateTaskStatusModal
-                task={task}
+                entity={entity}
                 isOpen
                 onClose={closeSubModal}
                 workspaceId={workspaceId}
+                refetchTasks={refetchTasks}
               />
             </div>
           )}
@@ -70,10 +72,11 @@ export default function TaskEditor({
           {openPanel === "members" && (
             <div style={popoverStyle()}>
               <UpdateTaskMembersModal
-                task={task}
+                entity={entity}
                 isOpen
                 onClose={closeSubModal}
                 workspaceId={workspaceId}
+                refetchTasks={refetchTasks}
               />
             </div>
           )}
@@ -87,10 +90,11 @@ export default function TaskEditor({
           {openPanel === "dates" && (
             <div style={popoverStyle()}>
               <UpdateTaskDatesModal
-                task={task}
+                entity={entity}
                 isOpen
                 onClose={closeSubModal}
                 workspaceId={workspaceId}
+                refetchTasks={refetchTasks}
               />
             </div>
           )}
@@ -104,10 +108,11 @@ export default function TaskEditor({
           {openPanel === "time" && (
             <div style={popoverStyle()}>
               <UpdateTaskTimeLogModal
-                task={task}
+                entity={entity}
                 isOpen
                 onClose={closeSubModal}
                 workspaceId={workspaceId}
+                // refetchTasks={refetchTasks}
               />
             </div>
           )}

@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import { useUpdateTaskMutation } from "@/rtk/Tasks/tasksApi";
-import { Task } from "@/interfaces/tasks";
+import { useUpdateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
 
-interface Props {
-  task: Task;
-  onClose: () => void;
-  workspaceId: string;
-}
-
-export const useDatesModal = ({ task, onClose ,workspaceId}: Props) => {
+export const useDatesModal = ({ entity, onClose, workspaceId, refetchTasks }) => {
   const [updateTask] = useUpdateTaskMutation();
+  const [updateSubTask] = useUpdateSubTaskMutation();
+
+  const data = entity?.data;
 
   const [dates, setDates] = useState({
     startDate: "",
@@ -17,28 +14,43 @@ export const useDatesModal = ({ task, onClose ,workspaceId}: Props) => {
   });
 
   useEffect(() => {
-    if (task) {
-      setDates({
-        startDate: task.startDate
-          ? new Date(task.startDate).toISOString().split("T")[0]
-          : "",
-        dueDate: task.dueDate
-          ? new Date(task.dueDate).toISOString().split("T")[0]
-          : "",
-      });
-    }
-  }, [task]);
+    if (!data) return;
+
+    setDates({
+      startDate: data.startDate
+        ? new Date(data.startDate).toISOString().split("T")[0]
+        : "",
+      dueDate: data.dueDate
+        ? new Date(data.dueDate).toISOString().split("T")[0]
+        : "",
+    });
+  }, [data?._id]);
 
   const handleSave = async () => {
     try {
-      await updateTask({
-        workspaceId,
-        id: task._id,
-        data: {
-          startDate: dates.startDate,
-          dueDate: dates.dueDate,
-        },
-      }).unwrap();
+      const payload = {
+        startDate: dates.startDate,
+        dueDate: dates.dueDate,
+      };
+
+      if (entity.type === "task") {
+        await updateTask({
+          workspaceId,
+          id: data._id,
+          data: payload,
+        }).unwrap();
+        refetchTasks();
+      }
+
+      if (entity.type === "subtask") {
+        await updateSubTask({
+          workspaceId,
+          taskId: entity.parentTaskId,
+          subTaskId: data._id,
+          data: payload,
+        }).unwrap();
+        refetchTasks();
+      }
 
       onClose();
     } catch (err) {

@@ -9,6 +9,7 @@ import {
 } from "@/rtk/Tasks/listApi";
 
 import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
+import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
 
 export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
   const listId = list?._id;
@@ -27,9 +28,7 @@ export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
     }
   }, []);
 
-  const { data: staffData } = useGetAllStaffQuery({
-    directManager: user?._id,
-  });
+  const { data: staffData } = useGetAllStaffQuery({});
 
   const [addMember, { isLoading: adding }] = useAddListMemberMutation();
   const [removeMember, { isLoading: removing }] = useRemoveListMemberMutation();
@@ -104,23 +103,12 @@ export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
           <div className="p-5 space-y-5">
             {/* ADD */}
             <div className="flex gap-2">
-              <select
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-              >
-                <option value="">Select user</option>
-
-                {staffData?.data?.map((u) => (
-                  <option
-                    key={u._id}
-                    value={u._id}
-                    disabled={members.some((m) => m.user._id === u._id)}
-                  >
-                    {u.fullName || u.email}
-                  </option>
-                ))}
-              </select>
+              <MemberSearchSelect
+                options={staffData?.data || []}
+                selectedValue={selectedUser}
+                onChange={setSelectedUser}
+                placeholder="Search employee..."
+              />
 
               <select
                 value={role}

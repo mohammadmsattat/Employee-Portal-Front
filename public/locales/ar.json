@@ -314,7 +314,9 @@
   "tasks": {
     "newTask": "مهمة جديدة",
     "createTask": "إنشاء مهمة",
+    "createSubTask": "إنشاء مهمة فرعية",
     "fillDetails": "قم بتعبئة التفاصيل أدناه لإنشاء مهمة جديدة",
+    
     "title": "العنوان",
     "description": "الوصف",
     "status": "الحالة",

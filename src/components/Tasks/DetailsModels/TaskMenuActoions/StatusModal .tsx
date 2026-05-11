@@ -9,18 +9,13 @@ const statusColors: Record<TaskStatus, string> = {
   done: "bg-green-100 text-green-700",
 };
 
-const UpdateTaskStatusModal = ({
-  task,
-  isOpen,
-  onClose,
-  workspaceId,
-}: {
-  task: Task;
-  isOpen: boolean;
-  onClose: () => void;
-  workspaceId: string;
-}) => {
-  const { status, setStatus, handleSave } = useStatusModal({ task, onClose , workspaceId });
+const UpdateTaskStatusModal = ({ entity, isOpen, onClose, workspaceId,refetchTasks }) => {
+  const { status, setStatus, handleSave } = useStatusModal({
+    entity,
+    onClose,
+    workspaceId,
+    refetchTasks,
+  });
 
   if (!isOpen) return null;
 

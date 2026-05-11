@@ -315,6 +315,7 @@
   },
   "tasks": {
     "newTask": "New Task",
+    "createSubTask": "Create Subtask",
     "createTask": "Create Task",
     "fillDetails": "Fill in the details below to create a new task",
     "title": "Title",

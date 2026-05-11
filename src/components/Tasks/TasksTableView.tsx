@@ -9,6 +9,7 @@ import {
   Plus,
   Pencil,
   Eye,
+  ListChecks,
 } from "lucide-react";
 
 const formatDate = (date) => {
@@ -27,6 +28,7 @@ const TasksTableView = ({
   onAddSubTask,
   onOpenEditModal,
   onOpenDetailsModal,
+  onOpenChecklistModal,
 }) => {
   const [expanded, setExpanded] = useState({});
 
@@ -114,15 +116,24 @@ const TasksTableView = ({
                               onClick={(e) => {
                                 e.stopPropagation();
 
-                                onOpenEditModal?.(task);
+                                onOpenEditModal?.({ type: "task", data: task });
                               }}
                               className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-amber-600 transition"
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
-
-                            {/* DETAILS MODAL */}
+                            {/* CHECKLIST MODAL */}
                             <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenChecklistModal?.(task);
+                              }}
+                              className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-indigo-600 transition"
+                            >
+                              <ListChecks className="h-4 w-4" />
+                            </button>
+                            {/* DETAILS MODAL */}
+                            {/* <button
                               onClick={(e) => {
                                 e.stopPropagation();
 
@@ -131,7 +142,7 @@ const TasksTableView = ({
                               className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-emerald-600 transition"
                             >
                               <Eye className="h-4 w-4" />
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       </div>
@@ -220,15 +231,28 @@ const TasksTableView = ({
                                 onClick={(e) => {
                                   e.stopPropagation();
 
-                                  onOpenEditModal?.(sub);
+                                  onOpenEditModal?.({
+                                    type: "subtask",
+                                    data: sub,
+                                    parentTaskId: task._id,
+                                  });
                                 }}
                                 className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-blue-600 transition"
                               >
                                 <Pencil className="h-4 w-4" />
                               </button>
-
-                              {/* DETAILS MODAL */}
+                              {/* CHECKLIST MODAL */}
                               <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpenChecklistModal?.(task);
+                                }}
+                                className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-indigo-600 transition"
+                              >
+                                <ListChecks className="h-4 w-4" />
+                              </button>
+                              {/* DETAILS MODAL */}
+                              {/* <button
                                 onClick={(e) => {
                                   e.stopPropagation();
 
@@ -237,7 +261,7 @@ const TasksTableView = ({
                                 className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-blue-600 transition"
                               >
                                 <Eye className="h-4 w-4" />
-                              </button>
+                              </button> */}
                             </div>
                           </div>
                         </div>

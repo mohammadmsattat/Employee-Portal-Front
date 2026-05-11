@@ -85,7 +85,7 @@ export const AddListModal = ({
               />
             </div>
             {/* VISIBILITY */}
-            <div>
+            {/* <div>
               <label className="text-xs text-slate-500">Visibility</label>
               <select
                 value={visibility}
@@ -98,9 +98,9 @@ export const AddListModal = ({
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
             {/* MEMBERS */}
-            {isPrivate && (
+            {/* {isPrivate && ( */}
               <div className="space-y-2">
                 <label className="text-xs text-slate-500 flex items-center gap-1">
                   <Users className="h-3 w-3" />
@@ -175,7 +175,7 @@ export const AddListModal = ({
                   </div>
                 )}
               </div>
-            )}
+            {/* )} */}
           </div>
           {/* FOOTER */}
           <div className="flex justify-end gap-2 p-5 border-t border-slate-200/70">

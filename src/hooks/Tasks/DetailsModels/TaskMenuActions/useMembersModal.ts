@@ -2,21 +2,24 @@ import { useEffect, useRef, useState } from "react";
 import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateTaskMutation } from "@/rtk/Tasks/tasksApi";
+import { useUpdateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
 
-export const useMembersModal = ({ isOpen, onClose, task, workspaceId }) => {
+export const useMembersModal = ({ isOpen, onClose, entity, workspaceId, refetchTasks }) => {
   const { toast } = useToast();
 
-  const [updateMembers, { isLoading }] = useUpdateTaskMutation();
+  const [updateTask] = useUpdateTaskMutation();
+  const [updateSubTask] = useUpdateSubTaskMutation();
 
   const { data } = useGetAllStaffQuery({
     directManager: JSON.parse(localStorage.getItem("user"))?._id,
   });
 
-  const [selectedMembers, setSelectedMembers] = useState([]);
+  const task = entity?.data;
 
+  const [selectedMembers, setSelectedMembers] = useState([]);
   const hasInitialized = useRef(false);
 
-  // init selected members safely
+  // init selected members
   useEffect(() => {
     if (!isOpen || !task?._id) return;
 
@@ -26,6 +29,7 @@ export const useMembersModal = ({ isOpen, onClose, task, workspaceId }) => {
     hasInitialized.current = true;
   }, [task?._id, isOpen]);
 
+  // reset on close
   useEffect(() => {
     if (!isOpen) {
       hasInitialized.current = false;
@@ -43,7 +47,7 @@ export const useMembersModal = ({ isOpen, onClose, task, workspaceId }) => {
 
   const toggleMember = (id) => {
     setSelectedMembers((prev) =>
-      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
     );
   };
 
@@ -57,13 +61,28 @@ export const useMembersModal = ({ isOpen, onClose, task, workspaceId }) => {
 
   const handleSave = async () => {
     try {
-      await updateMembers({
-        workspaceId,
-        id: task._id,
-        data: {
-          assignedTo: selectedMembers,
-        },
-      }).unwrap();
+      if (entity.type === "task") {
+        await updateTask({
+          workspaceId,
+          id: task._id,
+          data: {
+            assignedTo: selectedMembers,
+          },
+        }).unwrap();
+        refetchTasks();
+      }
+
+      if (entity.type === "subtask") {
+        await updateSubTask({
+          workspaceId,
+          taskId: entity.parentTaskId,
+          subTaskId: task._id,
+          data: {
+            assignedTo: selectedMembers,
+          },
+        }).unwrap();
+        refetchTasks();
+      }
 
       toast({
         title: "Updated",
@@ -87,6 +106,5 @@ export const useMembersModal = ({ isOpen, onClose, task, workspaceId }) => {
     addMember,
     removeMember,
     handleSave,
-    isLoading,
   };
 };

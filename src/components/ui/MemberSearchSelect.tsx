@@ -15,8 +15,6 @@ const MemberSearchSelect = ({
   placeholder = "Select employee",
   disabled = false,
 }) => {
-  console.log(options);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 

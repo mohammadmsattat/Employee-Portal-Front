@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
 
 type Mode = "task" | "subtask";
 
@@ -161,7 +162,22 @@ const TaskForm = ({
           </Popover>
         </div>
       </div>
+   {/* ASSIGN */}
+      <div className="space-y-2">
+        <Label>{t("tasks.assignTo")}</Label>
 
+        <MemberSearchSelect
+          options={staffData || []}
+          selectedValue={formData.assignedTo?.[0] || ""}
+          onChange={(id) =>
+            setFormData((prev) => ({
+              ...prev,
+              assignedTo: id ? [id] : [],
+            }))
+          }
+          placeholder="Search employee..."
+        />
+      </div>
       {/* DESCRIPTION */}
       <div className="space-y-2">
         <Label>{t("tasks.description")}</Label>
@@ -177,34 +193,7 @@ const TaskForm = ({
           }
         />
       </div>
-      {/* ASSIGN */}
-      <div className="space-y-2">
-        <Label>{t("tasks.assignTo")}</Label>
-
-        <Select
-          value={formData.assignedTo?.[0] || ""}
-          onValueChange={(value) =>
-            setFormData((p) => ({
-              ...p,
-              assignedTo: value ? [value] : [],
-            }))
-          }
-        >
-          <SelectTrigger className="h-12 rounded-2xl border-slate-200">
-            <SelectValue placeholder="Select user" />
-          </SelectTrigger>
-
-          <SelectContent className="z-[9999] bg-white">
-            <SelectItem value="me">Me</SelectItem>
-
-            {staffData?.map((s) => (
-              <SelectItem key={s._id} value={s._id}>
-                {s.fullName || s.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+   
 
       {/* TAGS */}
       {/* {mode === "task" && (
