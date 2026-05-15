@@ -1,10 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export const useFolderSidebar = ({
   onSelectList,
   onSelectContext,
   refetchTree,
 }) => {
+
+    const user = useMemo(() => {
+      try {
+        return JSON.parse(localStorage.getItem("user") || "null");
+      } catch {
+        return null;
+      }
+    }, []);
   const [openWorkspaces, setOpenWorkspaces] = useState({});
   const [openFolders, setOpenFolders] = useState({});
 
@@ -146,6 +154,7 @@ export const useFolderSidebar = ({
 
   return {
     state: {
+      user,
       openWorkspaces,
       openFolders,
 

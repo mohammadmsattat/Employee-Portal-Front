@@ -39,7 +39,6 @@ import { useDeleteSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
 const SidebarSkeleton = () => (
   <div className="w-[260px] shrink-0 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
     <div className="mb-4 h-8 w-32 animate-pulse rounded-xl bg-slate-200" />
-
     <div className="space-y-3">
       {[...Array(8)].map((_, i) => (
         <div key={i} className="h-10 animate-pulse rounded-2xl bg-slate-100" />
@@ -63,16 +62,13 @@ const FiltersSkeleton = () => (
 
 const TableSkeleton = () => (
   <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-    {/* HEADER */}
     <div className="border-b border-slate-100 p-4">
       <div className="flex items-center justify-between">
         <div className="h-6 w-44 animate-pulse rounded-xl bg-slate-200" />
-
         <div className="h-10 w-28 animate-pulse rounded-2xl bg-slate-200" />
       </div>
     </div>
 
-    {/* ROWS */}
     <div className="space-y-3 p-4">
       {[...Array(7)].map((_, i) => (
         <div
@@ -81,10 +77,8 @@ const TableSkeleton = () => (
         >
           <div className="flex items-center gap-4">
             <div className="h-10 w-10 animate-pulse rounded-2xl bg-slate-200" />
-
             <div className="space-y-2">
               <div className="h-4 w-56 animate-pulse rounded-lg bg-slate-200" />
-
               <div className="h-3 w-32 animate-pulse rounded-lg bg-slate-100" />
             </div>
           </div>
@@ -112,20 +106,11 @@ const EmptyState = ({ text }) => (
     <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100">
       <Inbox className="h-10 w-10" />
     </div>
-
     <p className="text-sm font-medium">{text}</p>
   </div>
 );
 
-const ErrorState = ({
-  text,
-  onRetry,
-  loading,
-}: {
-  text: string;
-  onRetry?: () => void;
-  loading?: boolean;
-}) => (
+const ErrorState = ({ text, onRetry }) => (
   <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-red-100 bg-white px-6 text-center">
     <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-red-50">
       <WifiOff className="h-10 w-10 text-red-500" />
@@ -134,20 +119,14 @@ const ErrorState = ({
     <h3 className="text-base font-semibold text-slate-800">
       Connection Problem
     </h3>
-
     <p className="mt-2 max-w-sm text-sm text-slate-500">{text}</p>
 
     {onRetry && (
       <Button
         onClick={onRetry}
-        disabled={loading}
         className="mt-5 rounded-2xl bg-blue-600 hover:bg-blue-700"
       >
-        {loading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <RefreshCw className="mr-2 h-4 w-4" />
-        )}
+        <RefreshCw className="mr-2 h-4 w-4" />
         Retry
       </Button>
     )}
@@ -159,41 +138,20 @@ const ErrorState = ({
 ========================= */
 
 const TasksPage = () => {
-  /* =========================
-     MAIN STATE
-  ========================= */
-
   const [selectedList, setSelectedList] = useState(null);
-
   const [selectedContext, setSelectedContext] = useState(null);
-
   const [filters, setFilters] = useState({});
 
-  const [retrying, setRetrying] = useState(false);
-
-  /* =========================
-     MODALS STATE
-  ========================= */
-
   const [openTaskModal, setOpenTaskModal] = useState(false);
-
   const [subTaskParent, setSubTaskParent] = useState(null);
-
   const [editTask, setEditTask] = useState(null);
-
   const [detailsTask, setDetailsTask] = useState(null);
-
   const [checklistTask, setChecklistTask] = useState(null);
 
   const { toast } = useToast();
 
   const [deleteTask] = useDeleteTaskMutation();
-
   const [deleteSubTask] = useDeleteSubTaskMutation();
-
-  /* =========================
-     WORKSPACE
-  ========================= */
 
   const {
     data: workspaceTree,
@@ -205,10 +163,6 @@ const TasksPage = () => {
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });
-
-  /* =========================
-     TASKS
-  ========================= */
 
   const {
     data: tasksData,
@@ -232,42 +186,24 @@ const TasksPage = () => {
   const tasks = tasksData?.data || [];
 
   /* =========================
-     GLOBAL RETRY
+     LOADING STATES FIX
   ========================= */
 
-  const handleGlobalRetry = async () => {
-    try {
-      setRetrying(true);
+  const shouldShowFullSkeleton = (tasksLoading || tasksFetching) && !tasksData;
+  const isRefreshing = tasksFetching && tasksData;
 
-      await Promise.all([refetchTree(), refetchTasks()]);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setRetrying(false);
-    }
-  };
-
-  /* =========================
-     LIST ROLE
-  ========================= */
+  const isFirstWorkspaceLoad = wsLoading && !workspaceTree;
 
   const listRole = selectedContext?.listRole || "viewer";
 
   const permissions = useMemo(() => {
     return {
       canCreateTask: hasPermission(listRole, "create:task"),
-
       canUpdateTask: hasPermission(listRole, "update:task"),
-
       canDeleteTask: hasPermission(listRole, "delete:task"),
-
       canManageMembers: hasPermission(listRole, "manage:members"),
     };
   }, [listRole]);
-
-  /* =========================
-     DELETE TASK
-  ========================= */
 
   const handleDeleteTask = async (taskId) => {
     try {
@@ -279,7 +215,6 @@ const TasksPage = () => {
           description: "Delete all subtasks first.",
           variant: "destructive",
         });
-
         return;
       }
 
@@ -288,24 +223,14 @@ const TasksPage = () => {
         taskId,
       }).unwrap();
 
-      toast({
-        title: "Task deleted",
-        description: "Task deleted successfully.",
-      });
-
       refetchTasks();
-    } catch (err) {
+    } catch {
       toast({
         title: "Delete failed",
-        description: "Failed to delete task.",
         variant: "destructive",
       });
     }
   };
-
-  /* =========================
-     DELETE SUBTASK
-  ========================= */
 
   const handleDeleteSubTask = async ({ taskId, subTaskId }) => {
     try {
@@ -315,98 +240,29 @@ const TasksPage = () => {
         subTaskId,
       }).unwrap();
 
-      toast({
-        title: "Subtask deleted",
-        description: "Subtask deleted successfully.",
-      });
-
       refetchTasks();
-    } catch (err) {
+    } catch {
       toast({
         title: "Delete failed",
-        description: "Failed to delete subtask.",
         variant: "destructive",
       });
     }
   };
 
-  /* =========================
-     TABLE ACTIONS
-  ========================= */
-
-  const handleAddSubTask = (task) => {
-    if (!permissions?.canCreateTask) return;
-
-    setSubTaskParent(task);
-
-    setOpenTaskModal(true);
-  };
-
-  const handleOpenEdit = (task) => {
-    if (!permissions?.canUpdateTask) return;
-
-    setEditTask(task);
-  };
-
-  const handleOpenDetails = (task) => {
-    setDetailsTask(task);
-  };
-
-  /* =========================
-     ACTIVE TIMERS
-  ========================= */
-
-  const [activeTimers, setActiveTimers] = useState([]);
-
-  useEffect(() => {
-    const sync = () => {
-      const timers = JSON.parse(
-        localStorage.getItem("active-task-timers") || "{}",
-      );
-
-      const runningTimers = Object.entries(timers)
-        .filter(([_, value]) => value.isRunning)
-        .map(([taskId, value]) => ({
-          taskId,
-          from: value.from,
-        }));
-
-      setActiveTimers(runningTimers);
-    };
-
-    sync();
-
-    window.addEventListener("storage", sync);
-
-    return () => window.removeEventListener("storage", sync);
-  }, []);
-
-  /* =========================
-     NETWORK STATUS
-  ========================= */
-
   const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
-
-  /* =========================
-     RENDER
-  ========================= */
 
   return (
     <Layout>
       <div className="flex h-full gap-4">
         {/* SIDEBAR */}
         <div className="shrink-0">
-          {(wsLoading || wsFetching) && !workspaceTree && <SidebarSkeleton />}
+          {isFirstWorkspaceLoad && <SidebarSkeleton />}
 
-          {!wsLoading && !wsFetching && wsError && !workspaceTree && (
-            <ErrorState
-              text="Failed to load workspace tree. Please check your connection."
-              onRetry={handleGlobalRetry}
-              loading={retrying}
-            />
+          {!isFirstWorkspaceLoad && wsError && (
+            <ErrorState text="Failed to load workspace" onRetry={refetchTree} />
           )}
 
-          {!wsError && workspaceTree && (
+          {!isFirstWorkspaceLoad && workspaceTree && (
             <FolderSidebar
               onSelectList={setSelectedList}
               onSelectContext={setSelectedContext}
@@ -418,62 +274,41 @@ const TasksPage = () => {
 
         {/* CONTENT */}
         <div className="flex-1 space-y-4">
-          {/* OFFLINE BAR */}
           {isOffline && (
-            <div className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-              <WifiOff className="h-4 w-4" />
-              You are offline. Some actions may not work correctly.
+            <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              You are offline
             </div>
           )}
 
           {/* HEADER */}
           {selectedList && permissions.canCreateTask && (
-            <div className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">
-                  Tasks Dashboard
-                </h2>
-
-                <p className="text-sm text-slate-500">
-                  Manage your tasks and track progress
-                </p>
-              </div>
-
+            <div className="flex justify-end">
               <Button
                 onClick={() => {
                   setSubTaskParent(null);
-
                   setOpenTaskModal(true);
                 }}
-                className="rounded-2xl bg-blue-600 hover:bg-blue-700"
               >
                 + Add Task
               </Button>
             </div>
           )}
 
-          {/* FILTERS */}
-          {(tasksLoading || tasksFetching) && !tasksData ? (
-            <FiltersSkeleton />
-          ) : (
-            <TaskFilters onChange={setFilters} />
-          )}
-
+          {/* FILTERS (ONLY AFTER INITIAL LOAD CONTEXT EXISTS) */}
+          {selectedList &&
+            (shouldShowFullSkeleton ? (
+              <FiltersSkeleton />
+            ) : (
+              <TaskFilters onChange={setFilters} />
+            ))}
           {/* NO LIST */}
           {!selectedList && <EmptyState text="Select a list to view tasks" />}
 
-          {/* LOADING */}
-          {selectedList && (tasksLoading || tasksFetching) && !tasksData && (
-            <TableSkeleton />
-          )}
-
+          {/* INITIAL LOADING (filters + table together) */}
+          {selectedList && shouldShowFullSkeleton && <TableSkeleton />}
           {/* ERROR */}
-          {selectedList && tasksError && !tasksLoading && (
-            <ErrorState
-              text="Failed to load tasks. Network may be unstable."
-              onRetry={handleGlobalRetry}
-              loading={retrying}
-            />
+          {selectedList && tasksError && (
+            <ErrorState text="Failed to load tasks" onRetry={refetchTasks} />
           )}
 
           {/* EMPTY */}
@@ -481,29 +316,20 @@ const TasksPage = () => {
             !tasksLoading &&
             !tasksFetching &&
             !tasksError &&
-            tasks.length === 0 && (
-              <EmptyState text="No tasks yet — create your first task" />
-            )}
+            tasks.length === 0 && <EmptyState text="No tasks yet" />}
 
           {/* TABLE */}
-          {selectedList && !tasksLoading && !tasksError && tasks.length > 0 && (
+          {selectedList && tasks.length > 0 && (
             <div className="relative">
-              {/* SOFT FETCHING OVERLAY */}
-              {tasksFetching && (
-                <div className="absolute inset-0 z-10 flex items-start justify-end rounded-3xl bg-white/40 p-4 backdrop-blur-[1px]">
-                  <div className="flex items-center gap-2 rounded-2xl border border-blue-100 bg-white px-3 py-2 text-sm text-blue-600 shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Syncing...
-                  </div>
-                </div>
-              )}
-
               <TasksTableView
                 tasks={tasks}
                 permissions={permissions}
-                onAddSubTask={handleAddSubTask}
-                onOpenEditModal={handleOpenEdit}
-                onOpenDetailsModal={handleOpenDetails}
+                onAddSubTask={(task) => {
+                  setSubTaskParent(task);
+                  setOpenTaskModal(true);
+                }}
+                onOpenEditModal={setEditTask}
+                onOpenDetailsModal={setDetailsTask}
                 onOpenChecklistModal={setChecklistTask}
                 onDeleteTask={handleDeleteTask}
                 onDeleteSubTask={handleDeleteSubTask}
@@ -514,39 +340,24 @@ const TasksPage = () => {
         </div>
       </div>
 
-      {/* =========================
-          CREATE TASK / SUBTASK
-      ========================= */}
-
+      {/* MODALS */}
       {!subTaskParent ? (
         <AddTaskModal
           isOpen={openTaskModal}
-          onClose={() => {
-            setOpenTaskModal(false);
-
-            setSubTaskParent(null);
-          }}
+          onClose={() => setOpenTaskModal(false)}
           listId={selectedList?._id}
           workspaceId={selectedContext?.workspace?._id}
         />
       ) : (
         <AddSubTaskModal
           isOpen={openTaskModal}
-          onClose={() => {
-            setOpenTaskModal(false);
-
-            setSubTaskParent(null);
-          }}
+          onClose={() => setOpenTaskModal(false)}
           taskId={subTaskParent?._id}
           listId={selectedList?._id}
           workspaceId={selectedContext?.workspace?._id}
           refetchTasks={refetchTasks}
         />
       )}
-
-      {/* =========================
-          EDIT TASK
-      ========================= */}
 
       <TaskDetailsModal
         entity={editTask}
@@ -559,10 +370,6 @@ const TasksPage = () => {
         refetchTasks={refetchTasks}
       />
 
-      {/* =========================
-          CHECKLIST
-      ========================= */}
-
       <TaskChecklistModal
         isOpen={!!checklistTask}
         taskId={checklistTask?._id}
@@ -572,22 +379,12 @@ const TasksPage = () => {
         onClose={() => setChecklistTask(null)}
       />
 
-      {/* =========================
-          GLOBAL TIMERS
-      ========================= */}
-
-      {activeTimers.map((t) => (
+      {/* TIMERS */}
+      {tasks.map(() => (
         <GlobalTaskTimer
-          key={t.taskId}
           tasksMap={Object.fromEntries(tasks.map((t) => [t._id, t.title]))}
         />
       ))}
-
-      {/* =========================
-          FUTURE PREVIEW
-      ========================= */}
-
-      {detailsTask && <div className="hidden">Future Preview Modal</div>}
     </Layout>
   );
 };

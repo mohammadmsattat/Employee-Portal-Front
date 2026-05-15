@@ -157,11 +157,9 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
               {members.map((m: any) => {
                 const memberUser = m.user;
 
-                const isCurrentUser = memberUser?._id === user?._id;
-
                 const isOwner = m.role === "owner";
 
-                const isProtectedOwner = isCurrentUser && isOwner;
+                const isProtectedOwner = isOwner;
 
                 return (
                   <div

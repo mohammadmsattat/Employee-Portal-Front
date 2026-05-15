@@ -49,6 +49,7 @@ export const useFolderSidebarController = ({ refetchTree }) => {
     type,
     name,
     workspaceId,
+    folderId,
     cancelRename,
   }) => {
     try {
@@ -72,7 +73,7 @@ export const useFolderSidebarController = ({ refetchTree }) => {
       if (type === "folder") {
         await updateFolder({
           workspaceId,
-          id,
+          folderId,
           data: { name },
         }).unwrap();
       }
@@ -81,6 +82,7 @@ export const useFolderSidebarController = ({ refetchTree }) => {
         await updateList({
           workspaceId,
           id,
+          folderId,
           data: { name },
         }).unwrap();
       }

@@ -20,7 +20,12 @@ import { ListMembersModal } from "./UpdatesModels/ManageListMembersModal";
 import { AddFolderModal } from "./CreateModels/AddFolderModal ";
 import { AddListModal } from "./CreateModels/AddListModal ";
 
-import { hasPermission } from "@/lib/permissions";
+import {
+  canManageWorkspace,
+  canManageFolder,
+  canManageList,
+} from "@/lib/permissions";
+
 import { useFolderSidebar } from "@/hooks/Tasks/useFolderSidebar";
 import { useFolderSidebarController } from "@/hooks/Tasks/useFolderSidebarController";
 import { HierarchyActionsMenu } from "./HierarchyActionsMenu";
@@ -88,7 +93,6 @@ const FolderSidebar = ({
     refetchTree,
   });
 
-  // folder-sidebar controller
   const {
     deleteState,
     setDeleteState,
@@ -99,32 +103,6 @@ const FolderSidebar = ({
   } = useFolderSidebarController({
     refetchTree,
   });
-
-  const getEffectiveRole = ({
-    workspaceRole,
-    folderRole,
-    listRole,
-  }: {
-    workspaceRole?: string;
-    folderRole?: string;
-    listRole?: string;
-  }) => {
-    // الأقرب يفوز
-
-    if (listRole) {
-      return listRole;
-    }
-
-    if (folderRole) {
-      return folderRole;
-    }
-
-    if (workspaceRole) {
-      return workspaceRole;
-    }
-
-    return "viewer";
-  };
 
   return (
     <div className="w-fit h-full p-2 bg-white border rounded-xl min-w-[220px]">
@@ -138,13 +116,15 @@ const FolderSidebar = ({
               : "Workspaces"}
         </div>
 
-        <button
-          onClick={() => actions.setOpenWorkspaceModal(true)}
-          className="flex items-center gap-1 text-xs hover:text-blue-600"
-        >
-          <Plus className="h-4 w-4" />
-          Workspace
-        </button>
+        {state.user?.canCreateWorkspace && (
+          <button
+            onClick={() => actions.setOpenWorkspaceModal(true)}
+            className="flex items-center gap-1 text-xs hover:text-blue-600"
+          >
+            <Plus className="h-4 w-4" />
+            Workspace
+          </button>
+        )}
       </div>
 
       {/* TREE */}
@@ -161,12 +141,7 @@ const FolderSidebar = ({
           state.editingItem?.id === workspace._id &&
           state.editingItem?.type === "workspace";
 
-        const canManageWorkspace =
-          hasPermission(workspace.role, "update:workspace") ||
-          hasPermission(workspace.role, "manage:members");
-
-        const canManageFolder =
-          canManageWorkspace || hasPermission(workspace.role, "update:folder");
+        const workspacePermissions = canManageWorkspace(workspace.role);
 
         return (
           <div key={workspace._id} className="relative">
@@ -198,6 +173,7 @@ const FolderSidebar = ({
                         handleRename({
                           workspaceId: workspace._id,
                           id: workspace._id,
+                          folderId: workspace._id,
                           type: "workspace",
                           name: state.editName,
                           cancelRename: actions.cancelRename,
@@ -215,7 +191,7 @@ const FolderSidebar = ({
                 )}
               </button>
 
-              {canManageWorkspace && (
+              {workspacePermissions && (
                 <div className="relative">
                   <button
                     onClick={(e) => {
@@ -275,6 +251,11 @@ const FolderSidebar = ({
                     state.editingItem?.id === folder._id &&
                     state.editingItem?.type === "folder";
 
+                  const folderPermissions = canManageFolder({
+                    workspaceRole: workspace.role,
+                    folderRole: folder.role,
+                  });
+
                   return (
                     <div key={folder._id} className="relative group/folder">
                       <div className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-slate-50">
@@ -304,7 +285,8 @@ const FolderSidebar = ({
                                 className="h-4 w-4 text-green-600 cursor-pointer"
                                 onClick={() =>
                                   handleRename({
-                                    id: folder._id,
+                                    id: null,
+                                    folderId: folder._id,
                                     type: "folder",
                                     name: state.editName,
                                     workspaceId: workspace._id,
@@ -323,7 +305,7 @@ const FolderSidebar = ({
                           )}
                         </button>
 
-                        {canManageFolder && (
+                        {folderPermissions && (
                           <div className="relative">
                             <button
                               onClick={(e) => {
@@ -358,6 +340,7 @@ const FolderSidebar = ({
                               }}
                               onManageFolderMembers={() => {
                                 actions.setMembersFolder(folder);
+
                                 actions.setMenuFolder(null);
                               }}
                               onDelete={() =>
@@ -385,16 +368,12 @@ const FolderSidebar = ({
                               state.editingItem?.id === list._id &&
                               state.editingItem?.type === "list";
 
-                       const effectiveRole = getEffectiveRole({
-  workspaceRole: workspace.role,
-  folderRole: folder.role,
-  listRole: list.listRole,
-});
+                            const listPermissions = canManageList({
+                              workspaceRole: workspace.role,
+                              folderRole: folder.role,
+                              listRole: list.listRole,
+                            });
 
-const canManageList = hasPermission(
-  effectiveRole,
-  "update:list",
-);
                             return (
                               <div
                                 key={list._id}
@@ -406,8 +385,7 @@ const canManageList = hasPermission(
                                       actions.handleSelectList(
                                         {
                                           ...list,
-                                          listRole:
-                                            list.listRole || workspace.role,
+                                          listRole: list.listRole,
                                         },
                                         workspace,
                                         folder,
@@ -435,6 +413,7 @@ const canManageList = hasPermission(
                                               type: "list",
                                               name: state.editName,
                                               workspaceId: workspace._id,
+                                              folderId: folder._id,
                                               cancelRename:
                                                 actions.cancelRename,
                                             })
@@ -454,7 +433,7 @@ const canManageList = hasPermission(
                                     )}
                                   </button>
 
-                                  {canManageList && (
+                                  {listPermissions && (
                                     <div className="relative">
                                       <button
                                         onClick={(e) => {
@@ -537,12 +516,14 @@ const canManageList = hasPermission(
         onClose={() => actions.setMembersWorkspace(null)}
         workspace={state.membersWorkspace}
       />
+
       <FolderMembersModal
         isOpen={!!state.membersFolder}
         folder={state.membersFolder}
         workspace={state.activeWorkspace}
         onClose={() => actions.setMembersFolder(null)}
       />
+
       <ListMembersModal
         isOpen={!!state.membersList}
         onClose={() => actions.setMembersList(null)}
