@@ -385,7 +385,7 @@ const FolderSidebar = ({
                                       actions.handleSelectList(
                                         {
                                           ...list,
-                                          listRole: list.listRole,
+                                          listRole: list.role,
                                         },
                                         workspace,
                                         folder,

@@ -100,7 +100,7 @@ export const useFolderSidebar = ({
     setActiveFolder(folder);
 
     onSelectList?.(list);
-
+    
     onSelectContext?.({
       list,
       workspace,

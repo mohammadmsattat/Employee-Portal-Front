@@ -197,11 +197,13 @@ const TasksPage = () => {
   const listRole = selectedContext?.listRole || "viewer";
 
   const permissions = useMemo(() => {
+    const isViewer = listRole === "viewer";
+
     return {
-      canCreateTask: hasPermission(listRole, "create:task"),
-      canUpdateTask: hasPermission(listRole, "update:task"),
-      canDeleteTask: hasPermission(listRole, "delete:task"),
-      canManageMembers: hasPermission(listRole, "manage:members"),
+      canCreateTask: !isViewer,
+      canUpdateTask: !isViewer,
+      canDeleteTask: !isViewer,
+      canManageMembers: !isViewer,
     };
   }, [listRole]);
 
