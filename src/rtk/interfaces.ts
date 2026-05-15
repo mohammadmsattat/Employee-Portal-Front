@@ -5,20 +5,28 @@ export interface LoginRequest {
   email: string;
   password: string;
 }
+export interface User {
+  _id: string;
+  fullName: string;
+  email: string;
+  companyId: string;
+  groupId: any;
 
-export interface LoginResponse {
-  status: boolean;
-  token: string;
-  user: {
-    _id: string;
-    fullName: string;
-    email: string;
-    companyId?: string;
-    role?: string;
-  };
-  message?: string;
+  branch?: any;
+  department?: any;
+  position?: any;
+
+  phoneNumber?: string;
+  nationality?: string;
+
+  [key: string]: any;
 }
-
+export interface LoginResponse {
+  status: string;
+  company: string;
+  token: string;
+  data: User;
+}
 // ===== SIGN OUT =====
 export interface SignOutRequest {
   email: string;

@@ -22,10 +22,11 @@ import { AddListModal } from "./CreateModels/AddListModal ";
 
 import { hasPermission } from "@/lib/permissions";
 import { useFolderSidebar } from "@/hooks/Tasks/useFolderSidebar";
+import { useFolderSidebarController } from "@/hooks/Tasks/useFolderSidebarController";
 import { HierarchyActionsMenu } from "./HierarchyActionsMenu";
-import { useUpdateWorkspaceMutation } from "@/rtk/Tasks/workspaceApi";
-import { useUpdateFolderMutation } from "@/rtk/Tasks/folderApi";
-import { useUpdateListMutation } from "@/rtk/Tasks/listApi";
+
+import DeleteConfirmModal from "../DeleteConfirmModal";
+import { FolderMembersModal } from "./UpdatesModels/FolderMembersModal";
 
 /* =========================
    ICON SYSTEM
@@ -87,47 +88,42 @@ const FolderSidebar = ({
     refetchTree,
   });
 
-  const [updateWorkspace] = useUpdateWorkspaceMutation();
-  const [updateFolder] = useUpdateFolderMutation();
-  const [updateList] = useUpdateListMutation();
+  // folder-sidebar controller
+  const {
+    deleteState,
+    setDeleteState,
+    deleteLoading,
+    handleRename,
+    handleDelete,
+    requestDelete,
+  } = useFolderSidebarController({
+    refetchTree,
+  });
 
-  /* =========================
-     RENAME HANDLER
-  ========================= */
+  const getEffectiveRole = ({
+    workspaceRole,
+    folderRole,
+    listRole,
+  }: {
+    workspaceRole?: string;
+    folderRole?: string;
+    listRole?: string;
+  }) => {
+    // الأقرب يفوز
 
-  const handleRename = async ({ id, type, name, workspaceId }) => {
-    try {
-      if (!name?.trim()) return;
-
-      if (type === "workspace") {
-        await updateWorkspace({
-          id,
-          data: { name },
-        }).unwrap();
-      }
-
-      if (type === "folder") {
-        await updateFolder({
-          workspaceId,
-          id,
-          data: { name },
-        }).unwrap();
-      }
-
-      if (type === "list") {
-        await updateList({
-          workspaceId,
-          id,
-          data: { name },
-        }).unwrap();
-      }
-
-      actions.cancelRename();
-
-      refetchTree?.();
-    } catch (err) {
-      console.log(err);
+    if (listRole) {
+      return listRole;
     }
+
+    if (folderRole) {
+      return folderRole;
+    }
+
+    if (workspaceRole) {
+      return workspaceRole;
+    }
+
+    return "viewer";
   };
 
   return (
@@ -204,6 +200,7 @@ const FolderSidebar = ({
                           id: workspace._id,
                           type: "workspace",
                           name: state.editName,
+                          cancelRename: actions.cancelRename,
                         })
                       }
                     />
@@ -254,7 +251,13 @@ const FolderSidebar = ({
 
                       actions.setMenuWorkspace(null);
                     }}
-                    onDelete={() => console.log("delete workspace")}
+                    onDelete={() =>
+                      requestDelete({
+                        type: "workspace",
+                        item: workspace,
+                        workspaceId: workspace._id,
+                      })
+                    }
                   />
                 </div>
               )}
@@ -305,6 +308,7 @@ const FolderSidebar = ({
                                     type: "folder",
                                     name: state.editName,
                                     workspaceId: workspace._id,
+                                    cancelRename: actions.cancelRename,
                                   })
                                 }
                               />
@@ -352,7 +356,17 @@ const FolderSidebar = ({
 
                                 actions.setMenuFolder(null);
                               }}
-                              onDelete={() => console.log("delete folder")}
+                              onManageFolderMembers={() => {
+                                actions.setMembersFolder(folder);
+                                actions.setMenuFolder(null);
+                              }}
+                              onDelete={() =>
+                                requestDelete({
+                                  type: "folder",
+                                  item: folder,
+                                  workspaceId: workspace._id,
+                                })
+                              }
                             />
                           </div>
                         )}
@@ -371,11 +385,16 @@ const FolderSidebar = ({
                               state.editingItem?.id === list._id &&
                               state.editingItem?.type === "list";
 
-                            const canManageList = hasPermission(
-                              list.listRole,
-                              "update:list",
-                            );
+                       const effectiveRole = getEffectiveRole({
+  workspaceRole: workspace.role,
+  folderRole: folder.role,
+  listRole: list.listRole,
+});
 
+const canManageList = hasPermission(
+  effectiveRole,
+  "update:list",
+);
                             return (
                               <div
                                 key={list._id}
@@ -416,6 +435,8 @@ const FolderSidebar = ({
                                               type: "list",
                                               name: state.editName,
                                               workspaceId: workspace._id,
+                                              cancelRename:
+                                                actions.cancelRename,
                                             })
                                           }
                                         />
@@ -465,7 +486,11 @@ const FolderSidebar = ({
                                           actions.setMenuList(null);
                                         }}
                                         onDelete={() =>
-                                          console.log("delete list")
+                                          requestDelete({
+                                            type: "list",
+                                            item: list,
+                                            workspaceId: workspace._id,
+                                          })
                                         }
                                       />
                                     </div>
@@ -512,7 +537,12 @@ const FolderSidebar = ({
         onClose={() => actions.setMembersWorkspace(null)}
         workspace={state.membersWorkspace}
       />
-
+      <FolderMembersModal
+        isOpen={!!state.membersFolder}
+        folder={state.membersFolder}
+        workspace={state.activeWorkspace}
+        onClose={() => actions.setMembersFolder(null)}
+      />
       <ListMembersModal
         isOpen={!!state.membersList}
         onClose={() => actions.setMembersList(null)}
@@ -524,6 +554,16 @@ const FolderSidebar = ({
             : null
         }
         workspace={state.activeWorkspace}
+        folderId={state.activeFolder?._id}
+      />
+
+      <DeleteConfirmModal
+        isOpen={deleteState.open}
+        loading={deleteLoading}
+        title={`Delete ${deleteState.type}`}
+        description={`Are you sure you want to delete "${deleteState.name}"? This action cannot be undone.`}
+        onClose={() => setDeleteState({ open: false })}
+        onConfirm={handleDelete}
       />
     </div>
   );

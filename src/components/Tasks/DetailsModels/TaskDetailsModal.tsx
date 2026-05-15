@@ -28,7 +28,7 @@ export default function TaskDetailsModal({
     activityLoading,
     activityError,
     refetchActivity,
-  } = useTaskDetailsModal({ entity, onClose, workspaceId: workspace?._id });
+  } = useTaskDetailsModal({ entity, onClose, workspaceId: workspace?._id ,listId: listName?._id });
 
   const [commentText, setCommentText] = useState("");
 
@@ -47,7 +47,7 @@ export default function TaskDetailsModal({
               <ChevronRight className="w-3 h-3" />
               <span>{folderName}</span>
               <ChevronRight className="w-3 h-3" />
-              <span>{listName}</span>
+              <span>{listName?.name}</span>
             </div>
           </div>
 
@@ -69,6 +69,7 @@ export default function TaskDetailsModal({
             closeSubModal={closeSubModal}
             workspaceId={workspace?._id}
             refetchTasks={refetchTasks}
+            listId={listName?._id}
           />
 
           <TaskActivity

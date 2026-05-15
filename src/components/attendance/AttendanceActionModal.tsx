@@ -123,7 +123,7 @@ const AttendanceActionModal: FC<AttendanceActionModalProps> = ({
               <div
                 className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black ${
                   hasLocationIssue
-                    ? "bg-red-50 text-red-600"
+                    ? "bg-red-500 text-red-600"
                     : "bg-emerald-50 text-emerald-600"
                 }`}
               >
@@ -140,7 +140,7 @@ const AttendanceActionModal: FC<AttendanceActionModalProps> = ({
                 <button
                   type="button"
                   onClick={requestLocationPermission}
-                  className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-600 transition hover:bg-red-100"
+                  className="rounded-full bg-red-500 px-3 py-1 text-xs font-black text-red-600 transition hover:bg-red-100"
                 >
                   Allow
                 </button>
@@ -160,7 +160,7 @@ const AttendanceActionModal: FC<AttendanceActionModalProps> = ({
                         ? "bg-slate-200 text-slate-400"
                         : mode === "Check-in"
                           ? "bg-emerald-600 text-white shadow-[0_18px_45px_rgba(5,150,105,0.32)] hover:bg-emerald-700"
-                          : "bg-orange-500 text-white shadow-[0_18px_45px_rgba(249,115,22,0.3)] hover:bg-orange-600"
+                          : "bg-red-400 text-white shadow-[0_18px_45px_rgba(239,68,68,0.30)] hover:bg-red-600"
                 } ${
                   disabled
                     ? "cursor-not-allowed opacity-70"
@@ -218,49 +218,39 @@ const AttendanceActionModal: FC<AttendanceActionModalProps> = ({
               </div>
             </div>
 
-            {todayRecords.length ? (
-              <div className="grid gap-2">
-                {todayRecords.map((record) => {
-                  const isCheckIn = record.type === "Check-in";
-                  const Icon = isCheckIn ? LogIn : LogOut;
+            {todayRecords.map((record) => {
+              const isCheckIn = record.type === "Check-in";
+              const Icon = isCheckIn ? LogIn : LogOut;
 
-                  return (
-                    <div
-                      key={record._id}
-                      className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-3"
+              return (
+                <div
+                  key={record._id}
+                  className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
+                        isCheckIn
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
-                            isCheckIn
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-orange-100 text-orange-700"
-                          }`}
-                        >
-                          <Icon className="h-5 w-5" />
-                        </span>
+                      <Icon className="h-5 w-5" />
+                    </span>
 
-                        <span className="text-sm font-black text-slate-800">
-                          {isCheckIn
-                            ? t("homePage.checkIn")
-                            : t("homePage.checkOut")}
-                        </span>
-                      </div>
+                    <span className="text-sm font-black text-slate-800">
+                      {isCheckIn
+                        ? t("homePage.checkIn")
+                        : t("homePage.checkOut")}
+                    </span>
+                  </div>
 
-                      <span className="text-sm font-black text-slate-950">
-                        {record.Time}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="rounded-2xl bg-slate-50 px-4 py-5 text-center">
-                <p className="text-sm font-semibold text-slate-500">
-                  No checks recorded today.
-                </p>
-              </div>
-            )}
+                  <span className="text-sm font-black text-slate-950">
+                    {record.Time}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 

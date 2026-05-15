@@ -95,17 +95,17 @@ const filteredStaff = useMemo(() => {
   const submit = async () => {
     if (!name.trim() || !workspaceId || !folderId) return;
     console.log(workspaceId);
-
-    await createList({
-      workspaceId,
-      data: {
-        name: name.trim(),
-        workspace: workspaceId,
-        folder: folderId,
-        visibility,
-        members: visibility === "private" ? members : [],
-      },
-    }).unwrap();
+await createList({
+  workspaceId,
+  folderId,
+  data: {
+    name: name.trim(),
+    workspace: workspaceId,
+    folder: folderId,
+    visibility,
+    members: visibility === "private" ? members : [],
+  },
+}).unwrap();
     await refetchTree();
     reset();
     onClose?.();

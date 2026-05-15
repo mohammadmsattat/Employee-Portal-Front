@@ -1,4 +1,4 @@
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, isValidElement, cloneElement } from "react";
 import AppHeader from "./header/AppHeader";
 import Bottombar from "./Bottombar";
 import AddAdvanceRequestModal from "@/pages/Advance/AddAdvanceRequestModal";
@@ -51,7 +51,14 @@ const Layout = ({ children }: LayoutProps) => {
 
       <main className="relative mx-auto min-h-screen w-full px-4 pb-28 pt-5 sm:px-6 md:ml-[104px] md:w-[calc(100%-104px)] md:px-8 md:pb-10 md:pt-8 xl:px-10">
         <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-80 bg-[linear-gradient(180deg,rgba(37,99,235,0.12),rgba(244,247,251,0))]" />
-        <div className="mx-auto max-w-7xl">{children}</div>
+
+        <div className="mx-auto max-w-7xl">
+          {isValidElement(children)
+            ? cloneElement(children, {
+                openAttendanceModal: () => setAttendanceOpen(true),
+              })
+            : children}
+        </div>
       </main>
 
       <Bottombar
@@ -80,6 +87,11 @@ const Layout = ({ children }: LayoutProps) => {
         t={t}
       />
 
+      <button
+        hidden
+        data-attendance-trigger
+        onClick={() => setAttendanceOpen(true)}
+      />
       {leaveOpen && (
         <AddLeaveRequestModal
           isOpen={leaveOpen}

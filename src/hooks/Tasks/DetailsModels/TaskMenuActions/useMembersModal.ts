@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdateTaskMutation } from "@/rtk/Tasks/tasksApi";
 import { useUpdateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
 
-export const useMembersModal = ({ isOpen, onClose, entity, workspaceId, refetchTasks }) => {
+export const useMembersModal = ({ isOpen, onClose, entity, workspaceId, refetchTasks  ,listId}) => {
   const { toast } = useToast();
 
   const [updateTask] = useUpdateTaskMutation();
@@ -63,7 +63,7 @@ export const useMembersModal = ({ isOpen, onClose, entity, workspaceId, refetchT
     try {
       if (entity.type === "task") {
         await updateTask({
-          workspaceId,
+          listId,
           id: task._id,
           data: {
             assignedTo: selectedMembers,
@@ -74,7 +74,7 @@ export const useMembersModal = ({ isOpen, onClose, entity, workspaceId, refetchT
 
       if (entity.type === "subtask") {
         await updateSubTask({
-          workspaceId,
+          listId,
           taskId: entity.parentTaskId,
           subTaskId: task._id,
           data: {

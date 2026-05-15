@@ -18,7 +18,7 @@ const Login = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.12),_transparent_35%),linear-gradient(135deg,#f8fbff_0%,#f1f5f9_45%,#ffffff_100%)] px-4 sm:px-6">
-      {/* soft background shapes */}
+      {/* Background effects */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-[-80px] top-[-80px] h-56 w-56 rounded-full bg-blue-200/20 blur-3xl" />
         <div className="absolute bottom-[-100px] right-[-60px] h-64 w-64 rounded-full bg-sky-200/20 blur-3xl" />
@@ -47,65 +47,70 @@ const Login = () => {
                 </p>
               </div>
 
+              {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-4 rounded-[28px] border border-slate-200/70 bg-slate-50/80 p-4 sm:p-5">
+                  {/* Email */}
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700">
                       {t("login.email")}
                     </label>
-                    <div className="rounded-3xl bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] ring-1 ring-slate-200 transition focus-within:ring-2 focus-within:ring-blue-500">
+
+                    <div className="rounded-3xl bg-white ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-blue-500">
                       <Input
                         type="email"
-                        placeholder={t("login.emailPlaceholder")}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="h-12 rounded-3xl border-0 bg-transparent px-4 text-[15px] shadow-none focus-visible:ring-0"
+                        className="h-12 rounded-3xl border-0 bg-transparent px-4 text-[15px] focus-visible:ring-0"
                         required
                       />
                     </div>
                   </div>
 
+                  {/* Password */}
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700">
                       {t("login.password")}
                     </label>
-                    <div className="rounded-3xl bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] ring-1 ring-slate-200 transition focus-within:ring-2 focus-within:ring-blue-500">
+
+                    <div className="rounded-3xl bg-white ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-blue-500">
                       <Input
                         type="password"
-                        placeholder={t("login.passwordPlaceholder")}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="h-12 rounded-3xl border-0 bg-transparent px-4 text-[15px] shadow-none focus-visible:ring-0"
+                        className="h-12 rounded-3xl border-0 bg-transparent px-4 text-[15px] focus-visible:ring-0"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-1">
+                  <div className="flex justify-end">
                     <Link
                       to="/forgot-password"
-                      className="text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+                      className="text-sm font-semibold text-blue-600 hover:text-blue-700"
                     >
                       {t("login.forgotPassword")}
                     </Link>
                   </div>
                 </div>
 
+                {/* Error */}
                 {error && (
                   <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
                     {error}
                   </div>
                 )}
 
+                {/* Submit */}
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="h-12 w-full rounded-3xl bg-blue-600 text-[15px] font-semibold text-white shadow-[0_14px_30px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-[1px] hover:bg-blue-700"
+                  className="h-12 w-full rounded-3xl bg-blue-600 text-[15px] font-semibold text-white shadow-[0_14px_30px_rgba(37,99,235,0.28)] hover:bg-blue-700"
                 >
                   {isLoading ? t("login.signingIn") : t("login.signIn")}
                 </Button>
 
-                <p className="text-center text-xs leading-5 text-slate-400">
+                <p className="text-center text-xs text-slate-400">
                   Secure access for employees and HR staff
                 </p>
               </form>

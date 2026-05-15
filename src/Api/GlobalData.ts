@@ -40,19 +40,18 @@ export const attachmentEndPoint = "/api/attachments";
 
 export const workspaceEndPoint = "/api/workspace";
 export const folderEndPoint = "/api/folder";
-export const buildListUrl = (workspaceId: string) =>
-  `/api/workspaces/${workspaceId}/lists`;
+
+export const buildListUrl = (workspaceId: string, folderId: string) =>
+  `/api/workspaces/${workspaceId}/folders/${folderId}/lists`;
 
 export const buildFolderUrl = (workspaceId: string) =>
   `/api/workspaces/${workspaceId}/folders`;
-export const buildTaskUrl = (workspaceId: string) =>
-  `/api/workspaces/${workspaceId}/tasks`;
-
+export const buildTaskUrl = (listId: string) =>
+  `/api/lists/${listId}/tasks`;
 
 export const buildSubTaskUrl = (
-  workspaceId: string,
   taskId: string,
-) => `/api/workspaces/${workspaceId}/tasks/${taskId}/subtasks`;
+) => `/api/tasks/${taskId}/subtasks`;
 
 export const timeTrackingEndPoint = "/api/time-tracking";
 // ================= EXPORT BASE =================

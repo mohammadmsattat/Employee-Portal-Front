@@ -6,19 +6,24 @@ import {
   useGetListByIdQuery,
   useAddListMemberMutation,
   useRemoveListMemberMutation,
+  useUpdateListMutation,
 } from "@/rtk/Tasks/listApi";
 
 import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
 import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
-
-export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
+export const ListMembersModal = ({
+  isOpen,
+  onClose,
+  list,
+  workspace,
+  folderId,
+}) => {
   const listId = list?._id;
 
-  const { data, isLoading, error } = useGetListByIdQuery(
-    { id: listId, workspaceId: workspace?._id },
-    { skip: !listId },
+  const { data } = useGetListByIdQuery(
+    { id: listId, workspaceId: workspace?._id, folderId },
+    { skip: !listId || !workspace?._id },
   );
-  console.log(error);
 
   const user = useMemo(() => {
     try {
@@ -29,6 +34,7 @@ export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
   }, []);
 
   const { data: staffData } = useGetAllStaffQuery({});
+  const [updateList] = useUpdateListMutation();
 
   const [addMember, { isLoading: adding }] = useAddListMemberMutation();
   const [removeMember, { isLoading: removing }] = useRemoveListMemberMutation();
@@ -39,37 +45,44 @@ export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
   if (!isOpen) return null;
 
   const members = data?.data?.members || [];
-  console.log(members);
 
   const handleAdd = async () => {
-    if (!selectedUser || !workspace?._id) return;
-    console.log({
+    if (!selectedUser || !workspace?._id || !listId) return;
+
+    await addMember({
       workspaceId: workspace._id,
+      folderId,
       id: listId,
       userId: selectedUser,
       role,
-    });
+    }).unwrap();
 
-    try {
-      await addMember({
-        workspaceId: workspace._id,
-        id: listId,
-        userId: selectedUser,
-        role,
-      }).unwrap();
-
-      setSelectedUser("");
-    } catch (err) {
-      console.error(err);
-    }
+    setSelectedUser("");
   };
 
   const handleRemove = async (userId) => {
+    await removeMember({
+      workspaceId: workspace._id,
+      folderId,
+      id: listId,
+      userId,
+    }).unwrap();
+  };
+
+  const handleRoleChange = async (memberUser, newRole) => {
     try {
-      await removeMember({
+      const updatedMembers = members.map((member) => ({
+        user: member.user?._id || member.user,
+        role: member.user?._id === memberUser?._id ? newRole : member.role,
+      }));
+
+      await updateList({
         workspaceId: workspace._id,
+        folderId,
         id: listId,
-        userId,
+        data: {
+          members: updatedMembers,
+        },
       }).unwrap();
     } catch (err) {
       console.error(err);
@@ -79,7 +92,7 @@ export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">
       <div className="w-full sm:max-w-xl">
-        <div className="max-h-[88vh] overflow-y-auto rounded-t-[28px] sm:rounded-[32px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+        <div className="max-h-[88vh]  rounded-t-[28px] sm:rounded-[32px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl">
           {/* HEADER */}
           <div className="relative p-5 border-b border-slate-200/70">
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -88,7 +101,7 @@ export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
             </div>
 
             <h3 className="mt-2 text-lg font-bold text-slate-900">
-              {list?.name}
+              {data?.data?.name}
             </h3>
 
             <button
@@ -115,7 +128,6 @@ export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
                 onChange={(e) => setRole(e.target.value)}
                 className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm"
               >
-                {" "}
                 <option value="viewer">viewer</option>
                 <option value="member">member</option>
                 <option value="manager">manager</option>
@@ -135,37 +147,69 @@ export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
             </div>
 
             {/* LIST */}
-            <div className="space-y-2 max-h-64 overflow-auto">
-              {members?.map((m) => {
-                const user = m.user;
+            <div className="space-y-3 max-h-[420px] overflow-auto pr-1">
+              {members.map((m) => {
+                const memberUser = m.user;
+
+                const isCurrentUser = memberUser?._id === user?._id;
+                const isOwner = m.role === "owner";
+                const isProtected = isCurrentUser && isOwner;
 
                 return (
                   <div
-                    key={user?._id}
-                    className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-3"
+                    key={memberUser?._id}
+                    className="group rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-slate-300 hover:shadow-sm"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">
-                        {(user?.fullName ||
-                          user?.email ||
-                          "?")[0].toUpperCase()}
+                    <div className="flex items-center justify-between">
+                      {/* LEFT */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-sm font-bold text-blue-700 ring-1 ring-blue-200">
+                          {(memberUser?.fullName || memberUser?.email || "?")
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-slate-800">
+                            {memberUser?.fullName}
+                          </div>
+                          <div className="truncate text-xs text-slate-500">
+                            {memberUser?.email}
+                          </div>
+                        </div>
                       </div>
 
-                      <div>
-                        <div className="text-sm font-medium text-slate-800">
-                          {user?.fullName}
-                        </div>
-                        <div className="text-xs text-slate-500">{m.role}</div>
+                      {/* RIGHT */}
+                      <div className="flex items-center gap-2">
+                        {isProtected ? (
+                          <span className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
+                            Owner
+                          </span>
+                        ) : (
+                          <select
+                            value={m.role}
+                            onChange={(e) =>
+                              handleRoleChange(memberUser, e.target.value)
+                            }
+                            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs"
+                          >
+                            <option value="viewer">Viewer</option>
+                            <option value="member">Member</option>
+                            <option value="manager">Manager</option>
+                          </select>
+                        )}
+
+                        {!isProtected && (
+                          <button
+                            onClick={() => handleRemove(memberUser?._id)}
+                            disabled={removing}
+                            className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600 hover:bg-red-100"
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
                     </div>
-
-                    <button
-                      onClick={() => handleRemove(user._id)}
-                      disabled={removing}
-                      className="text-sm text-red-500 hover:text-red-600"
-                    >
-                      Remove
-                    </button>
                   </div>
                 );
               })}
@@ -173,7 +217,7 @@ export const ListMembersModal = ({ isOpen, onClose, list, workspace }) => {
           </div>
 
           {/* FOOTER */}
-          <div className="flex justify-end p-5 border-t border-slate-200/70">
+          <div className="flex justify-end border-t border-slate-200/70 p-5">
             <Button onClick={onClose} variant="outline" className="rounded-2xl">
               Close
             </Button>

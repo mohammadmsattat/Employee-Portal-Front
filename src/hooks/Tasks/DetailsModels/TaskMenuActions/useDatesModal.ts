@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useUpdateTaskMutation } from "@/rtk/Tasks/tasksApi";
 import { useUpdateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
 
-export const useDatesModal = ({ entity, onClose, workspaceId, refetchTasks }) => {
+export const useDatesModal = ({ entity, onClose, workspaceId,listId, refetchTasks }) => {
   const [updateTask] = useUpdateTaskMutation();
   const [updateSubTask] = useUpdateSubTaskMutation();
 
@@ -35,7 +35,7 @@ export const useDatesModal = ({ entity, onClose, workspaceId, refetchTasks }) =>
 
       if (entity.type === "task") {
         await updateTask({
-          workspaceId,
+          listId,
           id: data._id,
           data: payload,
         }).unwrap();
@@ -44,7 +44,7 @@ export const useDatesModal = ({ entity, onClose, workspaceId, refetchTasks }) =>
 
       if (entity.type === "subtask") {
         await updateSubTask({
-          workspaceId,
+          listId,
           taskId: entity.parentTaskId,
           subTaskId: data._id,
           data: payload,

@@ -12,5 +12,6 @@ export interface LoginResponse {
     companyId: string;
     groupId: any;
     [key: string]: any;
+ 
   };
 }

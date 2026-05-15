@@ -43,9 +43,9 @@ export const taskApi = createApi({
       query: ({ workspaceId, listId, status, priority, assignedTo, due }) => {
         const params = new URLSearchParams();
 
-        if (listId) {
-          params.append("listId", listId);
-        }
+        // if (listId) {
+        //   params.append("listId", listId);
+        // }
 
         if (status) {
           params.append("status", status);
@@ -65,7 +65,7 @@ export const taskApi = createApi({
 
         params.append("companyId", getCompanyId() || "");
 
-        return `${buildTaskUrl(workspaceId)}?${params.toString()}`;
+        return `${buildTaskUrl(listId)}?${params.toString()}`;
       },
 
       providesTags: ["Tasks"],
@@ -74,9 +74,9 @@ export const taskApi = createApi({
     // GET TASK BY ID
     // /api/workspaces/:workspaceId/tasks/:id
     // =========================
-    getTaskById: builder.query<any, { workspaceId: string; id: string }>({
-      query: ({ workspaceId, id }) =>
-        `${buildTaskUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
+    getTaskById: builder.query<any, { listId: string; id: string }>({
+      query: ({ listId, id }) =>
+        `${buildTaskUrl(listId)}/${id}?companyId=${getCompanyId()}`,
 
       providesTags: ["Tasks"],
     }),
@@ -85,9 +85,9 @@ export const taskApi = createApi({
     // CREATE TASK
     // /api/workspaces/:workspaceId/tasks
     // =========================
-    createTask: builder.mutation<any, { workspaceId: string; data: any }>({
-      query: ({ workspaceId, data }) => ({
-        url: `${buildTaskUrl(workspaceId)}?companyId=${getCompanyId()}`,
+    createTask: builder.mutation<any, { listId: string; data: any }>({
+      query: ({ listId, data }) => ({
+        url: `${buildTaskUrl(listId)}?companyId=${getCompanyId()}`,
         method: "POST",
         body: data,
       }),
@@ -101,10 +101,10 @@ export const taskApi = createApi({
     // =========================
     updateTask: builder.mutation<
       any,
-      { workspaceId: string; id: string; data: any }
+      { listId: string; id: string; data: any }
     >({
-      query: ({ workspaceId, id, data }) => ({
-        url: `${buildTaskUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
+      query: ({ listId, id, data }) => ({
+        url: `${buildTaskUrl(listId)}/${id}?companyId=${getCompanyId()}`,
         method: "PATCH",
         body: data,
       }),
@@ -116,10 +116,45 @@ export const taskApi = createApi({
     // DELETE TASK
     // /api/workspaces/:workspaceId/tasks/:id
     // =========================
-    deleteTask: builder.mutation<any, { workspaceId: string; id: string }>({
-      query: ({ workspaceId, id }) => ({
-        url: `${buildTaskUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
+    deleteTask: builder.mutation<any, { listId: string; taskId: string }>({
+      query: ({ listId, taskId }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}?companyId=${getCompanyId()}`,
         method: "DELETE",
+      }),
+
+      invalidatesTags: ["Tasks"],
+    }),
+
+    addChecklistItem: builder.mutation({
+      query: ({ taskId, listId, data }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}/checklist?companyId=${getCompanyId()}`,
+        method: "POST",
+        body: data,
+      }),
+
+      invalidatesTags: ["Tasks"],
+    }),
+    updateChecklistItem: builder.mutation({
+      query: ({ taskId, listId, itemId, data }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}/checklist/${itemId}?companyId=${getCompanyId()}`,
+        method: "PATCH",
+        body: data,
+      }),
+
+      invalidatesTags: ["Tasks"],
+    }),
+    deleteChecklistItem: builder.mutation({
+      query: ({ taskId, listId, itemId }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}/checklist/${itemId}?companyId=${getCompanyId()}`,
+        method: "DELETE",
+      }),
+
+      invalidatesTags: ["Tasks"],
+    }),
+    toggleChecklistItem: builder.mutation({
+      query: ({ taskId, listId, itemId }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}/checklist/${itemId}/toggle?companyId=${getCompanyId()}`,
+        method: "PATCH",
       }),
 
       invalidatesTags: ["Tasks"],
@@ -133,4 +168,8 @@ export const {
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useDeleteTaskMutation,
+  useAddChecklistItemMutation,
+  useUpdateChecklistItemMutation,
+  useDeleteChecklistItemMutation,
+  useToggleChecklistItemMutation,
 } = taskApi;

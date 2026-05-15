@@ -14,7 +14,7 @@ import {
   useAddAttachmentMutation,
 } from "@/rtk/Tasks/attachmentsApi";
 
-export const useTaskDetailsModal = ({ entity, onClose, workspaceId }) => {
+export const useTaskDetailsModal = ({ entity, onClose, workspaceId ,listId }) => {
   const data = entity?.data;
   const type = entity?.type;
 

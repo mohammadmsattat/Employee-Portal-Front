@@ -5,19 +5,18 @@ import { useUpdateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
 export const useStatusModal = ({
   entity,
   onClose,
-  workspaceId,
+  listId,
   refetchTasks
 }: {
   entity: any;
   onClose: () => void;
-  workspaceId: string;
+  listId: string;
   refetchTasks: () => void;
 }) => {
   const [updateTask] = useUpdateTaskMutation();
   const [updateSubTask] = useUpdateSubTaskMutation();
 
   const data = entity?.data;
-console.log(data);
 
   const [status, setStatus] = useState(data?.status);
 
@@ -25,7 +24,7 @@ console.log(data);
     try {
       if (entity.type === "task") {
         await updateTask({
-          workspaceId,
+          listId,
           id: data._id,
           data: { status },
         }).unwrap();
@@ -34,7 +33,7 @@ console.log(data);
 
       if (entity.type === "subtask") {
         await updateSubTask({
-          workspaceId,
+          listId,
           taskId: entity.parentTaskId,
           subTaskId: data._id,
           data: { status },

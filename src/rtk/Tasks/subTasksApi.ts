@@ -23,7 +23,7 @@ type CreateSubTaskArgs = {
 };
 
 type UpdateSubTaskArgs = {
-  workspaceId: string;
+  listId: string;
   taskId: string;
   subTaskId: string;
   data: any;
@@ -59,7 +59,7 @@ export const subTaskApi = createApi({
        GET ALL
     ========================= */
     getAllSubTasks: builder.query<any, GetSubTasksArgs>({
-      query: ({ workspaceId, taskId }) => buildSubTaskUrl(workspaceId, taskId),
+      query: ({ workspaceId, taskId }) => buildSubTaskUrl( taskId),
 
       providesTags: ["SubTasks"],
     }),
@@ -69,7 +69,7 @@ export const subTaskApi = createApi({
     ========================= */
     getSubTaskById: builder.query<any, GetSubTaskArgs>({
       query: ({ workspaceId, taskId, subTaskId }) =>
-        `${buildSubTaskUrl(workspaceId, taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
+        `${buildSubTaskUrl( taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
 
       providesTags: ["SubTasks"],
     }),
@@ -78,8 +78,8 @@ export const subTaskApi = createApi({
        CREATE
     ========================= */
     createSubTask: builder.mutation<any, CreateSubTaskArgs>({
-      query: ({ workspaceId, taskId, data }) => ({
-        url: `${buildSubTaskUrl(workspaceId, taskId)}?companyId=${getCompanyId()}`,
+      query: ({  taskId, data }) => ({
+        url: `${buildSubTaskUrl(taskId)}?companyId=${getCompanyId()}`,
         method: "POST",
         body: data,
       }),
@@ -91,8 +91,8 @@ export const subTaskApi = createApi({
        UPDATE
     ========================= */
     updateSubTask: builder.mutation<any, UpdateSubTaskArgs>({
-      query: ({ workspaceId, taskId, subTaskId, data }) => ({
-        url: `${buildSubTaskUrl(workspaceId, taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
+      query: ({ listId, taskId, subTaskId, data }) => ({
+        url: `${buildSubTaskUrl( taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
         method: "PATCH",
         body: data,
       }),
@@ -105,7 +105,7 @@ export const subTaskApi = createApi({
     ========================= */
     deleteSubTask: builder.mutation<any, DeleteSubTaskArgs>({
       query: ({ workspaceId, taskId, subTaskId }) => ({
-        url: `${buildSubTaskUrl(workspaceId, taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
+        url: `${buildSubTaskUrl(taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
         method: "DELETE",
       }),
 

@@ -57,10 +57,12 @@ export const useHome = () => {
     { skip: !leavePolicyId },
   );
 
-  const { data: leaveLogsData } = useGetMyLeaveLogsQuery({
-    page: 1,
-    limit: 200,
-  });
+  const { data: leaveLogsData, error: leaveLogsError } = useGetMyLeaveLogsQuery(
+    {
+      page: 1,
+      limit: 200,
+    },
+  );
 
   const { data: myLeaveRequests } = useGetMyLeaveRequestsQuery({
     page: 1,

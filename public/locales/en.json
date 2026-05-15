@@ -142,7 +142,13 @@
     "overtime": "Overtime",
     "amount": "Amount",
     "tasks": "tasks",
-    "salary": "salary"
+    "salary": "salary",
+    "balance": "Leaves Balance",
+    "location": "Workplace Status",
+    "inside": "Inside",
+    "outside": "Outside",
+    "locationVerified": "Location verified",
+    "workedHours": "Worked Hours"
   },
   "attendancePage": {
     "title": "Attendance",

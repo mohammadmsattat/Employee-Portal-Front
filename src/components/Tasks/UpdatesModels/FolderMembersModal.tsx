@@ -1,0 +1,250 @@
+import { useMemo, useState } from "react";
+import { X, Plus, Loader2, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+import {
+  useGetFolderByIdQuery,
+  useAddFolderMemberMutation,
+  useRemoveFolderMemberMutation,
+  useUpdateFolderMutation,
+} from "@/rtk/Tasks/folderApi";
+
+import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
+import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
+import { useToast } from "@/hooks/use-toast";
+
+export const FolderMembersModal = ({ isOpen, onClose, folder, workspace }) => {
+  const { toast } = useToast();
+
+  const folderId = folder?._id;
+
+  const { data, refetch } = useGetFolderByIdQuery(
+    {
+      workspaceId: workspace?._id,
+      id: folder?._id,
+    },
+    {
+      skip: !folder?._id || !workspace?._id,
+    },
+  );
+
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const { data: staffData } = useGetAllStaffQuery({});
+
+  const [updateFolder, { isLoading: updating }] = useUpdateFolderMutation();
+
+  const [addMember, { isLoading: adding }] = useAddFolderMemberMutation();
+  const [removeMember, { isLoading: removing }] =
+    useRemoveFolderMemberMutation();
+
+  const [selectedUser, setSelectedUser] = useState("");
+  const [role, setRole] = useState("member");
+
+  if (!isOpen) return null;
+
+  const members = data?.data?.members || [];
+
+  const handleAdd = async () => {
+    if (!selectedUser || !folderId) return;
+
+    const exists = members.some((m) => m.user?._id === selectedUser);
+
+    try {
+      if (exists) {
+        toast({
+          title: "Member already exists",
+          description: "Updating role instead",
+        });
+      }
+      await addMember({
+        workspaceId: workspace?._id,
+        folderId: folderId,
+        userId: selectedUser,
+        role,
+      }).unwrap();
+
+      setSelectedUser("");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRemove = async (userId) => {
+    try {
+      await removeMember({
+        workspaceId: workspace?._id,
+        folderId: folderId,
+        userId,
+      }).unwrap();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const handleRoleChange = async (memberUser, newRole) => {
+    try {
+      const updatedMembers = members.map((m) =>
+        m.user?._id === memberUser?._id ? { ...m, role: newRole } : m,
+      );
+
+      await updateFolder({
+        workspaceId: workspace?._id,
+        folderId: folderId,
+        data: {
+          members: updatedMembers,
+        },
+      }).unwrap();
+
+      refetch();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  return (
+    <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">
+      <div className="w-full sm:max-w-xl">
+        <div className="max-h-[88vh] rounded-t-[28px] sm:rounded-[32px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+          {/* HEADER */}
+          <div className="relative p-5 border-b border-slate-200/70">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+              <Users className="h-4 w-4" />
+              Folder Members
+            </div>
+
+            <h3 className="mt-2 text-lg font-bold text-slate-900">
+              {folder?.name}
+            </h3>
+
+            <button
+              onClick={onClose}
+              className="absolute right-5 top-5 h-10 w-10 flex items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* BODY */}
+          <div className="p-5 space-y-5">
+            {/* ADD MEMBER */}
+            <div className="space-y-2">
+              <label className="text-xs text-slate-500">Add Member</label>
+
+              <div className="flex gap-2">
+                <MemberSearchSelect
+                  options={staffData?.data || []}
+                  selectedValue={selectedUser}
+                  onChange={setSelectedUser}
+                  placeholder="Search employee..."
+                />
+
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm"
+                >
+                  <option value="viewer">Viewer</option>
+                  <option value="member">Member</option>
+                  <option value="manager">Manager</option>
+                </select>
+
+                <Button
+                  onClick={handleAdd}
+                  disabled={adding || !selectedUser}
+                  className="h-10 w-10 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  {adding ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* MEMBERS */}
+            <div className="space-y-3 max-h-[420px] overflow-auto pr-1">
+              {members.map((m) => {
+                const memberUser = m.user;
+
+                const isCurrentUser = memberUser?._id === user?._id;
+                const isOwner = m.role === "owner";
+                const isProtected = isCurrentUser && isOwner;
+
+                return (
+                  <div
+                    key={memberUser?._id}
+                    className="group rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-slate-300 hover:shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      {/* LEFT */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-11 w-11 shrink-0 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-sm font-bold text-blue-700 ring-1 ring-blue-200">
+                          {(memberUser?.fullName ||
+                            memberUser?.email ||
+                            "?")[0]?.toUpperCase()}
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-slate-800">
+                            {memberUser?.fullName || "Unknown User"}
+                          </div>
+                          <div className="truncate text-xs text-slate-500">
+                            {memberUser?.email}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* RIGHT */}
+                      <div className="flex items-center gap-2">
+                        {isProtected ? (
+                          <span className="px-3 py-1.5 text-xs rounded-xl border border-amber-200 bg-amber-50 text-amber-700 font-semibold">
+                            Owner
+                          </span>
+                        ) : (
+                          <>
+                            <select
+                              value={m.role}
+                              onChange={(e) =>
+                                handleRoleChange(memberUser, e.target.value)
+                              }
+                              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs"
+                            >
+                              <option value="viewer">Viewer</option>
+                              <option value="member">Member</option>
+                              <option value="manager">Manager</option>
+                            </select>
+
+                            <button
+                              onClick={() => handleRemove(memberUser?._id)}
+                              disabled={removing}
+                              className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600 hover:bg-red-100 disabled:opacity-50"
+                            >
+                              Remove
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* FOOTER */}
+          <div className="flex justify-end p-5 border-t border-slate-200/70">
+            <Button onClick={onClose} variant="outline" className="rounded-2xl">
+              Close
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

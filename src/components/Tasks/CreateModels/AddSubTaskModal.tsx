@@ -5,7 +5,7 @@ import { X, Plus } from "lucide-react";
 import TaskForm from "./TaskForm";
 import { useTranslation } from "react-i18next";
 
-const AddSubTaskModal = ({ isOpen, onClose, taskId, workspaceId ,refetchTasks }) => {
+const AddSubTaskModal = ({ isOpen, onClose, taskId,listId, workspaceId ,refetchTasks }) => {
   if (!isOpen || !taskId || !workspaceId) return null;
 
   const { t } = useTranslation();

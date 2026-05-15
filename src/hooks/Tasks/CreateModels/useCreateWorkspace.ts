@@ -22,7 +22,6 @@ export interface StaffUser {
 
 interface UseWorkspaceProps {
   onClose?: () => void;
-
 }
 
 /* =========================
@@ -30,7 +29,6 @@ interface UseWorkspaceProps {
 ========================= */
 
 export const useCreateWorkspace = ({ onClose }: UseWorkspaceProps) => {
-  
   const user = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "null");
@@ -38,10 +36,8 @@ export const useCreateWorkspace = ({ onClose }: UseWorkspaceProps) => {
       return null;
     }
   }, []);
-  const { data: staffData, isError } = useGetAllStaffQuery({
-    directManager: user._id,
-  });
-  
+  const { data: staffData, isError } = useGetAllStaffQuery({});
+
   const [createWorkspace, { isLoading }] = useCreateWorkspaceMutation();
 
   /* STATE */

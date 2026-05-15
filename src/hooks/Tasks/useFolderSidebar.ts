@@ -24,6 +24,8 @@ export const useFolderSidebar = ({
   const [membersWorkspace, setMembersWorkspace] = useState(null);
   const [membersList, setMembersList] = useState(null);
 
+  const [membersFolder, setMembersFolder] = useState(null);
+
   /**
    * EDITING STATE
    */
@@ -52,8 +54,7 @@ export const useFolderSidebar = ({
 
     document.addEventListener("mousedown", handleClickOutside);
 
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   /* =========================
@@ -162,6 +163,7 @@ export const useFolderSidebar = ({
 
       membersWorkspace,
       membersList,
+      membersFolder,
 
       editingItem,
       editName,
@@ -180,6 +182,7 @@ export const useFolderSidebar = ({
 
       setMembersWorkspace,
       setMembersList,
+      setMembersFolder,
 
       setEditName,
 

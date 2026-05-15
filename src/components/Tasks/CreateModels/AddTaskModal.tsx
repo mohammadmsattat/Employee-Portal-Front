@@ -10,7 +10,7 @@ const AddTaskModal = ({ isOpen, onClose, listId, workspaceId  }) => {
     useAddTaskModal({
       isOpen,
       onClose,
-      workspaceId
+      listId
     });
 
   if (!isOpen) return null;

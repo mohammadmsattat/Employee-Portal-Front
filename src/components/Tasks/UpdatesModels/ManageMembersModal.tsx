@@ -6,8 +6,11 @@ import {
   useGetWorkspaceByIdQuery,
   useAddWorkspaceMemberMutation,
   useRemoveWorkspaceMemberMutation,
+  useUpdateWorkspaceMutation,
 } from "@/rtk/Tasks/workspaceApi";
 import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
+import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
+import { useToast } from "@/hooks/use-toast";
 
 type Props = {
   isOpen: boolean;
@@ -16,12 +19,13 @@ type Props = {
 };
 
 export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
+  const { toast } = useToast();
   const workspaceId = workspace?._id;
 
-  const { data, isLoading } = useGetWorkspaceByIdQuery(workspaceId, {
+  const { data, isLoading, refetch } = useGetWorkspaceByIdQuery(workspaceId, {
     skip: !workspaceId,
   });
-//   console.log(data);
+  console.log(data);
 
   const user = useMemo(() => {
     try {
@@ -31,8 +35,11 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
     }
   }, []);
   const { data: staffData, isError } = useGetAllStaffQuery({
-    directManager: user._id,
+    // directManager: user._id,
   });
+
+  const [updateWorkspace] = useUpdateWorkspaceMutation();
+
   const [addMember, { isLoading: adding }] = useAddWorkspaceMemberMutation();
 
   const [removeMember, { isLoading: removing }] =
@@ -49,28 +56,36 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
     if (!selectedUser) return;
 
     try {
-      await addMember({
-        id: workspaceId,
-        userId: selectedUser,
-        role,
-      }).unwrap();
+      const exists = members.some((m) => m.user?._id === selectedUser);
+
+      if (exists) {
+        toast({
+          title: "Info",
+          description: "User already exists → role may be updated instead",
+        });
+      } else {
+        // ➕ إضافة عضو جديد
+        await addMember({
+          id: workspaceId,
+          userId: selectedUser,
+          role,
+        }).unwrap();
+      }
 
       setSelectedUser("");
     } catch (err) {
       console.error(err);
     }
   };
-
   const handleRemove = async (userId: string) => {
     console.log(userId);
-    
+
     try {
-     const result = await removeMember({
+      const result = await removeMember({
         id: workspaceId,
         userId,
       }).unwrap();
       console.log(result);
-      
     } catch (err) {
       console.error(err);
     }
@@ -79,7 +94,7 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">
       <div className="w-full sm:max-w-xl">
-        <div className="max-h-[88vh] overflow-y-auto rounded-t-[28px] sm:rounded-[32px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+        <div className="max-h-[88vh]  rounded-t-[28px] sm:rounded-[32px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl">
           {/* HEADER */}
           <div className="relative p-5 border-b border-slate-200/70">
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -106,19 +121,12 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
               <label className="text-xs text-slate-500">Add Member</label>
 
               <div className="flex gap-2">
-                   <select
-                  value={selectedUser}
-                  onChange={(e) => setSelectedUser(e.target.value)}
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                >
-                  <option value="">Select user</option>
-
-                  {staffData?.data?.map((u) => (
-                    <option key={u._id} value={u._id}>
-                      {u.fullName || u.email}
-                    </option>
-                  ))}
-                </select>
+                <MemberSearchSelect
+                  options={staffData?.data || []}
+                  selectedValue={selectedUser}
+                  onChange={setSelectedUser}
+                  placeholder="Search employee..."
+                />
 
                 <select
                   value={role}
@@ -144,37 +152,97 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
               </div>
             </div>
 
-            {/* LIST */}
-            <div className="space-y-2 max-h-64 overflow-auto">
+            {/* MEMBERS LIST */}
+            <div className="space-y-3 max-h-[420px] overflow-auto pr-1">
               {members.map((m: any) => {
-                const user = m.user;
+                const memberUser = m.user;
+
+                const isCurrentUser = memberUser?._id === user?._id;
+
+                const isOwner = m.role === "owner";
+
+                const isProtectedOwner = isCurrentUser && isOwner;
 
                 return (
                   <div
-                    key={user._id}
-                    className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-3"
+                    key={memberUser?._id}
+                    className="group rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-slate-300 hover:shadow-sm"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">
-                        {(user?.fullName ||
-                          user?.email ||
-                          "?")[0].toUpperCase()}
+                    <div className="flex items-center justify-between gap-4">
+                      {/* LEFT */}
+                      <div className="flex min-w-0 items-center gap-3">
+                        {/* AVATAR */}
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-sm font-bold text-blue-700 ring-1 ring-blue-200">
+                          {(memberUser?.fullName || memberUser?.email || "?")
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+
+                        {/* INFO */}
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-slate-800">
+                            {memberUser?.fullName || "Unknown User"}
+                          </div>
+
+                          <div className="truncate text-xs text-slate-500">
+                            {memberUser?.email}
+                          </div>
+                        </div>
                       </div>
 
-                      <div>
-                        <div className="text-sm font-medium text-slate-800">
-                          {user?.fullName}
-                        </div>
-                        <div className="text-xs text-slate-500">{m.role}</div>
+                      {/* RIGHT */}
+                      <div className="flex items-center gap-2">
+                        {/* ROLE */}
+                        {isProtectedOwner ? (
+                          <div className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
+                            Owner
+                          </div>
+                        ) : (
+                          <select
+                            value={m.role}
+                            onChange={async (e) => {
+                              const newRole = e.target.value;
+
+                              try {
+                                const res = await updateWorkspace({
+                                  id: workspaceId,
+                                  data: {
+                                    members: members.map((member) => {
+                                      const memberId = member?.user?._id;
+
+                                      if (!memberId) return member;
+
+                                      return memberId === memberUser?._id
+                                        ? { ...member, role: newRole }
+                                        : member;
+                                    }),
+                                  },
+                                }).unwrap();
+                                refetch();
+                              } catch (err) {
+                                console.error(err);
+                              }
+                            }}
+                            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                          >
+                            <option value="viewer">Viewer</option>
+                            <option value="member">Member</option>
+                            <option value="manager">Manager</option>
+                          </select>
+                        )}
+
+                        {/* REMOVE */}
+                        {!isProtectedOwner && (
+                          <button
+                            onClick={() => handleRemove(memberUser?._id)}
+                            disabled={removing}
+                            className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 transition hover:border-red-200 hover:bg-red-100 disabled:opacity-50"
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
                     </div>
-
-                    <button
-                      onClick={() => handleRemove(user._id)}
-                      className="text-sm text-red-500 hover:text-red-600"
-                    >
-                      Remove
-                    </button>
                   </div>
                 );
               })}

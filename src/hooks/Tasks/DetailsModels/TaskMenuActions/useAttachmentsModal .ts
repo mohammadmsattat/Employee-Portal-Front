@@ -14,7 +14,6 @@ export const useAttachmentsModal = ({ task }: { task: Task }) => {
   const [deleteAttachmentMutation] = useDeleteAttachmentMutation();
 
   const attachments = data?.data || [];
-  console.log(attachments);
 
   const addAttachment = async (url: string) => {
     if (!url.trim()) return;

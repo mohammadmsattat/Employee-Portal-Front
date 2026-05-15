@@ -1,7 +1,7 @@
 import { useMembersModal } from "@/hooks/Tasks/DetailsModels/TaskMenuActions/useMembersModal";
 import { X, UserMinus } from "lucide-react";
 
-const UpdateTaskMembersModal = ({ isOpen, onClose, entity, workspaceId,refetchTasks }) => {
+const UpdateTaskMembersModal = ({ isOpen, onClose, entity, workspaceId,refetchTasks ,listId }) => {
   const {
     staff,
     selectedMembers,
@@ -13,6 +13,7 @@ const UpdateTaskMembersModal = ({ isOpen, onClose, entity, workspaceId,refetchTa
     onClose,
     entity,
     workspaceId,
+    listId,
     refetchTasks
   });
 

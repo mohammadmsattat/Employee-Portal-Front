@@ -23,6 +23,7 @@ export default function TaskEditor({
   closeSubModal,
   workspaceId,
   refetchTasks,
+  listId,
 }) {
   const actionBtn =
     "flex items-center gap-2 px-3 py-2 text-sm rounded-2xl bg-white/80 border border-slate-200/60 text-slate-700 hover:bg-white hover:shadow-sm transition backdrop-blur-sm";
@@ -55,6 +56,7 @@ export default function TaskEditor({
                 isOpen
                 onClose={closeSubModal}
                 workspaceId={workspaceId}
+                listId={listId}
                 refetchTasks={refetchTasks}
               />
             </div>
@@ -76,6 +78,7 @@ export default function TaskEditor({
                 isOpen
                 onClose={closeSubModal}
                 workspaceId={workspaceId}
+                listId={listId}
                 refetchTasks={refetchTasks}
               />
             </div>
@@ -94,6 +97,7 @@ export default function TaskEditor({
                 isOpen
                 onClose={closeSubModal}
                 workspaceId={workspaceId}
+                listId={listId}
                 refetchTasks={refetchTasks}
               />
             </div>

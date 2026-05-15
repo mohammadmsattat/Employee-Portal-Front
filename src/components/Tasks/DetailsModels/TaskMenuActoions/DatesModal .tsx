@@ -7,12 +7,14 @@ const UpdateTaskDatesModal = ({
   isOpen,
   onClose,
   workspaceId,
+  listId,
   refetchTasks,
 }) => {
   const { dates, setDates, handleSave } = useDatesModal({
     entity,
     onClose,
     workspaceId,
+    listId,
     refetchTasks,
   });
 
