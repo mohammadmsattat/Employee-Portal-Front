@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { differenceInDays, isBefore, isAfter, isSameDay } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -17,6 +17,13 @@ interface FormState {
   attachment: File | null;
 }
 
+/** ✅ FIX: missing function */
+const normalizeDate = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
 export const useAddLeaveRequestModal = ({
   isOpen,
   onClose,
@@ -26,7 +33,6 @@ export const useAddLeaveRequestModal = ({
 }) => {
   const { toast } = useToast();
 
-  // ✅ Safe localStorage parsing
   const group = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("group") || "null");
@@ -64,7 +70,6 @@ export const useAddLeaveRequestModal = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ✅ File validation (added)
   const allowedMimeTypes = [
     "image/jpeg",
     "image/png",
@@ -75,7 +80,7 @@ export const useAddLeaveRequestModal = ({
 
   const allowedExtensions = [".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx"];
 
-  const maxFileSize = 5 * 1024 * 1024; // 5MB
+  const maxFileSize = 5 * 1024 * 1024;
 
   const validateFile = (file: File) => {
     const extension = file.name
@@ -106,7 +111,6 @@ export const useAddLeaveRequestModal = ({
     return true;
   };
 
-  // Correct useEffect cleanup
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
 
@@ -115,14 +119,11 @@ export const useAddLeaveRequestModal = ({
     };
   }, [isOpen]);
 
-  const {
-    data: leaveTypesData,
-    isLoading: isLeaveTypesLoading,
-    error,
-  } = useGetAllLeavesQuery(
-    { page: 1, limit: 100, policyId: leavePolicyId },
-    { skip: !leavePolicyId },
-  );
+  const { data: leaveTypesData, isLoading: isLeaveTypesLoading } =
+    useGetAllLeavesQuery(
+      { page: 1, limit: 100, policyId: leavePolicyId },
+      { skip: !leavePolicyId },
+    );
 
   const { data: leaveLogsData } = useGetMyLeaveLogsQuery({
     page: 1,
@@ -139,54 +140,65 @@ export const useAddLeaveRequestModal = ({
     return calculateLeaveBalances(leaveTypesData.data, leaveLogsData.data);
   }, [leaveTypesData, leaveLogsData]);
 
-  const numberOfDays = useMemo(() => {
-    if (formData.startDate && formData.endDate) {
-      const diff = differenceInDays(formData.endDate, formData.startDate);
-      return diff >= 0 ? diff + 1 : 0;
-    }
-    return 0;
-  }, [formData.startDate, formData.endDate]);
-
   const [createLeaveRequest] = useCreateLeaveRequestMutation();
 
-  const isHoliday = (date: Date) => {
-    if (!group?.calendarRules) return false;
+const normalize = (date: Date | string) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+console.log(group);
 
-    return group.calendarRules.some((rule: any) => {
-      if (rule.effectType !== "FULL_DAY_OFF") return false;
+const isHoliday = useCallback((date: Date) => {
+  if (!group?.calendarRules?.length) return false;
 
-      if (rule.patternType === "SINGLE_DATE") {
-        return isSameDay(date, new Date(rule.startDate));
-      }
+  const d = normalize(date);
 
-      if (rule.patternType === "RECURRING_WEEKLY") {
-        const weekDays = [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-        ];
-        return rule.daysOfWeek?.some(
-          (day: string) => weekDays[date.getDay()] === day,
-        );
-      }
+  return group.calendarRules.some((rule: any) => {
+    if (rule.effectType !== "FULL_DAY_OFF") return false;
 
-      if (rule.patternType === "DATE_RANGE") {
-        const start = new Date(rule.startDate);
-        const end = new Date(rule.endDate);
-        return (
-          isSameDay(date, start) ||
-          isSameDay(date, end) ||
-          (isAfter(date, start) && isBefore(date, end))
-        );
-      }
+    if (rule.patternType === "SINGLE_DATE") {
+      return isSameDay(d, normalize(rule.startDate));
+    }
 
-      return false;
-    });
-  };
+    if (rule.patternType === "RECURRING_WEEKLY") {
+      const weekDays = [
+        "Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"
+      ];
+      return rule.daysOfWeek?.includes(weekDays[d.getDay()]);
+    }
+
+    if (rule.patternType === "DATE_RANGE") {
+      const start = normalize(rule.startDate);
+      const end = normalize(rule.endDate);
+
+      return d >= start && d <= end;
+    }
+
+    return false;
+  });
+}, [group]);
+
+  const numberOfDays = useMemo(() => {
+    if (!formData.startDate || !formData.endDate) return 0;
+
+    const start = normalizeDate(formData.startDate);
+    const end = normalizeDate(formData.endDate);
+
+    if (start > end) return 0;
+
+    let count = 0;
+    let cursor = new Date(start);
+
+    while (cursor <= end) {
+      if (!isHoliday(cursor)) count++;
+
+      cursor = new Date(cursor);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return count;
+  }, [formData.startDate, formData.endDate, isHoliday]);
 
   const getLeaveTypeName = (type: any) => {
     if (!type?.typeKey) return "Leave";
@@ -231,7 +243,10 @@ export const useAddLeaveRequestModal = ({
     );
 
     const remainingDays =
-      selectedLeave?.remainingDays ?? myLeaveRequestsData?.summary?.remaining ?? 0;
+      selectedLeave?.remainingDays ??
+      myLeaveRequestsData?.summary?.remaining ??
+      0;
+
     const requiresAttachment = selectedLeave?.requiresAttachment || false;
 
     if (
@@ -342,14 +357,16 @@ export const useAddLeaveRequestModal = ({
       ? {
           _id: formData.leaveType,
           typeKey:
-            leaveTypesData?.data?.find((type: any) => type._id === formData.leaveType)
-              ?.typeKey || "Leave",
+            leaveTypesData?.data?.find(
+              (type: any) => type._id === formData.leaveType,
+            )?.typeKey || "Leave",
           totalAllowed: myLeaveRequestsData.summary.totalBalance,
           usedDays: myLeaveRequestsData.summary.used,
           remainingDays: myLeaveRequestsData.summary.remaining,
           requiresAttachment:
-            leaveTypesData?.data?.find((type: any) => type._id === formData.leaveType)
-              ?.requiresAttachment || false,
+            leaveTypesData?.data?.find(
+              (type: any) => type._id === formData.leaveType,
+            )?.requiresAttachment || false,
         }
       : selectedLeave;
 

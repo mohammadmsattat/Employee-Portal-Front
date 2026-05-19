@@ -147,6 +147,7 @@ const TasksPage = () => {
   const [editTask, setEditTask] = useState(null);
   const [detailsTask, setDetailsTask] = useState(null);
   const [checklistTask, setChecklistTask] = useState(null);
+console.log(editTask);
 
   const { toast } = useToast();
 
@@ -277,7 +278,7 @@ const TasksPage = () => {
         {/* CONTENT */}
         <div className="flex-1 space-y-4">
           {isOffline && (
-            <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-black-700">
               You are offline
             </div>
           )}

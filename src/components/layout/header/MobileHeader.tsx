@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTopbar } from "@/hooks/Topbar/useTopbar";
 import logo from "../../../../public/logo.png";
 import { MobileHeaderConfig } from "@/interfaces/header";
+import NotificationsDropdown from "@/components/NotificationsDropdown";
 
 interface MobileHeaderProps {
   config: MobileHeaderConfig;
@@ -64,15 +65,7 @@ const MobileHeader = ({ config }: MobileHeaderProps) => {
                     </button>
                   )}
 
-                  {config.showNotifications && (
-                    <button
-                      aria-label="Notifications"
-                      className="relative inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:bg-slate-50"
-                    >
-                      <Bell className="h-5 w-5" />
-                      <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-red-500" />
-                    </button>
-                  )}
+                  {config.showNotifications && <NotificationsDropdown />}
 
                   {config.rightActions?.map((action) => (
                     <button

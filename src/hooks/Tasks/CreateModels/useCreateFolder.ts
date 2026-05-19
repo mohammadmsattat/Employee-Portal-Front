@@ -2,10 +2,6 @@ import { useMemo, useState } from "react";
 import { useCreateFolderMutation } from "@/rtk/Tasks/folderApi";
 import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
 
-/* =========================
-   TYPES
-========================= */
-
 export const VISIBILITY = ["private", "public"] as const;
 export type Visibility = (typeof VISIBILITY)[number];
 
@@ -15,6 +11,7 @@ export type WorkspaceRole = (typeof ROLES)[number];
 interface Member {
   user: string;
   role: WorkspaceRole;
+  notificationEnabled: boolean;
 }
 
 interface Props {
@@ -22,10 +19,6 @@ interface Props {
   onClose?: () => void;
   refetchTree?: () => void;
 }
-
-/* =========================
-   HOOK
-========================= */
 
 export const useCreateFolder = ({
   workspaceId,
@@ -35,20 +28,14 @@ export const useCreateFolder = ({
   const [createFolder, { isLoading }] = useCreateFolderMutation();
 
   const { data: staffRes } = useGetAllStaffQuery({});
-
   const staffData = useMemo(() => staffRes?.data || [], [staffRes]);
 
   const [name, setName] = useState("");
-
-  const [visibility, setVisibility] =
-    useState<Visibility>("private");
+  const [visibility, setVisibility] = useState<Visibility>("private");
 
   const [members, setMembers] = useState<Member[]>([]);
-
   const [selectedUser, setSelectedUser] = useState("");
-
-  const [role, setRole] =
-    useState<WorkspaceRole>("viewer");
+  const [role, setRole] = useState<WorkspaceRole>("viewer");
 
   const reset = () => {
     setName("");
@@ -58,13 +45,12 @@ export const useCreateFolder = ({
     setRole("viewer");
   };
 
+  const isNotificationEnabled = (r: WorkspaceRole) => r === "manager";
+
   const addMember = () => {
     if (!selectedUser) return;
 
-    const exists = members.some(
-      (m) => m.user === selectedUser
-    );
-
+    const exists = members.some((m) => m.user === selectedUser);
     if (exists) return;
 
     setMembers((prev) => [
@@ -72,6 +58,7 @@ export const useCreateFolder = ({
       {
         user: selectedUser,
         role,
+        notificationEnabled: isNotificationEnabled(role),
       },
     ]);
 
@@ -79,42 +66,54 @@ export const useCreateFolder = ({
     setRole("viewer");
   };
 
-  const removeMember = (id: string) => {
+  const updateMember = (userId: string, payload: Partial<Member>) => {
     setMembers((prev) =>
-      prev.filter((m) => m.user !== id)
+      prev.map((m) => {
+        if (m.user !== userId) return m;
+
+        const newRole = payload.role ?? m.role;
+
+        return {
+          ...m,
+          ...payload,
+          role: newRole,
+          notificationEnabled:
+            payload.notificationEnabled !== undefined
+              ? payload.notificationEnabled
+              : isNotificationEnabled(newRole),
+        };
+      }),
     );
   };
 
-const submit = async () => {
-  if (!name.trim() || !workspaceId) return;
-console.log(members);
+  const removeMember = (id: string) => {
+    setMembers((prev) => prev.filter((m) => m.user !== id));
+  };
 
-  try {
+  const submit = async () => {
+    if (!name.trim() || !workspaceId) return;
+
     await createFolder({
+      workspaceId,
       data: {
         name: name.trim(),
         visibility,
         order: 0,
-
         members:
           visibility === "private"
             ? members.map((m) => ({
                 user: m.user,
                 role: m.role,
+                notificationsEnabled: m.notificationEnabled,
               }))
             : [],
       },
-      workspaceId,
     }).unwrap();
 
     await refetchTree?.();
-
     reset();
     onClose?.();
-  } catch (err) {
-    console.error(err);
-  }
-};
+  };
 
   return {
     name,
@@ -134,11 +133,11 @@ console.log(members);
     staffData,
 
     addMember,
+    updateMember,
     removeMember,
 
     submit,
     isLoading,
-
-    reset,
+    reset
   };
 };

@@ -1,5 +1,13 @@
 import { useMemo, useState } from "react";
-import { X, Plus, Loader2, Users, CheckCircle2 } from "lucide-react";
+import {
+  X,
+  Plus,
+  Loader2,
+  Users,
+  CheckCircle2,
+  Bell,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -11,6 +19,7 @@ import {
 
 import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
 import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
+import { Switch } from "@/components/ui/switch";
 
 export const ListMembersModal = ({
   isOpen,
@@ -52,17 +61,21 @@ export const ListMembersModal = ({
 
   const handleAdd = async () => {
     if (!selectedUser || !workspace?._id || !listId) return;
+console.log("1111");
 
-    await addMember({
+   const res = await addMember({
       workspaceId: workspace._id,
       folderId,
       id: listId,
       userId: selectedUser,
       role,
+      notificationsEnabled: role === "manager"? true : false,
     }).unwrap();
 
     setSelectedUser("");
     refetch();
+    console.log(res);
+    
   };
 
   const handleRemove = async (userId) => {
@@ -83,10 +96,7 @@ export const ListMembersModal = ({
 
       const updatedMembers = members.map((member) => ({
         user: member.user?._id || member.user,
-        role:
-          member.user?._id === memberUser?._id
-            ? newRole
-            : member.role,
+        role: member.user?._id === memberUser?._id ? newRole : member.role,
       }));
 
       await updateList({
@@ -111,7 +121,6 @@ export const ListMembersModal = ({
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">
       <div className="w-full sm:max-w-xl">
         <div className="max-h-[88vh] rounded-t-[28px] sm:rounded-[32px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl">
-
           {/* HEADER */}
           <div className="relative p-5 border-b border-slate-200/70">
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -133,7 +142,6 @@ export const ListMembersModal = ({
 
           {/* BODY */}
           <div className="p-5 space-y-5">
-
             {/* ADD */}
             <div className="flex gap-2">
               <MemberSearchSelect
@@ -168,7 +176,6 @@ export const ListMembersModal = ({
 
             {/* LIST */}
             <div className="space-y-3 max-h-[420px] overflow-auto pr-1">
-
               {members.map((m) => {
                 const memberUser = m.user;
 
@@ -187,7 +194,6 @@ export const ListMembersModal = ({
                           : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
                       }`}
                   >
-
                     {/* overlay loader */}
                     {isUpdating && (
                       <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/60">
@@ -196,7 +202,6 @@ export const ListMembersModal = ({
                     )}
 
                     <div className="flex items-center justify-between">
-
                       {/* LEFT */}
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-sm font-bold text-blue-700">
@@ -217,7 +222,56 @@ export const ListMembersModal = ({
 
                       {/* RIGHT */}
                       <div className="flex items-center gap-2">
+                        {/* NOTIFICATION */}
+                        <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-2 py-1">
+                          <Bell className="h-4 w-4 text-slate-500" />
+                          <Switch
+                            checked={Boolean(m.notificationsEnabled)}
+                            disabled={isUpdating}
+                            onCheckedChange={async (checked) => {
+                              try {
+                                setUpdatingMemberId(memberUser?._id);
+                                setSuccessMemberId(null);
 
+                                const updatedMembers = members.map(
+                                  (member) => ({
+                                    user: member.user?._id || member.user,
+
+                                    role: member.role,
+
+                                    notificationsEnabled:
+                                      (member.user?._id || member.user) ===
+                                      memberUser?._id
+                                        ? checked
+                                        : Boolean(member.notificationsEnabled),
+                                  }),
+                                );
+
+                                await updateList({
+                                  workspaceId: workspace._id,
+                                  folderId,
+                                  id: listId,
+
+                                  data: {
+                                    members: updatedMembers,
+                                  },
+                                }).unwrap();
+
+                                await refetch();
+
+                                setSuccessMemberId(memberUser?._id);
+
+                                setTimeout(() => {
+                                  setSuccessMemberId(null);
+                                }, 1200);
+                              } catch (err) {
+                                console.error(err);
+                              } finally {
+                                setUpdatingMemberId(null);
+                              }
+                            }}
+                          />
+                        </div>
                         {isOwner ? (
                           <span className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
                             Owner
@@ -247,18 +301,16 @@ export const ListMembersModal = ({
                           <button
                             onClick={() => handleRemove(memberUser?._id)}
                             disabled={removing || isUpdating}
-                            className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600 hover:bg-red-100 disabled:opacity-50"
+                            className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-50"
                           >
-                            Remove
+                            <Trash2 className="h-3 w-3" />
                           </button>
                         )}
-
                       </div>
                     </div>
                   </div>
                 );
               })}
-
             </div>
           </div>
 
@@ -268,7 +320,6 @@ export const ListMembersModal = ({
               Close
             </Button>
           </div>
-
         </div>
       </div>
     </div>

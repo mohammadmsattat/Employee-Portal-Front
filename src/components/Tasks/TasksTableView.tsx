@@ -65,7 +65,7 @@ const TasksTableView = ({
 
       if (deleteState.type === "task") {
         console.log("...");
-        
+
         await onDeleteTask?.(deleteState.taskId);
       }
 
@@ -401,6 +401,7 @@ const TasksTableView = ({
           loading={deleteLoading}
           title={`Delete ${deleteState.type}`}
           description={`Are you sure you want to delete "${deleteState.title}"? This action cannot be undone.`}
+          stateName={deleteState.title}
           onClose={() =>
             setDeleteState({
               open: false,

@@ -181,9 +181,9 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
                         mode="single"
                         selected={formData[field]}
                         onSelect={(date) => handleDateSelect(field, date)}
-                        disabled={(date) =>
-                          date < new Date() || isHoliday(date)
-                        }
+                        // disabled={(date) =>
+                        //   date < new Date() || isHoliday(date)
+                        // }
                         initialFocus
                         className="pointer-events-auto"
                         modifiers={{
@@ -210,9 +210,21 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
                                   "Saturday",
                                 ];
 
-                                return rule.daysOfWeek?.some(
-                                  (day) => weekDays[date.getDay()] === day,
+                                return rule.daysOfWeek?.includes(
+                                  weekDays[date.getDay()],
                                 );
+                              }
+
+                              if (rule.patternType === "DATE_RANGE") {
+                                const start = new Date(rule.startDate);
+                                const end = new Date(rule.endDate);
+                                const current = new Date(date);
+
+                                start.setHours(0, 0, 0, 0);
+                                end.setHours(0, 0, 0, 0);
+                                current.setHours(0, 0, 0, 0);
+
+                                return current >= start && current <= end;
                               }
 
                               return false;

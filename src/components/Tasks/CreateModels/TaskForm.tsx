@@ -1,4 +1,3 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -46,8 +45,8 @@ const TaskForm = ({
       {/* TITLE */}
       <div className="space-y-2">
         <Label>{t("tasks.title")} *</Label>
-        <Input
-          className="h-12 rounded-2xl border-slate-200"
+        <input
+          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
           value={formData.title}
           onChange={(e) =>
             setFormData((p) => ({ ...p, title: e.target.value }))
@@ -162,7 +161,7 @@ const TaskForm = ({
           </Popover>
         </div>
       </div>
-   {/* ASSIGN */}
+      {/* ASSIGN */}
       <div className="space-y-2">
         <Label>{t("tasks.assignTo")}</Label>
 
@@ -193,7 +192,6 @@ const TaskForm = ({
           }
         />
       </div>
-   
 
       {/* TAGS */}
       {/* {mode === "task" && (

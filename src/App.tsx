@@ -21,6 +21,7 @@ import LeavesPage from "./pages/Leaves/LeavesPage";
 import TasksPage from "./pages/Tasks/TasksPage";
 import OvertimePage from "./pages/Overtime/OvertimePage";
 import AdvancePage from "./pages/Advance/AdvancePage";
+import NotificationsPage from "./pages/Notifications/NotificationsPage";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
                 path="/advance/my-advance-requests"
                 element={<AdvancePage />}
               />
+              <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/profile" element={<Profile />} />
 

@@ -18,7 +18,7 @@ import { AddWorkspaceModal } from "./CreateModels/AddWorkspaceModal";
 import { ManageMembersModal } from "./UpdatesModels/ManageMembersModal";
 import { ListMembersModal } from "./UpdatesModels/ManageListMembersModal";
 import { AddFolderModal } from "./CreateModels/AddFolderModal ";
-import { AddListModal } from "./CreateModels/AddListModal ";
+import { AddListModal } from "./CreateModels/AddListModal";
 
 import {
   canManageWorkspace,
@@ -543,6 +543,7 @@ const FolderSidebar = ({
         loading={deleteLoading}
         title={`Delete ${deleteState.type}`}
         description={`Are you sure you want to delete "${deleteState.name}"? This action cannot be undone.`}
+        stateName={deleteState.name}
         onClose={() => setDeleteState({ open: false })}
         onConfirm={handleDelete}
       />

@@ -29,6 +29,7 @@ export default function TaskDetailsModal({
     activityError,
     refetchActivity,
   } = useTaskDetailsModal({ entity, onClose, workspaceId: workspace?._id ,listId: listName?._id });
+console.log(entity);
 
   const [commentText, setCommentText] = useState("");
 

@@ -30,6 +30,7 @@ const DesktopHeader = () => {
       to: "/overtime/my-overtime-requests",
       icon: FileText,
     },
+    { label: t("navigation.tasks"), to: "/tasks", icon: User },
     { label: t("navigation.myProfile"), to: "/profile", icon: User },
   ];
 

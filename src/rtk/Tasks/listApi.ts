@@ -19,13 +19,12 @@ export const listApi = createApi({
   tagTypes: ["List"],
 
   endpoints: (builder) => ({
-
     // =========================
     // GET LISTS BY WORKSPACE
     // GET /api/workspaces/:workspaceId/lists
     // =========================
-    getLists: builder.query<any, { workspaceId: string ; folderId: string }>({
-      query: ({ workspaceId , folderId }) =>
+    getLists: builder.query<any, { workspaceId: string; folderId: string }>({
+      query: ({ workspaceId, folderId }) =>
         `${buildListUrl(workspaceId, folderId)}?companyId=${getCompanyId()}`,
       providesTags: ["List"],
     }),
@@ -36,10 +35,10 @@ export const listApi = createApi({
     // =========================
     getListById: builder.query<
       any,
-      { workspaceId: string; id: string , folderId: string }
+      { workspaceId: string; id: string; folderId: string }
     >({
-      query: ({ workspaceId, id , folderId }) =>
-        `${buildListUrl(workspaceId , folderId)}/${id}?companyId=${getCompanyId()}`,
+      query: ({ workspaceId, id, folderId }) =>
+        `${buildListUrl(workspaceId, folderId)}/${id}?companyId=${getCompanyId()}`,
       providesTags: ["List"],
     }),
 
@@ -47,14 +46,17 @@ export const listApi = createApi({
     // CREATE LIST
     // POST /api/workspaces/:workspaceId/lists
     // =========================
-   createList: builder.mutation<any, { workspaceId: string; folderId: string; data: any }>({
-  query: ({ workspaceId, folderId, data }) => ({
-    url: `${buildListUrl(workspaceId, folderId)}?companyId=${getCompanyId()}`,
-    method: "POST",
-    body: data,
-  }),
-  invalidatesTags: ["List"],
-}),
+    createList: builder.mutation<
+      any,
+      { workspaceId: string; folderId: string; data: any }
+    >({
+      query: ({ workspaceId, folderId, data }) => ({
+        url: `${buildListUrl(workspaceId, folderId)}?companyId=${getCompanyId()}`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["List"],
+    }),
 
     // =========================
     // UPDATE LIST
@@ -62,9 +64,9 @@ export const listApi = createApi({
     // =========================
     updateList: builder.mutation<
       any,
-      { workspaceId: string; id: string; data: any , folderId: string }
+      { workspaceId: string; id: string; data: any; folderId: string }
     >({
-      query: ({ workspaceId, id, data , folderId }) => ({
+      query: ({ workspaceId, id, data, folderId }) => ({
         url: `${buildListUrl(workspaceId, folderId)}/${id}?companyId=${getCompanyId()}`,
         method: "PATCH",
         body: data,
@@ -78,9 +80,9 @@ export const listApi = createApi({
     // =========================
     deleteList: builder.mutation<
       any,
-      { workspaceId: string; id: string , folderId: string }
+      { workspaceId: string; id: string; folderId: string }
     >({
-      query: ({ workspaceId, id , folderId}) => ({
+      query: ({ workspaceId, id, folderId }) => ({
         url: `${buildListUrl(workspaceId, folderId)}/${id}?companyId=${getCompanyId()}`,
         method: "DELETE",
       }),
@@ -93,12 +95,26 @@ export const listApi = createApi({
     // =========================
     addListMember: builder.mutation<
       any,
-      { workspaceId: string; id: string; userId: string; role: string  , folderId: string }
+      {
+        workspaceId: string;
+        id: string;
+        userId: string;
+        role: string;
+        folderId: string;
+        notificationsEnabled: boolean;
+      }
     >({
-      query: ({ workspaceId, id, userId, role , folderId}) => ({
+      query: ({
+        workspaceId,
+        id,
+        userId,
+        role,
+        folderId,
+        notificationsEnabled,
+      }) => ({
         url: `${buildListUrl(workspaceId, folderId)}/${id}/members?companyId=${getCompanyId()}`,
         method: "POST",
-        body: { userId, role },
+        body: { userId, role, notificationsEnabled },
       }),
       invalidatesTags: ["List"],
     }),
@@ -109,9 +125,9 @@ export const listApi = createApi({
     // =========================
     removeListMember: builder.mutation<
       any,
-      { workspaceId: string; id: string; userId: string , folderId: string }
+      { workspaceId: string; id: string; userId: string; folderId: string }
     >({
-      query: ({ workspaceId, id, userId , folderId}) => ({
+      query: ({ workspaceId, id, userId, folderId }) => ({
         url: `${buildListUrl(workspaceId, folderId)}/${id}/members/${userId}?companyId=${getCompanyId()}`,
         method: "DELETE",
       }),

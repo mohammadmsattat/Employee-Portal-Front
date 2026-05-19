@@ -23,7 +23,6 @@ type CreateSubTaskArgs = {
 };
 
 type UpdateSubTaskArgs = {
-  listId: string;
   taskId: string;
   subTaskId: string;
   data: any;
@@ -91,7 +90,7 @@ export const subTaskApi = createApi({
        UPDATE
     ========================= */
     updateSubTask: builder.mutation<any, UpdateSubTaskArgs>({
-      query: ({ listId, taskId, subTaskId, data }) => ({
+      query: ({  taskId, subTaskId, data }) => ({
         url: `${buildSubTaskUrl( taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
         method: "PATCH",
         body: data,

@@ -1,5 +1,13 @@
 import { useMemo, useState } from "react";
-import { X, Plus, Users, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  X,
+  Plus,
+  Users,
+  Loader2,
+  CheckCircle2,
+  Trash2,
+  Bell,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -14,7 +22,7 @@ import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
 import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
 
 import { useToast } from "@/hooks/use-toast";
-
+import { Switch } from "@/components/ui/switch";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
@@ -59,6 +67,7 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
           id: workspaceId,
           userId: selectedUser,
           role,
+          notificationsEnabled: role === "manager",
         }).unwrap();
 
         toast({ title: "Member added" });
@@ -84,6 +93,7 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
       toast({ title: "Remove failed", variant: "destructive" });
     }
   };
+  console.log(members);
 
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-900/40 backdrop-blur-[2px] sm:items-center">
@@ -193,6 +203,60 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
 
                       {/* RIGHT */}
                       <div className="flex items-center gap-2">
+                        {/* NOTIFICATION */}
+                        <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-2 py-1">
+                          <Bell className="h-4 w-4 text-slate-500" />
+                          <Switch
+                            checked={Boolean(m.notificationsEnabled)}
+                            disabled={isUpdating}
+                            onCheckedChange={async (checked) => {
+                              try {
+                                setUpdatingMemberId(memberUser?._id);
+                                setSuccessMemberId(null);
+
+                                await updateWorkspace({
+                                  id: workspaceId,
+                                  data: {
+                                    members: members.map((member) => {
+                                      const id = member?.user?._id;
+
+                                      if (!id) return member;
+
+                                      return id === memberUser?._id
+                                        ? {
+                                            ...member,
+                                            notificationsEnabled: checked,
+                                          }
+                                        : member;
+                                    }),
+                                  },
+                                }).unwrap();
+
+                                await refetch();
+
+                                setSuccessMemberId(memberUser?._id);
+
+                                setTimeout(() => {
+                                  setSuccessMemberId(null);
+                                }, 1200);
+
+                                toast({
+                                  title: checked
+                                    ? "Notifications enabled"
+                                    : "Notifications disabled",
+                                  description: memberUser?.fullName,
+                                });
+                              } catch (err) {
+                                toast({
+                                  title: "Update failed",
+                                  variant: "destructive",
+                                });
+                              } finally {
+                                setUpdatingMemberId(null);
+                              }
+                            }}
+                          />
+                        </div>
                         {/* ROLE */}
                         {isOwner ? (
                           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
@@ -245,7 +309,7 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
                                   setUpdatingMemberId(null);
                                 }
                               }}
-                              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-xs font-medium text-slate-700 transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-2 text-xs font-medium text-slate-700 transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
                             >
                               <option value="viewer">Viewer</option>
                               <option value="member">Member</option>
@@ -266,7 +330,7 @@ export const ManageMembersModal = ({ isOpen, onClose, workspace }: Props) => {
                             disabled={removing || isUpdating}
                             className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-50"
                           >
-                            Remove
+                            <Trash2 className="h-3 w-3" />
                           </button>
                         )}
                       </div>

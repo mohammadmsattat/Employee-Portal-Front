@@ -98,12 +98,13 @@ export const folderApi = createApi({
         folderId: string;
         userId: string;
         role: string;
+        notificationsEnabled:boolean
       }
     >({
-      query: ({ workspaceId, folderId, userId, role }) => ({
+      query: ({ workspaceId, folderId, userId, role ,notificationsEnabled }) => ({
         url: `${buildFolderMemberUrl(workspaceId, folderId)}?companyId=${getCompanyId()}`,
         method: "POST",
-        body: { userId, role },
+        body: { userId, role ,notificationsEnabled },
       }),
       invalidatesTags: ["Folder"],
     }),

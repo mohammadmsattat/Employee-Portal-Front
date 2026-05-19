@@ -67,12 +67,12 @@ export const workspaceApi = createApi({
     // ADD MEMBER
     addWorkspaceMember: builder.mutation<
       any,
-      { id: string; userId: string; role: string }
+      { id: string; userId: string; role: string, notificationsEnabled :boolean }
     >({
-      query: ({ id, userId, role }) => ({
+      query: ({ id, userId, role,notificationsEnabled }) => ({
         url: `${workspaceEndPoint}/${id}/members?companyId=${getCompanyId()}`,
         method: "POST",
-        body: { userId, role },
+        body: { userId, role , notificationsEnabled },
       }),
       invalidatesTags: ["Workspace"],
     }),

@@ -14,7 +14,12 @@ import {
   useAddAttachmentMutation,
 } from "@/rtk/Tasks/attachmentsApi";
 
-export const useTaskDetailsModal = ({ entity, onClose, workspaceId ,listId }) => {
+export const useTaskDetailsModal = ({
+  entity,
+  onClose,
+  workspaceId,
+  listId,
+}) => {
   const data = entity?.data;
   const type = entity?.type;
 
@@ -22,6 +27,7 @@ export const useTaskDetailsModal = ({ entity, onClose, workspaceId ,listId }) =>
   const id = data?._id;
 
   const parentTaskId = data?.parentTaskId;
+console.log(data);
 
   const [openPanel, setOpenPanel] = useState(null);
   const [position, setPosition] = useState("bottom");
@@ -100,21 +106,22 @@ export const useTaskDetailsModal = ({ entity, onClose, workspaceId ,listId }) =>
 
   const saveTask = async () => {
     if (isSubTask) {
-      await updateSubTask({
-        workspaceId,
-        taskId: parentTaskId,
+      const res = await updateSubTask({
+        taskId: entity?.parentTaskId,
         subTaskId: id,
         data: form,
       });
+      console.log(res);
     } else {
-      await updateTask({
-        workspaceId,
+      const res = await updateTask({
+        listId,
         id,
         data: form,
       });
+      console.log(res);
     }
 
-    onClose();
+    // onClose();
   };
 
   /* =========================
