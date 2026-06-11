@@ -213,7 +213,11 @@ export const useAttendance = () => {
       setActionLocked(true);
       setLocalLastAction({ date: todayDate, type });
 
-      await createFingerprint({ type }).unwrap();
+      await createFingerprint({
+        type,
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+      }).unwrap();
 
       toast({ title: `Successfully ${type}` });
     } catch (error: any) {

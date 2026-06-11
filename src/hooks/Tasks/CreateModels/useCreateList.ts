@@ -156,7 +156,7 @@ export const useCreateList = ({
               ? members.map((m) => ({
                   user: m.user,
                   role: m.role,
-                  notificationEnabled:
+                  notificationsEnabled:
                     Boolean(
                       m.notificationEnabled
                     ),
@@ -175,7 +175,7 @@ export const useCreateList = ({
       setRole("viewer");
       setVisibility("private");
     } catch (error) {
-      console.error(
+      console.log(
         "Create list failed:",
         error
       );

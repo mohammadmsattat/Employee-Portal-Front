@@ -72,7 +72,11 @@ export const fingerprintApi = createApi({
 
     createLogedFingerprint: builder.mutation<
       ApiResponse<AttendanceFingerprint>,
-      { type: "Check-in" | "Check-out" }
+      {
+        type: "Check-in" | "Check-out";
+        latitude: number;
+        longitude: number;
+      }
     >({
       query: (body) => ({
         url: `${fingerprintEndPoint}?companyId=${getCompanyId()}`,
