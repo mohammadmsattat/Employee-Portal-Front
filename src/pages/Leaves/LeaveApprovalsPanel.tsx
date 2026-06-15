@@ -258,9 +258,7 @@ const LeaveApprovalsPanel = () => {
                       <TableCell>{req.leaveType?.typeKey || "-"}</TableCell>
                       <TableCell>{formatDate(req.startDate)}</TableCell>
                       <TableCell>{formatDate(req.endDate)}</TableCell>
-                      <TableCell className="text-center">
-                        {calculateDays(req.startDate, req.endDate)}
-                      </TableCell>
+                      <TableCell className="text-center">{req.days}</TableCell>
                       <TableCell className="text-center">
                         <StatusBadge status={req.status} />
                       </TableCell>
@@ -361,7 +359,7 @@ const LeaveApprovalsPanel = () => {
                         <MobileCardValue className="mt-1 flex items-center gap-1.5">
                           <Clock3 className="h-4 w-4 text-slate-400" />
                           <span>
-                            {calculateDays(req.startDate, req.endDate)}
+                        {req.days}
                           </span>
                         </MobileCardValue>
                       </div>
@@ -432,5 +430,3 @@ const SummaryCard = ({ title, value }) => (
     </p>
   </div>
 );
-
-

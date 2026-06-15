@@ -4,6 +4,7 @@ import { Notification, NotificationsResponse } from "../interfaces";
 
 const getJWT = () => localStorage.getItem("token");
 const getCompanyId = () => localStorage.getItem("company"); 
+console.log(getJWT());
 
 export const NotificationsApi = createApi({
   reducerPath: "notificationsApi",

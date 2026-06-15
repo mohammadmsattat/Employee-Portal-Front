@@ -20,10 +20,11 @@ const NotificationsDropdown = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
-  const { data, isLoading } = useGetMyNotificationsQuery({
+  const { data, isLoading , error } = useGetMyNotificationsQuery({
     page: 1,
     limit: 20,
   });
+console.log(error);
 
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();

@@ -28,9 +28,7 @@ export default function TaskEditor({
   const actionBtn =
     "flex items-center gap-2 px-3 py-2 text-sm rounded-2xl bg-white/80 border border-slate-200/60 text-slate-700 hover:bg-white hover:shadow-sm transition backdrop-blur-sm";
 
-
-
-    console.log(entity);
+  console.log(entity);
 
   return (
     <div className="w-1/2 border-r border-slate-200/50 flex flex-col bg-slate-50/40">
@@ -76,7 +74,12 @@ export default function TaskEditor({
           </button>
 
           {openPanel === "members" && (
-            <div style={popoverStyle()}>
+            <div
+              style={{
+                ...popoverStyle(),
+                overflow: "visible",
+              }}
+            >
               <UpdateTaskMembersModal
                 entity={entity}
                 isOpen
@@ -114,7 +117,13 @@ export default function TaskEditor({
           </button>
 
           {openPanel === "time" && (
-            <div style={popoverStyle()}>
+            <div
+              style={{
+                ...popoverStyle(),
+                width: "min(350px, 95vw)",
+                maxHeight: "60vh",
+              }}
+            >
               <UpdateTaskTimeLogModal
                 entity={entity}
                 isOpen

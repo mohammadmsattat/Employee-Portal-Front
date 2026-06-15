@@ -11,7 +11,7 @@ export const useMembersModal = ({ isOpen, onClose, entity, workspaceId, refetchT
   const [updateSubTask] = useUpdateSubTaskMutation();
 
   const { data } = useGetAllStaffQuery({
-    directManager: JSON.parse(localStorage.getItem("user"))?._id,
+    // directManager: JSON.parse(localStorage.getItem("user"))?._id,
   });
 
   const task = entity?.data;

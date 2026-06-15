@@ -4,7 +4,7 @@ import Layout from "@/components/layout/Layout";
 import TasksTableView from "@/components/Tasks/TasksTableView";
 import TaskFilters from "@/components/Tasks/TaskFilters";
 
-import { useGetAllTasksQuery } from "@/rtk/Tasks/tasksApi";
+import { useGetAllTasksQuery, useGetTaskByIdQuery } from "@/rtk/Tasks/tasksApi";
 import { useGetWorkspaceTreeQuery } from "@/rtk/Tasks/workspaceApi";
 
 import AddTaskModal from "@/components/Tasks/CreateModels/AddTaskModal";
@@ -14,15 +14,8 @@ import { Button } from "@/components/ui/button";
 
 import FolderSidebar from "@/components/Tasks/FolderSidebar";
 
-import {
-  AlertTriangle,
-  Inbox,
-  WifiOff,
-  RefreshCw,
-  Loader2,
-} from "lucide-react";
+import { Inbox, WifiOff, RefreshCw } from "lucide-react";
 
-import { hasPermission } from "@/lib/permissions";
 import AddSubTaskModal from "@/components/Tasks/CreateModels/AddSubTaskModal";
 import TaskChecklistModal from "@/components/Tasks/DetailsModels/TaskChecklistModal";
 import GlobalTaskTimer from "@/components/Tasks/GlobalTaskTimer";
@@ -30,7 +23,11 @@ import GlobalTaskTimer from "@/components/Tasks/GlobalTaskTimer";
 import { useDeleteTaskMutation } from "@/rtk/Tasks/tasksApi";
 
 import { useToast } from "@/hooks/use-toast";
-import { useDeleteSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
+import {
+  useDeleteSubTaskMutation,
+  useGetSubTaskByIdQuery,
+} from "@/rtk/Tasks/subTasksApi";
+import { useSearchParams } from "react-router-dom";
 
 /* =========================
    SKELETONS
@@ -119,6 +116,7 @@ const ErrorState = ({ text, onRetry }) => (
     <h3 className="text-base font-semibold text-slate-800">
       Connection Problem
     </h3>
+
     <p className="mt-2 max-w-sm text-sm text-slate-500">{text}</p>
 
     {onRetry && (
@@ -138,16 +136,29 @@ const ErrorState = ({ text, onRetry }) => (
 ========================= */
 
 const TasksPage = () => {
+  const [searchParams] = useSearchParams();
+
+  const workspaceId = searchParams.get("workspaceId");
+  const folderId = searchParams.get("folderId");
+  const listId = searchParams.get("listId");
+
+  const taskId = searchParams.get("taskId");
+  const subTaskId = searchParams.get("subTaskId");
+
+  const type = searchParams.get("type");
+  const mode = searchParams.get("mode");
+
   const [selectedList, setSelectedList] = useState(null);
   const [selectedContext, setSelectedContext] = useState(null);
-  const [filters, setFilters] = useState({});
 
+  const [filters, setFilters] = useState({});
   const [openTaskModal, setOpenTaskModal] = useState(false);
+
   const [subTaskParent, setSubTaskParent] = useState(null);
+
   const [editTask, setEditTask] = useState(null);
   const [detailsTask, setDetailsTask] = useState(null);
   const [checklistTask, setChecklistTask] = useState(null);
-console.log(editTask);
 
   const { toast } = useToast();
 
@@ -157,7 +168,6 @@ console.log(editTask);
   const {
     data: workspaceTree,
     isLoading: wsLoading,
-    isFetching: wsFetching,
     error: wsError,
     refetch: refetchTree,
   } = useGetWorkspaceTreeQuery(undefined, {
@@ -183,23 +193,115 @@ console.log(editTask);
       refetchOnReconnect: true,
     },
   );
+console.log(tasksError);
 
   const tasks = tasksData?.data || [];
 
-  /* =========================
-     LOADING STATES FIX
-  ========================= */
+  const { data: singleTaskData } = useGetTaskByIdQuery(
+    {
+      listId,
+      id: taskId,
+    },
+    {
+      skip: !taskId || !listId,
+    },
+  );
+console.log(singleTaskData);
+
+  const singleTask = singleTaskData?.data;
+
+  const { data: singleSubTaskData } = useGetSubTaskByIdQuery(
+    {
+      workspaceId,
+      taskId,
+      subTaskId,
+    },
+    {
+      skip: !subTaskId || !taskId,
+    },
+  );
+
+  const singleSubTask = singleSubTaskData?.data;
+
+console.log(singleSubTaskData);
 
   const shouldShowFullSkeleton = (tasksLoading || tasksFetching) && !tasksData;
-  const isRefreshing = tasksFetching && tasksData;
-
   const isFirstWorkspaceLoad = wsLoading && !workspaceTree;
+
+  useEffect(() => {
+    const tree = Array.isArray(workspaceTree)
+      ? workspaceTree
+      : workspaceTree?.data || [];
+
+    if (!tree.length) return;
+
+    const workspace = tree.find((w) => w._id === workspaceId);
+    if (!workspace) return;
+
+    if (type === "workspace") {
+      setSelectedList(null);
+      setSelectedContext({ workspace });
+      return;
+    }
+
+    let foundFolder = null;
+
+    for (const folder of workspace.folders || []) {
+      if (folder._id === folderId) {
+        foundFolder = folder;
+        break;
+      }
+
+      const hasList = folder.lists?.some((list) => list._id === listId);
+      if (hasList) {
+        foundFolder = folder;
+        break;
+      }
+    }
+
+    if (type === "folder" && foundFolder) {
+      setSelectedList(null);
+      setSelectedContext({ workspace, folder: foundFolder });
+      return;
+    }
+
+    const foundList = foundFolder?.lists?.find((list) => list._id === listId);
+
+    if (foundList && ["list", "task", "subtask"].includes(type || "")) {
+      setSelectedList(foundList);
+      setSelectedContext({
+        workspace,
+        folder: foundFolder,
+        list: foundList.name,
+        listRole: foundList.role,
+      });
+    }
+  }, [workspaceTree, workspaceId, folderId, listId, type]);
+
+  useEffect(() => {
+    if (taskId && singleTask) {
+      if (mode === "edit") setEditTask(singleTask);
+      if (mode === "details") setDetailsTask(singleTask);
+      if (mode === "checklist") setChecklistTask(singleTask);
+    }
+  }, [singleTask, taskId, mode]);
+
+  useEffect(() => {
+    if (!singleSubTask) return;
+
+    if (singleSubTask.parentTask) {
+      setDetailsTask(singleSubTask.parentTask);
+    }
+
+    if (mode === "checklist") {
+      setChecklistTask(singleSubTask);
+    }
+  }, [singleSubTask, mode]);
 
   const listRole = selectedContext?.listRole || "viewer";
 
   const permissions = useMemo(() => {
     const isViewer = listRole === "viewer";
-
     return {
       canCreateTask: !isViewer,
       canUpdateTask: !isViewer,
@@ -257,7 +359,6 @@ console.log(editTask);
   return (
     <Layout>
       <div className="flex h-full gap-4">
-        {/* SIDEBAR */}
         <div className="shrink-0">
           {isFirstWorkspaceLoad && <SidebarSkeleton />}
 
@@ -275,7 +376,6 @@ console.log(editTask);
           )}
         </div>
 
-        {/* CONTENT */}
         <div className="flex-1 space-y-4">
           {isOffline && (
             <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-black-700">
@@ -283,7 +383,6 @@ console.log(editTask);
             </div>
           )}
 
-          {/* HEADER */}
           {selectedList && permissions.canCreateTask && (
             <div className="flex justify-end">
               <Button
@@ -297,53 +396,46 @@ console.log(editTask);
             </div>
           )}
 
-          {/* FILTERS (ONLY AFTER INITIAL LOAD CONTEXT EXISTS) */}
           {selectedList &&
             (shouldShowFullSkeleton ? (
               <FiltersSkeleton />
             ) : (
               <TaskFilters onChange={setFilters} />
             ))}
-          {/* NO LIST */}
+
           {!selectedList && <EmptyState text="Select a list to view tasks" />}
 
-          {/* INITIAL LOADING (filters + table together) */}
           {selectedList && shouldShowFullSkeleton && <TableSkeleton />}
-          {/* ERROR */}
+
           {selectedList && tasksError && (
             <ErrorState text="Failed to load tasks" onRetry={refetchTasks} />
           )}
 
-          {/* EMPTY */}
           {selectedList &&
             !tasksLoading &&
             !tasksFetching &&
             !tasksError &&
             tasks.length === 0 && <EmptyState text="No tasks yet" />}
 
-          {/* TABLE */}
           {selectedList && tasks.length > 0 && (
-            <div className="relative">
-              <TasksTableView
-                tasks={tasks}
-                permissions={permissions}
-                onAddSubTask={(task) => {
-                  setSubTaskParent(task);
-                  setOpenTaskModal(true);
-                }}
-                onOpenEditModal={setEditTask}
-                onOpenDetailsModal={setDetailsTask}
-                onOpenChecklistModal={setChecklistTask}
-                onDeleteTask={handleDeleteTask}
-                onDeleteSubTask={handleDeleteSubTask}
-                toast={toast}
-              />
-            </div>
+            <TasksTableView
+              tasks={tasks}
+              permissions={permissions}
+              onAddSubTask={(task) => {
+                setSubTaskParent(task);
+                setOpenTaskModal(true);
+              }}
+              onOpenEditModal={setEditTask}
+              onOpenDetailsModal={setDetailsTask}
+              onOpenChecklistModal={setChecklistTask}
+              onDeleteTask={handleDeleteTask}
+              onDeleteSubTask={handleDeleteSubTask}
+              toast={toast}
+            />
           )}
         </div>
       </div>
 
-      {/* MODALS */}
       {!subTaskParent ? (
         <AddTaskModal
           isOpen={openTaskModal}
@@ -382,12 +474,9 @@ console.log(editTask);
         onClose={() => setChecklistTask(null)}
       />
 
-      {/* TIMERS */}
-      {tasks.map(() => (
-        <GlobalTaskTimer
-          tasksMap={Object.fromEntries(tasks.map((t) => [t._id, t.title]))}
-        />
-      ))}
+      <GlobalTaskTimer
+        tasksMap={Object.fromEntries(tasks.map((t) => [t._id, t.title]))}
+      />
     </Layout>
   );
 };

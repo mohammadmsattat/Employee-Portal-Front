@@ -116,7 +116,7 @@ const MyLeavesPanel = () => {
                 {t("myLeavesPage.history")}
               </h3>
               <p className="text-sm text-slate-500">
-                Your submitted leave requests
+                Your submitted leave requests{" "}
               </p>
             </div>
           </div>
@@ -145,7 +145,7 @@ const MyLeavesPanel = () => {
                       <TableCell>{formatDate(r.startDate)}</TableCell>
                       <TableCell>{formatDate(r.endDate)}</TableCell>
                       <TableCell className="text-center">
-                        {calculateDays(r.startDate, r.endDate)}
+                        {r.days}
                       </TableCell>
                       <TableCell className="text-end">
                         <StatusBadge status={r.status} />
@@ -235,7 +235,7 @@ const MyLeavesPanel = () => {
                         </MobileCardLabel>
                         <MobileCardValue className="mt-1 flex items-center gap-1.5">
                           <Clock3 className="h-4 w-4 text-slate-400" />
-                          <span>{calculateDays(r?.startDate, r?.endDate)}</span>
+                          <span>{r.days}</span>
                         </MobileCardValue>
                       </div>
                       <div className="rounded-md bg-slate-50 p-3">

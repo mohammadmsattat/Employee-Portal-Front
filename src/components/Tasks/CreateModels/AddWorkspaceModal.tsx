@@ -190,7 +190,7 @@ export const AddWorkspaceModal = ({ isOpen, onClose }: Props) => {
           </div>
 
           {/* FOOTER */}
-          <div className="flex justify-end border-t p-5">
+          <div className="flex justify-end border-t p-5 gap-2">
             <Button onClick={onClose} variant="outline">
               Cancel
             </Button>

@@ -1,4 +1,5 @@
 import { Bell, CheckCheck, Clock3, FileText, CalendarDays } from "lucide-react";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
@@ -8,17 +9,18 @@ import {
   useMarkAllAsReadMutation,
   useMarkAsReadMutation,
 } from "@/rtk/Notifications/NotificationsApi";
+
 import { useNavigate } from "react-router-dom";
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
+
   const { data, isLoading } = useGetMyNotificationsQuery({
     page: 1,
     limit: 50,
   });
 
-  const [markAllAsRead, { isLoading: isMarking }] =
-    useMarkAllAsReadMutation();
+  const [markAllAsRead, { isLoading: isMarking }] = useMarkAllAsReadMutation();
 
   const [markAsRead] = useMarkAsReadMutation();
 
@@ -34,42 +36,88 @@ console.log(notifications);
       console.error(err);
     }
   };
-const handleNotificationClick = async (notification) => {
-  try {
-    if (!notification.isRead) {
-      await markAsRead(notification._id).unwrap();
+
+  const handleNotificationClick = async (notification) => {
+    try {
+      if (!notification.isRead) {
+        await markAsRead(notification._id).unwrap();
+      }
+
+      const { entity } = notification;
+
+      if (!entity?.model) return;
+
+      const params = new URLSearchParams();
+
+      // =========================
+      // WORKSPACE
+      // =========================
+
+      if (entity.model === "Workspace") {
+        params.set("type", "workspace");
+
+        params.set("workspaceId", entity.id);
+      }
+
+      // =========================
+      // FOLDER
+      // =========================
+
+      if (entity.model === "Folder") {
+        params.set("type", "folder");
+
+        params.set("workspaceId", entity.workspaceId);
+
+        params.set("folderId", entity.folderId);
+      }
+
+      // =========================
+      // LIST
+      // =========================
+
+      if (entity.model === "List") {
+        params.set("type", "list");
+
+        params.set("workspaceId", entity.workspaceId);
+
+        params.set("folderId", entity.folderId);
+
+        params.set("listId", entity.listId);
+      }
+
+      // =========================
+      // TASK
+      // =========================
+
+      if (entity.model === "Task") {
+        params.set("type", "task");
+
+        params.set("taskId", entity.taskId);
+        params.set("listId", entity.listId);
+
+        params.set("mode", "details");
+      }
+
+      // =========================
+      // SUBTASK
+      // =========================
+
+      if (entity.model === "SubTask") {
+        params.set("type", "subtask");
+
+        params.set("taskId", entity.taskId);
+
+        params.set("subTaskId", entity.subTaskId);
+
+        params.set("mode", "details");
+      }
+
+      navigate(`/tasks?${params.toString()}`);
+    } catch (err) {
+      console.error(err);
     }
+  };
 
-    const { entity, type } = notification;
-
-    if (!entity?.model) return;
-
-    const baseParams = new URLSearchParams();
-
-    baseParams.set("open", entity.model.toLowerCase());
-    baseParams.set("id", entity.id);
-
-    // routing decision
-    if (entity.model === "Task") {
-      navigate(`/tasks?taskId=${entity.id}`);
-    }
-
-    if (entity.model === "SubTask") {
-      navigate(`/tasks?subTaskId=${entity.id}`);
-    }
-
-    if (entity.model === "Workspace") {
-      navigate(`/tasks?workspaceId=${entity.id}`);
-    }
-
-    if (entity.model === "Folder") {
-      navigate(`/tasks?folderId=${entity.id}`);
-    }
-
-  } catch (err) {
-    console.error(err);
-  }
-};
   const getNotificationIcon = (message: string) => {
     const lower = message.toLowerCase();
 
@@ -87,8 +135,8 @@ const handleNotificationClick = async (notification) => {
   return (
     <Layout>
       <div className="space-y-6">
-
         {/* HERO */}
+
         <section className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.06)]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_35%)]" />
 
@@ -102,6 +150,7 @@ const handleNotificationClick = async (notification) => {
                 <h1 className="text-3xl font-bold text-slate-900">
                   Notifications
                 </h1>
+
                 <p className="mt-2 text-sm text-slate-500">
                   Stay updated with your latest activities
                 </p>
@@ -122,6 +171,7 @@ const handleNotificationClick = async (notification) => {
         </section>
 
         {/* STATS */}
+
         <section className="grid gap-4 sm:grid-cols-3">
           <StatsCard title="Total" value={notifications.length} />
 
@@ -139,6 +189,7 @@ const handleNotificationClick = async (notification) => {
         </section>
 
         {/* LIST */}
+
         <section className="space-y-4">
           {isLoading && (
             <Card className="rounded-3xl p-10 text-center">
@@ -147,18 +198,17 @@ const handleNotificationClick = async (notification) => {
           )}
 
           {!isLoading && notifications.length === 0 && (
-            <Card className="rounded-3xl p-14 text-center border-dashed">
+            <Card className="rounded-3xl border-dashed p-14 text-center">
               <Bell className="mx-auto h-10 w-10 text-slate-400" />
-              <p className="mt-4 text-slate-500">
-                No notifications yet
-              </p>
+
+              <p className="mt-4 text-slate-500">No notifications yet</p>
             </Card>
           )}
 
           {notifications.map((notification) => (
             <Card
               key={notification._id}
-            onClick={() => handleNotificationClick(notification)}
+              onClick={() => handleNotificationClick(notification)}
               className={`
                 relative cursor-pointer rounded-3xl border p-5
                 transition hover:-translate-y-0.5
@@ -169,7 +219,6 @@ const handleNotificationClick = async (notification) => {
                 }
               `}
             >
-              {/* unread dot */}
               {!notification.isRead && (
                 <div className="absolute right-5 top-5 h-2.5 w-2.5 rounded-full bg-blue-500" />
               )}
@@ -210,8 +259,7 @@ const StatsCard = ({
 }) => (
   <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
     <p className="text-sm text-slate-500">{title}</p>
-    <p className={`mt-3 text-3xl font-bold ${valueClass || ""}`}>
-      {value}
-    </p>
+
+    <p className={`mt-3 text-3xl font-bold ${valueClass || ""}`}>{value}</p>
   </div>
 );

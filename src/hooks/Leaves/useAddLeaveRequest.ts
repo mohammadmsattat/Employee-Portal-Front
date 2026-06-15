@@ -294,6 +294,7 @@ const isHoliday = useCallback((date: Date) => {
 
     try {
       const formDataToSend = new FormData();
+console.log(numberOfDays);
 
       formDataToSend.append("leaveType", formData.leaveType);
       formDataToSend.append("startDate", formData.startDate.toISOString());

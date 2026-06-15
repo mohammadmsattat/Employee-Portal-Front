@@ -118,10 +118,10 @@ const MyLeavesRequests = () => {
                         <TableCell className="text-start">
                           {r.leaveType?.typeKey || "-"}
                         </TableCell>
-                        <TableCell>{formatDate(r.startDate)}</TableCell>
+                        <TableCell>{formatDate(r.startDate)}0</TableCell>
                         <TableCell>{formatDate(r.endDate)}</TableCell>
                         <TableCell className="text-center">
-                          {calculateDays(r.startDate, r.endDate)}
+                          {calculateDays(r.startDate, r.endDate)}0
                         </TableCell>
                         <TableCell className="text-end">
                           <StatusBadge status={r.status} />

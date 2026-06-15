@@ -192,13 +192,17 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
                               if (rule.effectType !== "FULL_DAY_OFF")
                                 return false;
 
+                              const target = new Date(date);
+
+                              // 1. Single Date
                               if (rule.patternType === "SINGLE_DATE") {
                                 return isSameDay(
-                                  date,
+                                  target,
                                   new Date(rule.startDate),
                                 );
                               }
 
+                              // 2. Weekly
                               if (rule.patternType === "RECURRING_WEEKLY") {
                                 const weekDays = [
                                   "Sunday",
@@ -211,20 +215,26 @@ const AddLeaveRequestModal = ({ isOpen, onClose }) => {
                                 ];
 
                                 return rule.daysOfWeek?.includes(
-                                  weekDays[date.getDay()],
+                                  weekDays[target.getDay()],
                                 );
                               }
 
+                              // 3. Date Range
                               if (rule.patternType === "DATE_RANGE") {
                                 const start = new Date(rule.startDate);
                                 const end = new Date(rule.endDate);
-                                const current = new Date(date);
 
                                 start.setHours(0, 0, 0, 0);
                                 end.setHours(0, 0, 0, 0);
-                                current.setHours(0, 0, 0, 0);
+                                target.setHours(0, 0, 0, 0);
 
-                                return current >= start && current <= end;
+                                return target >= start && target <= end;
+                              }
+
+                              // 4. Monthly Recurring (MISSING CASE)
+                              if (rule.patternType === "RECURRING_MONTHLY") {
+                                const dayOfMonth = rule.dayOfMonth;
+                                return target.getDate() === dayOfMonth;
                               }
 
                               return false;

@@ -25,9 +25,10 @@ export const useTaskDetailsModal = ({
 
   const isSubTask = type === "subtask";
   const id = data?._id;
+  console.log(data);
 
   const parentTaskId = data?.parentTaskId;
-console.log(data);
+  console.log(data);
 
   const [openPanel, setOpenPanel] = useState(null);
   const [position, setPosition] = useState("bottom");
@@ -121,7 +122,7 @@ console.log(data);
       console.log(res);
     }
 
-    // onClose();
+    onClose();
   };
 
   /* =========================
@@ -133,7 +134,7 @@ console.log(data);
 
     await createComment({
       content: text,
-      task: isSubTask ? undefined : id,
+      task: isSubTask ? data?.task : id,
       subTask: isSubTask ? id : undefined,
     }).unwrap();
   };
@@ -194,7 +195,10 @@ console.log(data);
     setOpenPanel((prev) => (prev === panel ? null : panel));
   };
 
-  const closeSubModal = () => setOpenPanel(null);
+  const closeSubModal = () => {
+    setOpenPanel(null);
+    // onClose();
+  };
 
   const popoverStyle = () => {
     if (!anchorRect) return {};

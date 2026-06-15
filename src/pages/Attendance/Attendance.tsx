@@ -43,7 +43,8 @@ const Attendance = () => {
   const [page] = useState(1);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
-  const { data, isLoading } = useGetMyDailyFingerprintsQuery(page);
+  const { data, isLoading ,error} = useGetMyDailyFingerprintsQuery(page);
+console.log(error);
 
   const dateFormatter = new Intl.DateTimeFormat(i18n.language, {
     weekday: "short",

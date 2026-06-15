@@ -42,8 +42,7 @@ export const useCreateList = ({
 
   const [name, setName] = useState("");
 
-  const [visibility, setVisibility] =
-    useState<Visibility>("private");
+  const [visibility, setVisibility] = useState<Visibility>("private");
 
   const [members, setMembers] = useState<Member[]>([]);
 
@@ -66,9 +65,7 @@ export const useCreateList = ({
   const addMember = () => {
     if (!selectedUser) return;
 
-    const exists = members.some(
-      (m) => m.user === selectedUser
-    );
+    const exists = members.some((m) => m.user === selectedUser);
 
     if (exists) return;
 
@@ -77,8 +74,7 @@ export const useCreateList = ({
       {
         user: selectedUser,
         role,
-        notificationEnabled:
-          getNotificationByRole(role),
+        notificationEnabled: getNotificationByRole(role),
       },
     ]);
 
@@ -90,16 +86,12 @@ export const useCreateList = ({
       UPDATE MEMBER
   ========================= */
 
-  const updateMember = (
-    userId: string,
-    payload: UpdateMemberPayload
-  ) => {
+  const updateMember = (userId: string, payload: UpdateMemberPayload) => {
     setMembers((prev) =>
       prev.map((m) => {
         if (m.user !== userId) return m;
 
-        const updatedRole =
-          payload.role ?? m.role;
+        const updatedRole = payload.role ?? m.role;
 
         return {
           ...m,
@@ -107,14 +99,11 @@ export const useCreateList = ({
           role: updatedRole,
 
           notificationEnabled:
-            payload.notificationEnabled !==
-            undefined
+            payload.notificationEnabled !== undefined
               ? payload.notificationEnabled
-              : getNotificationByRole(
-                  updatedRole
-                ),
+              : getNotificationByRole(updatedRole),
         };
-      })
+      }),
     );
   };
 
@@ -123,9 +112,7 @@ export const useCreateList = ({
   ========================= */
 
   const removeMember = (id: string) => {
-    setMembers((prev) =>
-      prev.filter((m) => m.user !== id)
-    );
+    setMembers((prev) => prev.filter((m) => m.user !== id));
   };
 
   /* =========================
@@ -133,11 +120,7 @@ export const useCreateList = ({
   ========================= */
 
   const submit = async () => {
-    if (
-      !name.trim() ||
-      !workspaceId ||
-      !folderId
-    ) {
+    if (!name.trim() || !workspaceId || !folderId) {
       return;
     }
 
@@ -156,10 +139,7 @@ export const useCreateList = ({
               ? members.map((m) => ({
                   user: m.user,
                   role: m.role,
-                  notificationsEnabled:
-                    Boolean(
-                      m.notificationEnabled
-                    ),
+                  notificationsEnabled: Boolean(m.notificationEnabled),
                 }))
               : [],
         },
@@ -175,10 +155,7 @@ export const useCreateList = ({
       setRole("viewer");
       setVisibility("private");
     } catch (error) {
-      console.log(
-        "Create list failed:",
-        error
-      );
+      console.error("Create list failed:", error);
     }
   };
 

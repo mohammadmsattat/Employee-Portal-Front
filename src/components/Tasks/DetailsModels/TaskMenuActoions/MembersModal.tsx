@@ -1,38 +1,37 @@
+import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
 import { useMembersModal } from "@/hooks/Tasks/DetailsModels/TaskMenuActions/useMembersModal";
 import { X, UserMinus } from "lucide-react";
 
-const UpdateTaskMembersModal = ({ isOpen, onClose, entity, workspaceId,refetchTasks ,listId }) => {
-  const {
-    staff,
-    selectedMembers,
-    addMember,
-    removeMember,
-    handleSave,
-  } = useMembersModal({
-    isOpen,
-    onClose,
-    entity,
-    workspaceId,
-    listId,
-    refetchTasks
-  });
+const UpdateTaskMembersModal = ({
+  isOpen,
+  onClose,
+  entity,
+  workspaceId,
+  refetchTasks,
+  listId,
+}) => {
+  const { staff, selectedMembers, addMember, removeMember, handleSave } =
+    useMembersModal({
+      isOpen,
+      onClose,
+      entity,
+      workspaceId,
+      listId,
+      refetchTasks,
+    });
 
   const task = entity?.data;
 
   if (!isOpen || !task) return null;
 
-  const selectedStaff = staff.filter((u) =>
-    selectedMembers.includes(u._id)
-  );
+  const selectedStaff = staff.filter((u) => selectedMembers.includes(u._id));
 
-  const availableStaff = staff.filter(
-    (u) => !selectedMembers.includes(u._id)
-  );
+  const availableStaff = staff.filter((u) => !selectedMembers.includes(u._id));
 
   return (
-    <div className="w-[320px] bg-white border rounded-2xl shadow-xl p-4">
+    <div className="w-[320px] bg-white border rounded-2xl shadow-xl p-4 ">
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 ">
         <h2 className="text-sm font-semibold">Task Members</h2>
 
         <button onClick={onClose}>
@@ -44,23 +43,16 @@ const UpdateTaskMembersModal = ({ isOpen, onClose, entity, workspaceId,refetchTa
       <div className="mb-3">
         <p className="text-xs text-slate-500 mb-1">Add Member</p>
 
-        <select
-          className="w-full border rounded-md p-2 text-xs"
-          onChange={(e) => {
-            if (e.target.value) {
-              addMember(e.target.value);
-              e.target.value = "";
+        <MemberSearchSelect
+          options={availableStaff || []}
+          selectedValue={null}
+          onChange={(id) => {
+            if (id) {
+              addMember(id);
             }
           }}
-        >
-          <option value="">Select staff...</option>
-
-          {availableStaff.map((user) => (
-            <option key={user._id} value={user._id}>
-              {user.fullName}
-            </option>
-          ))}
-        </select>
+          placeholder="Search employee..."
+        />
       </div>
 
       {/* CURRENT MEMBERS */}

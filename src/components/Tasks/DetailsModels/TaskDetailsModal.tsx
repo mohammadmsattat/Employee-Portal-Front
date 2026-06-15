@@ -28,8 +28,13 @@ export default function TaskDetailsModal({
     activityLoading,
     activityError,
     refetchActivity,
-  } = useTaskDetailsModal({ entity, onClose, workspaceId: workspace?._id ,listId: listName?._id });
-console.log(entity);
+  } = useTaskDetailsModal({
+    entity,
+    onClose,
+    workspaceId: workspace?._id,
+    listId: listName?._id,
+  });
+  console.log(entity);
 
   const [commentText, setCommentText] = useState("");
 
@@ -81,6 +86,7 @@ console.log(entity);
             loading={activityLoading}
             error={activityError}
             refetch={refetchActivity}
+            
           />
         </div>
       </div>
