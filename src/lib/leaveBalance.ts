@@ -12,56 +12,79 @@ export interface LeaveBalance {
 
 export const calculateLeaveBalances = (
   leaveTypes: PolicyLeaveType[] = [],
-  leaveLogs: LeaveLog[] = []
+  leaveLogs: LeaveLog[] = [],
 ): LeaveBalance[] => {
   const toNumber = (value: unknown) => {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
+    const num = Number(value);
+    return Number.isFinite(num) ? num : 0;
   };
 
-  const getLeaveTypeId = (leaveType: unknown) => {
-    if (!leaveType) return "";
-    if (typeof leaveType === "string") return leaveType;
-    return (leaveType as { _id?: string })._id || "";
+  const getLeaveTypeId = (lt: any): string => {
+    if (!lt) return "";
+    if (typeof lt === "string") return lt;
+    return lt._id || "";
+  };
+
+  const getTotalAllowed = (leaveType: PolicyLeaveType) => {
+    switch (leaveType.typeKey) {
+      /* ================== ANNUAL ================== */
+      case "annual":
+        return (
+          leaveType.annualRules?.reduce(
+            (acc, r) => acc + toNumber(r.days),
+            0,
+          ) || 0
+        );
+
+      /* ================== SICK ================== */
+      case "sick":
+        return (
+          leaveType.sickRules?.reduce((acc, r) => acc + toNumber(r.days), 0) ||
+          0
+        );
+
+      /* ================== MATERNITY ================== */
+      case "maternity":
+        return (
+          leaveType.maternityRules?.reduce(
+            (acc, r) => acc + toNumber(r.days),
+            0,
+          ) || 0
+        );
+
+      /* ================== SINGLE RULE BASE TYPES ================== */
+      case "paternity":
+      case "marriage":
+      case "bereavement":
+      case "hajj":
+      case "special":
+      case "unpaid":
+        return toNumber(leaveType.singleRules?.days);
+
+      default:
+        return 0;
+    }
   };
 
   return leaveTypes.map((leaveType) => {
-    let totalAllowed = 0;
+    /* ================= TOTAL ================= */
+    const totalAllowed = getTotalAllowed(leaveType);
 
-    switch (leaveType.typeKey) {
-      case "annual":
-        if (leaveType.annualRules?.length) {
-          totalAllowed = toNumber(leaveType.annualRules[0].days);
-        }
-        break;
-
-      case "sick":
-        if (leaveType.sickRules?.length) {
-          totalAllowed = leaveType.sickRules.reduce(
-            (acc, rule) => acc + toNumber(rule.days),
-            0
-          );
-        }
-        break;
-
-      case "maternity":
-        if (leaveType.maternityRules?.length) {
-          totalAllowed = leaveType.maternityRules.reduce(
-            (acc, rule) => acc + toNumber(rule.days),
-            0
-          );
-        }
-        break;
-
-      default:
-        totalAllowed = toNumber(leaveType.singleRules?.days);
-        break;
-    }
-
+    /* ================= USED DAYS ================= */
     const usedDays = leaveLogs
-      .filter((log) => getLeaveTypeId(log.leaveType) === leaveType?._id)
-      .reduce((acc, log) => acc + toNumber(log.days), 0);
+      .filter((log) => {
+        const logTypeId = getLeaveTypeId(log.leaveType);
+        return logTypeId === leaveType._id;
+      })
+      .reduce((acc, log) => {
+        const days =
+          toNumber((log as any)?.calculation?.totalDays) ||
+          toNumber((log as any)?.days);
 
+        return acc + days;
+      }, 0);
+
+    /* ================= RESULT ================= */
     return {
       _id: leaveType._id,
       typeKey: leaveType.typeKey,
@@ -69,7 +92,7 @@ export const calculateLeaveBalances = (
       totalAllowed,
       usedDays,
       remainingDays: Math.max(totalAllowed - usedDays, 0),
-      requiresAttachment: (leaveType as any).requiresAttachment || false,
+      requiresAttachment: (leaveType as any)?.requiresAttachment || false,
     };
   });
 };

@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import baseURL, { StaffEndPoint } from "../../Api/GlobalData";
 import { StaffsResponse, GetAllStaffParams } from "../interfaces";
 
-const getJWT = () => localStorage.getItem("Token");
+const getJWT = () => localStorage.getItem("token");
 const getCompanyId = () => localStorage.getItem("company");
 
 export const staffApi = createApi({
@@ -35,7 +35,7 @@ export const staffApi = createApi({
           limit: limit.toString(),
           page: page.toString(),
           position,
-        });
+        }); 
 
         if (branchId) params.append("branch", branchId);
         if (directManager) params.append("directManager", directManager);
