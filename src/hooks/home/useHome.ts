@@ -81,6 +81,8 @@ export const useHome = () => {
     limit: 200,
     status: LEAVE_REQUEST_STATUS.PENDING,
   });
+console.log(leaveTypesData);
+console.log(leaveLogsData);
 
   // ===== Leave Balances =====
   const leaveBalances = useMemo(() => {

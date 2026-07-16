@@ -108,15 +108,21 @@ export const useAddOvertimeRequestModal = ({
   };
 
   // ---------------------- Helpers ----------------------
-  const calculateHours = (start?: string, end?: string) => {
-    if (!start || !end) return 0;
-    const [sH, sM] = start.split(":").map(Number);
-    const [eH, eM] = end.split(":").map(Number);
-    const startDate = new Date(0, 0, 0, sH, sM);
-    const endDate = new Date(0, 0, 0, eH, eM);
-    const diffMinutes = differenceInMinutes(endDate, startDate);
-    return diffMinutes > 0 ? diffMinutes / 60 : 0;
-  };
+const calculateHours = (start?: string, end?: string) => {
+  if (!start || !end) return 0;
+
+  const [sH, sM] = start.split(":").map(Number);
+  const [eH, eM] = end.split(":").map(Number);
+
+  const startDate = new Date(0, 0, 0, sH, sM);
+  const endDate = new Date(0, 0, 0, eH, eM);
+
+  const diffMinutes = differenceInMinutes(endDate, startDate);
+
+  return diffMinutes > 0
+    ? Math.round((diffMinutes / 60) * 10) / 10
+    : 0;
+};
 
   const parseTimeToDate = (date: Date, time: string) => {
     const [hours, minutes] = time.split(":").map(Number);

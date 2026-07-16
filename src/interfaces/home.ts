@@ -1,20 +1,33 @@
 export interface IUser {
   _id: string;
+  profileImage :string;
   fullName: string;
   email: string;
-  phoneNumber?: string;
-  nationality?: string;
-  maritalStatus?: string;
-  hireDate?: string;
-  salary?: number;
-  employmentStatus?: boolean;
-  profileImage?: string;
-  attendanceType?: string;
+department?: string;
+position?: string;
   groupId?: {
-    offDays?: string[];
-    fixedAttendance?: {
-      startTime: string;
-      endTime: string;
+    _id?: string;
+    groupName?: string;
+
+    leavePolicy?: {
+      _id?: string;
+      policyName?: string;
+    };
+
+    policiesSnapshot?: {
+      leavePolicy?: {
+        _id?: string;
+        policyName?: string;
+      };
+    };
+  };
+
+  payrollGroupId?: {
+    policiesSnapshot?: {
+      leavePolicy?: {
+        _id?: string;
+        policyName?: string;
+      };
     };
   };
 }

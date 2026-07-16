@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Home,
   User,
@@ -10,7 +11,6 @@ import {
   X,
   ChevronUp,
 } from "lucide-react";
-import { useTranslation } from "react-i18next";
 
 interface BottombarProps {
   openModal: (type: "leave" | "advance" | "overtime") => void;

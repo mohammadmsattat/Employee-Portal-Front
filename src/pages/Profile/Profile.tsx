@@ -98,7 +98,7 @@ const Profile = () => {
 
         {/* summary card */}
         <PortalCard className="overflow-hidden">
-          <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50/70 p-6 sm:p-7">
+          <div className=" p-6 sm:p-7">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
               <div className="flex justify-between">
                 <Avatar className="h-24 w-24 border-4 border-white shadow-sm ring-1 ring-blue-100">
@@ -150,12 +150,12 @@ const Profile = () => {
 
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ${
-                      user.employmentStatus
+                      user.isActive
                         ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
-                        : "bg-slate-100 text-slate-600 ring-slate-200"
+                        : "bg-red-100 text-red-600 ring-red-200"
                     }`}
                   >
-                    {user.employmentStatus
+                    {user.isActive
                       ? "Active Employee"
                       : "Inactive Employee"}
                   </span>

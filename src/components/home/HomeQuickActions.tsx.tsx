@@ -55,7 +55,7 @@ const HomeQuickActions = ({ t }: HomeQuickActionsProps) => {
   return (
     <section className="relative">
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-[0_16px_38px_rgba(15,23,42,0.06)]">
-        <div className="mb-4 flex items-center justify-between">
+        {/* <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-950">
               {t("homePage.quickActions") || "Quick actions"}
@@ -64,7 +64,7 @@ const HomeQuickActions = ({ t }: HomeQuickActionsProps) => {
               {t("homePage.startHere") || "Jump into the workflow you need"}
             </p>
           </div>
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           {actions.map((action, index) => {
@@ -83,9 +83,9 @@ const HomeQuickActions = ({ t }: HomeQuickActionsProps) => {
                 </div>
 
                 <p className="text-sm font-bold">{action.label}</p>
-                <p className={`mt-1 text-xs text-slate-500`}>
+                {/* <p className={`mt-1 text-xs text-slate-500`}>
                   {t("home.quickAccess") || "Quick access"}
-                </p>
+                </p> */}
               </Link>
             );
           })}

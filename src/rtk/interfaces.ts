@@ -155,6 +155,9 @@ export interface LeaveRequestsResponse {
   totalPages: number;
   results: number;
   totalItems: number;
+  paginationResult : {
+    totalDocuments:number
+  };
   summary?: {
     totalBalance: number;
     used: number;

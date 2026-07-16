@@ -2,15 +2,6 @@ import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-/**
- * useTopbar
- * Custom hook for Topbar logic:
- * - User info
- * - Dropdown state
- * - Active nav link
- * - Language switch
- * - Logout
- */
 export const useTopbar = () => {
   // ===== i18n =====
   const { t, i18n } = useTranslation();
@@ -34,6 +25,14 @@ export const useTopbar = () => {
     .slice(0, 2)
     .toUpperCase();
 
+  const userGroup = user?.groupId?.groupName || "";
+
+  const userSubtitle =
+    userGroup ||
+    user?.department?.name ||
+    user?.position?.name ||
+    "Employee Workspace";
+    
   // ===== Dropdown states =====
   const [requestsOpen, setRequestsOpen] = useState(false); // Requests menu
   const [userOpen, setUserOpen] = useState(false); // User menu
@@ -74,6 +73,7 @@ export const useTopbar = () => {
     userName,
     userEmail,
     userInitials,
+    userSubtitle,
     requestsOpen,
     setRequestsOpen,
     userOpen,

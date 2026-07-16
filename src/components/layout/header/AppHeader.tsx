@@ -1,8 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import MobileHeader from "./MobileHeader.tsx";
 import { AppHeaderConfig } from "@/interfaces/header";
+import MobileHeader from "./MobileHeader.tsx";
 import DesktopHeader from "./DesktopHeader.tsx";
 
 interface AppHeaderProps {

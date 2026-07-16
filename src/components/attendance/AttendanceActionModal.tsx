@@ -123,7 +123,7 @@ const AttendanceActionModal: FC<AttendanceActionModalProps> = ({
               <div
                 className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black ${
                   hasLocationIssue
-                    ? "bg-red-500 text-red-600"
+                    ? "bg-red-100 text-red-600"
                     : "bg-emerald-50 text-emerald-600"
                 }`}
               >
