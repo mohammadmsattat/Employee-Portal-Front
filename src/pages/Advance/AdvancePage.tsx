@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { CheckCircle2, FileText, Plus, Wallet } from "lucide-react";
+import { CheckCircle2, FileText, LucideIcon, Plus, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,11 @@ import MyAdvanceRequests from "./MyAdvanceRequestsPage";
 
 type AdvanceTab = "my" | "approvals";
 
+type TabItem = {
+  key: AdvanceTab;
+  label: string;
+  icon: LucideIcon;
+};
 const getInitialTab = (pathname: string, search: string): AdvanceTab => {
   const tab = new URLSearchParams(search).get("tab");
 
@@ -36,7 +41,7 @@ const AdvancePage = () => {
   }, [location.pathname, location.search]);
 
   const tabs = useMemo(() => {
-    const base = [
+    const base: TabItem[] = [
       {
         key: "my" as const,
         label: t("myAdvanceRequestsPage.title") || "My Requests",
@@ -75,8 +80,10 @@ const AdvancePage = () => {
                   </h1>
                   <p className="mt-1 text-xs text-slate-500">
                     {activeTab === "my"
-                      ? t("myAdvanceRequestsPage.subtitle") || "Track your advance requests"
-                      : t("managerAdvanceRequestsPage.subtitle") || "Review and manage employee advance requests"}
+                      ? t("myAdvanceRequestsPage.subtitle") ||
+                        "Track your advance requests"
+                      : t("managerAdvanceRequestsPage.subtitle") ||
+                        "Review and manage employee advance requests"}
                   </p>
                 </div>
                 {activeTab === "my" && (
@@ -114,8 +121,10 @@ const AdvancePage = () => {
                     </h1>
                     <p className="mt-1.5 text-sm text-slate-500">
                       {activeTab === "my"
-                        ? t("myAdvanceRequestsPage.subtitle") || "Track your advance requests"
-                        : t("managerAdvanceRequestsPage.subtitle") || "Review and manage employee advance requests"}
+                        ? t("myAdvanceRequestsPage.subtitle") ||
+                          "Track your advance requests"
+                        : t("managerAdvanceRequestsPage.subtitle") ||
+                          "Review and manage employee advance requests"}
                     </p>
                   </div>
                   {activeTab === "my" && (

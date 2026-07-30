@@ -86,9 +86,12 @@ const ManagerAdvanceRequests = ({
   // حساب الإحصائيات
   const counts = {
     total: data?.data?.length || 0,
-    pending: data?.data?.filter((item) => item.status === "pending")?.length || 0,
-    approved: data?.data?.filter((item) => item.status === "approved")?.length || 0,
-    rejected: data?.data?.filter((item) => item.status === "rejected")?.length || 0,
+    pending:
+      data?.data?.filter((item) => item.status === "pending")?.length || 0,
+    approved:
+      data?.data?.filter((item) => item.status === "approved")?.length || 0,
+    rejected:
+      data?.data?.filter((item) => item.status === "rejected")?.length || 0,
   };
 
   const statuses = [
@@ -155,12 +158,14 @@ const ManagerAdvanceRequests = ({
             className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/50 transition-colors group"
           >
             <div className="flex items-center gap-3">
-              <div className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-                (searchInput || statusFilter) 
-                  ? "bg-blue-100 text-blue-600 ring-1 ring-blue-200" 
-                  : "bg-blue-50 text-blue-500 ring-1 ring-blue-100"
-              )}>
+              <div
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+                  searchInput || statusFilter
+                    ? "bg-blue-100 text-blue-600 ring-1 ring-blue-200"
+                    : "bg-blue-50 text-blue-500 ring-1 ring-blue-100",
+                )}
+              >
                 <Filter className="h-4 w-4" />
               </div>
               <div className="text-left">
@@ -168,12 +173,18 @@ const ManagerAdvanceRequests = ({
                   Filters
                   {(searchInput || statusFilter) && (
                     <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-[10px] font-medium text-blue-600">
-                      {[searchInput ? 1 : 0, statusFilter ? 1 : 0].filter(Boolean).length}
+                      {
+                        [searchInput ? 1 : 0, statusFilter ? 1 : 0].filter(
+                          Boolean,
+                        ).length
+                      }
                     </span>
                   )}
                 </h4>
                 <p className="text-xs text-slate-400">
-                  {showFilters ? "Hide filter options" : "Click to filter requests"}
+                  {showFilters
+                    ? "Hide filter options"
+                    : "Click to filter requests"}
                 </p>
               </div>
             </div>
@@ -194,7 +205,7 @@ const ManagerAdvanceRequests = ({
               <ChevronDown
                 className={cn(
                   "h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:text-slate-600",
-                  showFilters && "rotate-180"
+                  showFilters && "rotate-180",
                 )}
               />
             </div>
@@ -212,7 +223,9 @@ const ManagerAdvanceRequests = ({
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder={t("managerAdvanceRequestsPage.searchPlaceholder")}
+                      placeholder={t(
+                        "managerAdvanceRequestsPage.searchPlaceholder",
+                      )}
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
                       className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-4 pr-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400"
@@ -242,10 +255,21 @@ const ManagerAdvanceRequests = ({
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 pr-8 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M6%208L1%203h10z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px] bg-[right_12px_center] bg-no-repeat"
                   >
-                    <option value="">{t("managerAdvanceRequestsPage.allStatus")}</option>
-                    <option value="pending"> {t("managerAdvanceRequestsPage.pending")}</option>
-                    <option value="approved"> {t("managerAdvanceRequestsPage.approved")}</option>
-                    <option value="rejected"> {t("managerAdvanceRequestsPage.rejected")}</option>
+                    <option value="">
+                      {t("managerAdvanceRequestsPage.allStatus")}
+                    </option>
+                    <option value="pending">
+                      {" "}
+                      {t("managerAdvanceRequestsPage.pending")}
+                    </option>
+                    <option value="approved">
+                      {" "}
+                      {t("managerAdvanceRequestsPage.approved")}
+                    </option>
+                    <option value="rejected">
+                      {" "}
+                      {t("managerAdvanceRequestsPage.rejected")}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -253,7 +277,9 @@ const ManagerAdvanceRequests = ({
               {/* Active Filters Display */}
               {(searchInput || statusFilter) && (
                 <div className="mt-4 pt-4 border-t border-slate-200/60 flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-slate-500 font-medium">Active filters:</span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    Active filters:
+                  </span>
                   {searchInput && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600 border border-blue-100">
                       Search: "{searchInput}"
@@ -362,7 +388,16 @@ const ManagerAdvanceRequests = ({
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                </Table>{" "}
+                {/* ========== Pagination ========== */}
+                <UnifiedPagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  setCurrentPage={setPage}
+                  perPage={isMobile ? mobileLimit : limit}
+                  setPerPage={isMobile ? undefined : setLimit}
+                  className="mt-2"
+                />
               </div>
             ) : (
               <EmptyState />
@@ -408,11 +443,11 @@ const ManagerAdvanceRequests = ({
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge status={req.status} compact />
+                      <StatusBadge status={req.status}  />
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 text-slate-400 transition-transform duration-200",
-                          isExpanded && "rotate-180"
+                          isExpanded && "rotate-180",
                         )}
                       />
                     </div>
@@ -427,7 +462,9 @@ const ManagerAdvanceRequests = ({
                         </div>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-slate-500">Amount</span>
+                            <span className="text-xs text-slate-500">
+                              Amount
+                            </span>
                             <span className="text-sm font-semibold text-slate-700">
                               ${req.amount?.toFixed(2) || "-"}
                             </span>
@@ -472,16 +509,6 @@ const ManagerAdvanceRequests = ({
             <EmptyState />
           )}
         </div>
-
-        {/* ========== Pagination ========== */}
-        <UnifiedPagination
-          currentPage={page}
-          totalPages={totalPages}
-          setCurrentPage={setPage}
-          perPage={isMobile ? mobileLimit : limit}
-          setPerPage={isMobile ? undefined : setLimit}
-          className="mt-2"
-        />
       </div>
 
       {/* ========== Modal ========== */}

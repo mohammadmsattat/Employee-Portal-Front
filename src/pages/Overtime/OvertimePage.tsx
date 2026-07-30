@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { CheckCircle2, FileText, Plus, Clock3 } from "lucide-react";
+import { CheckCircle2, FileText, Plus, Clock3, LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,11 @@ import ManagerOvertimeRequests from "./ManagerOvertimeRequests";
 import MyOvertimeRequests from "./MyOvertimeRequests";
 
 type OvertimeTab = "my" | "approvals";
-
+type TabItem = {
+  key: OvertimeTab;
+  label: string;
+  icon: LucideIcon;
+};
 const getInitialTab = (pathname: string, search: string): OvertimeTab => {
   const tab = new URLSearchParams(search).get("tab");
 
@@ -35,10 +39,10 @@ const OvertimePage = () => {
     setActiveTab(getInitialTab(location.pathname, location.search));
   }, [location.pathname, location.search]);
 
-  const tabs = useMemo(() => {
-    const base = [
+  const tabs = useMemo<TabItem[]>(() => {
+    const base: TabItem[] = [
       {
-        key: "my" as const,
+        key: "my",
         label: t("myOvertimeRequestsPage.title") || "My Requests",
         icon: FileText,
       },
@@ -46,7 +50,7 @@ const OvertimePage = () => {
 
     if (canApproveOvertime) {
       base.push({
-        key: "approvals" as const,
+        key: "approvals",
         label: t("managerOvertimeRequestsPage.title") || "Approve Requests",
         icon: CheckCircle2,
       });
@@ -75,8 +79,10 @@ const OvertimePage = () => {
                   </h1>
                   <p className="mt-1 text-xs text-slate-500">
                     {activeTab === "my"
-                      ? t("myOvertimeRequestsPage.subtitle") || "Track your overtime requests"
-                      : t("managerOvertimeRequestsPage.subtitle") || "Review and manage employee overtime requests"}
+                      ? t("myOvertimeRequestsPage.subtitle") ||
+                        "Track your overtime requests"
+                      : t("managerOvertimeRequestsPage.subtitle") ||
+                        "Review and manage employee overtime requests"}
                   </p>
                 </div>
                 {activeTab === "my" && (
@@ -114,8 +120,10 @@ const OvertimePage = () => {
                     </h1>
                     <p className="mt-1.5 text-sm text-slate-500">
                       {activeTab === "my"
-                        ? t("myOvertimeRequestsPage.subtitle") || "Track your overtime requests"
-                        : t("managerOvertimeRequestsPage.subtitle") || "Review and manage employee overtime requests"}
+                        ? t("myOvertimeRequestsPage.subtitle") ||
+                          "Track your overtime requests"
+                        : t("managerOvertimeRequestsPage.subtitle") ||
+                          "Review and manage employee overtime requests"}
                     </p>
                   </div>
                   {activeTab === "my" && (

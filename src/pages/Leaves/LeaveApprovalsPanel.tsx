@@ -292,6 +292,15 @@ const LeaveApprovalsPanel = () => {
                     ))}
                   </TableBody>
                 </Table>
+                {/* ========== Pagination ========== */}
+                <UnifiedPagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  setCurrentPage={setPage}
+                  perPage={isMobile ? mobileLimit : limit}
+                  setPerPage={isMobile ? undefined : setLimit}
+                  className="mt-2"
+                />
               </div>
             ) : (
               <EmptyState />
@@ -337,7 +346,7 @@ const LeaveApprovalsPanel = () => {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge status={req.status} compact />
+                      <StatusBadge status={req.status}  />
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 text-slate-400 transition-transform duration-200",
@@ -404,16 +413,6 @@ const LeaveApprovalsPanel = () => {
             <EmptyState />
           )}
         </div>
-
-        {/* ========== Pagination ========== */}
-        <UnifiedPagination
-          currentPage={page}
-          totalPages={totalPages}
-          setCurrentPage={setPage}
-          perPage={isMobile ? mobileLimit : limit}
-          setPerPage={isMobile ? undefined : setLimit}
-          className="mt-2"
-        />
       </div>
 
       {/* ========== Modal ========== */}

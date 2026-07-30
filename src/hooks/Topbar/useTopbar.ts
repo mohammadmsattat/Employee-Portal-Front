@@ -7,8 +7,8 @@ export const useTopbar = () => {
   const { t, i18n } = useTranslation();
 
   // ===== Router =====
-  const location = useLocation(); // current page path
-  const navigate = useNavigate(); // navigation
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // ===== User info =====
   const user = useMemo(() => {
@@ -16,6 +16,7 @@ export const useTopbar = () => {
     return stored ? JSON.parse(stored) : null;
   }, []);
 
+  const userImage = user?.profileImage || null;
   const userName = user?.fullName || t("navigation.name");
   const userEmail = user?.email || "";
   const userInitials = userName
@@ -26,27 +27,25 @@ export const useTopbar = () => {
     .toUpperCase();
 
   const userGroup = user?.groupId?.groupName || "";
-
   const userSubtitle =
     userGroup ||
     user?.department?.name ||
     user?.position?.name ||
     "Employee Workspace";
-    
+
   // ===== Dropdown states =====
-  const [requestsOpen, setRequestsOpen] = useState(false); // Requests menu
-  const [userOpen, setUserOpen] = useState(false); // User menu
-  const [activeDesktopSection, setActiveDesktopSection] = useState<
-    string | null
-  >(null); // Hovered section
+  const [requestsOpen, setRequestsOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const [activeDesktopSection, setActiveDesktopSection] = useState<string | null>(null);
 
   // ===== Helpers =====
   const isActive = (path: string) => {
     if (path === "/") {
-      return location.pathname === "/"; // Home active only for exact /
+      return location.pathname === "/";
     }
     return location.pathname.startsWith(path);
   };
+
   const navLink = (path: string) =>
     `px-4 py-2 text-sm font-medium rounded-md transition ${
       isActive(path)
@@ -70,6 +69,8 @@ export const useTopbar = () => {
   return {
     t,
     i18n,
+    user, // ← Make sure user is exposed
+    userImage,
     userName,
     userEmail,
     userInitials,

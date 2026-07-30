@@ -39,7 +39,7 @@ import { useMyLeaves } from "@/hooks/Leaves/useMyLeaves";
 import { Button } from "@/components/ui/button";
 import LeaveRequestModal from "./LeaveRequestModal";
 import LeaveRequestViewModal from "./LeaveRequestViewModal";
-
+import type { ReactNode } from "react";
 const MyLeavesPanel = () => {
   const [expandedMobileCardId, setExpandedMobileCardId] = useState<
     string | null

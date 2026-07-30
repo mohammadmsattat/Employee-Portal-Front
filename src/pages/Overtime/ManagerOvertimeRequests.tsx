@@ -83,7 +83,6 @@ const ManagerOvertimeRequests = ({
     return format(parsed, "PPP");
   };
 
-  // حساب الإحصائيات
   const counts = {
     total: data?.data?.length || 0,
     pending:
@@ -326,28 +325,19 @@ const ManagerOvertimeRequests = ({
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 border-b border-slate-100">
-                      <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider py-2.5">
-                        <div className="flex items-center gap-1.5">
-                          <UserRound className="h-3 w-3" />
-                          Employee
-                        </div>
+                      <TableHead className="text-center text-xs text-slate-500 tracking-wider">
+                       Employee
                       </TableHead>
-                      <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider py-2.5">
-                        <div className="flex items-center gap-1.5">
-                          <CalendarDays className="h-3 w-3" />
-                          Date
-                        </div>
+                      <TableHead className="text-center text-xs text-slate-500 tracking-wider">
+                       Date
                       </TableHead>
-                      <TableHead className="text-center text-[10px] font-semibold text-slate-400 uppercase tracking-wider py-2.5">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <Clock3 className="h-3 w-3" />
-                          Hours
-                        </div>
+                      <TableHead className="text-center text-xs text-slate-500 tracking-wider">
+                      Hours
                       </TableHead>
-                      <TableHead className="text-center text-[10px] font-semibold text-slate-400 uppercase tracking-wider py-2.5">
+                      <TableHead className="text-center text-xs text-slate-500 tracking-wider">
                         Status
                       </TableHead>
-                      <TableHead className="text-center text-[10px] font-semibold text-slate-400 uppercase tracking-wider py-2.5">
+                      <TableHead className="text-center text-xs text-slate-500 tracking-wider">
                         Action
                       </TableHead>
                     </TableRow>
@@ -359,13 +349,13 @@ const ManagerOvertimeRequests = ({
                         key={req._id}
                         className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
                       >
-                        <TableCell className="text-sm font-medium text-slate-700 py-3">
+                        <TableCell className=" text-center text-sm font-medium text-slate-700 py-3">
                           {req.userId?.fullName || "-"}
                         </TableCell>
-                        <TableCell className="text-sm text-slate-600">
+                        <TableCell className="text-center text-sm text-slate-600">
                           {formatDate(req.workDate || req.createdAt)}
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className=" text-center text-center">
                           <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
                             {req.hours || "-"}h
                           </span>
@@ -384,7 +374,16 @@ const ManagerOvertimeRequests = ({
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                </Table>{" "}
+                {/* ========== Pagination ========== */}
+                <UnifiedPagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  setCurrentPage={setPage}
+                  perPage={limit}
+                  setPerPage={setLimit}
+                  className="mt-2"
+                />
               </div>
             ) : (
               <EmptyState />
@@ -430,7 +429,7 @@ const ManagerOvertimeRequests = ({
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge status={req.status} compact />
+                      <StatusBadge status={req.status}  />
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 text-slate-400 transition-transform duration-200",
@@ -454,8 +453,8 @@ const ManagerOvertimeRequests = ({
                           <div className="flex items-center gap-2 text-xs text-slate-500">
                             <Clock3 className="h-3.5 w-3.5" />
                             <span>
-                              {FormatTime(req.startTime, true)} -{" "}
-                              {FormatTime(req.endTime, true)}
+                              {formatDate(req.startTime)} -{" "}
+                              {formatDate(req.endTime)}
                             </span>
                           </div>
                         </div>
@@ -500,16 +499,6 @@ const ManagerOvertimeRequests = ({
             <EmptyState />
           )}
         </div>
-
-        {/* ========== Pagination ========== */}
-        <UnifiedPagination
-          currentPage={page}
-          totalPages={totalPages}
-          setCurrentPage={setPage}
-          perPage={limit}
-          setPerPage={setLimit}
-          className="mt-2"
-        />
       </div>
 
       {/* ========== Modal ========== */}

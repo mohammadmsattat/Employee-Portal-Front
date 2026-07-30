@@ -72,7 +72,6 @@ const Home = () => {
     setCurrentSlide((prev) => (prev === 3 ? 0 : prev + 1));
   };
 
-  // معالجة اللمس للتمرير
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStartX(e.touches[0].clientX);
   };
@@ -99,121 +98,47 @@ const Home = () => {
           <div className="mb-4 sm:mb-8">
             {/* Mobile Header (No Card) */}
             <div className="sm:hidden mb-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md shadow-blue-200/50 ring-2 ring-white/80">
-                  {user?.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt={user.fullName || "User"}
-                      className="h-full w-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-base font-bold">
-                      {user?.fullName?.charAt(0) || "U"}
-                    </span>
-                  )}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-blue-600">
-                    {t("homePage.welcome") || "Welcome back"}
-                  </p>
-                  <h1 className="mt-0.5 text-base font-bold text-blue-900 truncate">
-                    {user?.fullName || t("navigation.name")}
-                  </h1>
-                  <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-500">
-                    <div className="flex items-center gap-1">
-                      <Briefcase className="h-3 w-3 text-slate-400" />
-                      <span className="text-slate-600 truncate max-w-[80px]">
-                        {getPosition(user?.position)}
-                      </span>
-                    </div>
-                    <span className="h-1 w-1 rounded-full bg-slate-300" />
-                    <span className="text-slate-600 truncate max-w-[80px]">
-                      {getDepartmentName(user?.department)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
               {/* Stats Row - Mobile Slider with Swipe */}
-              <div 
-                className="mt-4"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              >
-                <div className="overflow-hidden rounded-2xl">
-                  <div
-                    className="flex transition-transform duration-500 ease-in-out"
-                    style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                  >
-                    {/* Stat 1: Worked Today */}
-                    <div className="min-w-full px-0.5">
-                      <StatCardMobile
-                        icon={<Clock3 className="h-5 w-5" />}
-                        label="Worked Today"
-                        value={workedTimeText || "0h"}
-                        color="blue"
-                        large
-                      />
-                    </div>
+              <div className="sm:hidden mb-6">
+                {/* Stats Row - Mobile Grid 2x2 */}
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Stat 1: Worked Today */}
+                  <StatCardMobile
+                    icon={<Clock3 className="h-4 w-4" />}
+                    label="Worked Today"
+                    value={workedTimeText || "0h"}
+                    color="blue"
+                  />
 
-                    {/* Stat 2: Location */}
-                    <div className="min-w-full px-0.5">
-                      <StatCardMobile
-                        icon={<MapPin className="h-5 w-5" />}
-                        label="Location"
-                        value={
-                          locationLoading
-                            ? "..."
-                            : isWithinDistance
-                              ? "In Range"
-                              : "Outside"
-                        }
-                        color={isWithinDistance ? "emerald" : "red"}
-                        large
-                      />
-                    </div>
+                  {/* Stat 2: Location */}
+                  <StatCardMobile
+                    icon={<MapPin className="h-4 w-4" />}
+                    label="Location"
+                    value={
+                      locationLoading
+                        ? "..."
+                        : isWithinDistance
+                          ? "In Range"
+                          : "Outside"
+                    }
+                    color={isWithinDistance ? "emerald" : "red"}
+                  />
 
-                    {/* Stat 3: Leave Balance */}
-                    <div className="min-w-full px-0.5">
-                      <StatCardMobile
-                        icon={<Gift className="h-5 w-5" />}
-                        label="Leave Balance"
-                        value={`${leaveBalances?.reduce((acc, l) => acc + l.remainingDays, 0) || 0} Days`}
-                        color="purple"
-                        large
-                      />
-                    </div>
+                  {/* Stat 3: Leave Balance */}
+                  <StatCardMobile
+                    icon={<Gift className="h-4 w-4" />}
+                    label="Leave Balance"
+                    value={`${leaveBalances?.reduce((acc, l) => acc + l.remainingDays, 0) || 0} Days`}
+                    color="purple"
+                  />
 
-                    {/* Stat 4: Pending Requests */}
-                    <div className="min-w-full px-0.5">
-                      <StatCardMobile
-                        icon={<FileText className="h-5 w-5" />}
-                        label="Pending Requests"
-                        value={pendingCount.toString()}
-                        color={pendingCount > 0 ? "orange" : "gray"}
-                        large
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* مؤشرات التقدم فقط */}
-                <div className="flex justify-center gap-1.5 mt-3">
-                  {[0, 1, 2, 3].map((index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentSlide(index)}
-                      className={cn(
-                        "h-1.5 rounded-full transition-all duration-300 cursor-pointer",
-                        currentSlide === index
-                          ? "w-6 bg-blue-500"
-                          : "w-1.5 bg-slate-300 hover:bg-slate-400",
-                      )}
-                    />
-                  ))}
+                  {/* Stat 4: Pending Requests */}
+                  <StatCardMobile
+                    icon={<FileText className="h-4 w-4" />}
+                    label="Pending Requests"
+                    value={pendingCount.toString()}
+                    color={pendingCount > 0 ? "orange" : "gray"}
+                  />
                 </div>
               </div>
             </div>
@@ -228,6 +153,18 @@ const Home = () => {
                         src={user.profileImage}
                         alt={user.fullName || "User"}
                         className="h-full w-full rounded-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            const fallback = document.createElement("span");
+                            fallback.className = "text-xl font-bold";
+                            fallback.textContent =
+                              user?.fullName?.charAt(0) || "U";
+                            parent.appendChild(fallback);
+                            e.currentTarget.remove();
+                          }
+                        }}
                       />
                     ) : (
                       <span className="text-xl font-bold">
@@ -292,7 +229,7 @@ const Home = () => {
                   />
                   <StatCardWeb
                     icon={<Gift className="h-5 w-5" />}
-                    label="All Leaves Balance"
+                    label="Remaining Leave Balance"
                     value={`${leaveBalances?.reduce((acc, l) => acc + l.remainingDays, 0) || 0} Days`}
                     color="purple"
                   />

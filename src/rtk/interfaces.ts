@@ -142,7 +142,7 @@ export interface LeaveRequest {
   startDate: string;
   endDate: string;
   reason: string;
-  days: string;
+  days: number;
   attachment?: string | null;
   status: LeaveStatus;
   createdAt: string;

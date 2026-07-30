@@ -89,7 +89,6 @@ const MyOvertimeRequests = ({ embedded = false }: MyOvertimeRequestsProps) => {
   const [customEndDate, setCustomEndDate] = useState<string>("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // ============= استخراج أنواع الأوفرتايم الفريدة =============
   const overtimeTypes = useMemo(() => {
     const types = new Set<string>();
     requests.forEach((r) => {
@@ -100,7 +99,6 @@ const MyOvertimeRequests = ({ embedded = false }: MyOvertimeRequestsProps) => {
     return Array.from(types);
   }, [requests]);
 
-  // ============= فلترة حسب التاريخ =============
   const filteredByDate = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -147,7 +145,6 @@ const MyOvertimeRequests = ({ embedded = false }: MyOvertimeRequestsProps) => {
     customEndDate,
   ]);
 
-  // ============= فلترة حسب النوع =============
   const filteredByType = useMemo(() => {
     if (!filterType) return filteredByDate;
     return filteredByDate.filter(
@@ -155,7 +152,6 @@ const MyOvertimeRequests = ({ embedded = false }: MyOvertimeRequestsProps) => {
     );
   }, [filteredByDate, filterType]);
 
-  // ============= فلترة حسب البحث =============
   const filteredBySearch = useMemo(() => {
     if (!searchQuery) return filteredByType;
     return filteredByType.filter(
@@ -169,13 +165,13 @@ const MyOvertimeRequests = ({ embedded = false }: MyOvertimeRequestsProps) => {
     );
   }, [filteredByType, searchQuery]);
 
-  // ============= فلترة حسب الحالة =============
+
   const filteredRequests = useMemo(() => {
     if (!statusFilter) return filteredBySearch;
     return filteredBySearch.filter((r) => r.status === statusFilter);
   }, [filteredBySearch, statusFilter]);
 
-  // ============= إحصائيات الفترة =============
+
   const periodStats = useMemo(() => {
     const total = filteredRequests.reduce((sum, r) => sum + (r.hours || 0), 0);
     const approved = filteredRequests
@@ -788,7 +784,7 @@ const MyOvertimeRequests = ({ embedded = false }: MyOvertimeRequestsProps) => {
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge status={request.status} compact />
+                      <StatusBadge status={request.status}  />
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 text-slate-400 transition-transform duration-200",

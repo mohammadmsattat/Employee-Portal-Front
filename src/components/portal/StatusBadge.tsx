@@ -8,7 +8,9 @@ type TaskStatus =
   | "pending"
   | "approved"
   | "rejected"
-  | "cancelled";
+  | "cancelled"
+  | "paid"
+  | "closed";
 
 interface StatusBadgeProps {
   status: TaskStatus;
@@ -35,6 +37,9 @@ const StatusBadge = ({ status, className }: StatusBadgeProps) => {
 
     cancelled:
       "bg-status-rejected/10 text-status-rejected border-status-rejected/20",
+
+    paid: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    closed: "bg-slate-200 text-slate-700 border-slate-300",
   };
 
   const statusLabels: Record<TaskStatus, string> = {
@@ -47,6 +52,8 @@ const StatusBadge = ({ status, className }: StatusBadgeProps) => {
     approved: "Approved",
     rejected: "Rejected",
     cancelled: "Cancelled",
+    paid: "Paid",
+    closed: "Closed",
   };
 
   return (
@@ -54,7 +61,7 @@ const StatusBadge = ({ status, className }: StatusBadgeProps) => {
       className={cn(
         "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
         statusStyles[status],
-        className
+        className,
       )}
     >
       {statusLabels[status]}

@@ -250,7 +250,7 @@ console.log(request);
                 onClick={onClose}
                 className="h-11 rounded-2xl sm:rounded-lg border-slate-200 font-medium text-slate-700 hover:bg-slate-50 sm:w-auto"
               >
-                {t("buttons.close") || "Close"}
+                Close
               </Button>
             </div>
           )}

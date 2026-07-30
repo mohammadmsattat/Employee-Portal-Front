@@ -108,7 +108,7 @@ const ManagerOvertimeRequestModal = ({
           <div className="relative mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-200/30 backdrop-blur-sm">
             <TimerReset className="h-3.5 w-3.5" />
             <span>
-              {request?.hours || calculateHours(request?.startTime, request?.endTime) || "0"} {t("managerOvertimeRequestModal.hours") || "hours"}
+              {request?.hours || calculateHours(request?.startTime, request?.endTime) || "0"} hours
             </span>
           </div>
         </div>
@@ -283,7 +283,7 @@ const ManagerOvertimeRequestModal = ({
                 onClick={onClose}
                 className="h-11 rounded-2xl sm:rounded-lg border-slate-200 font-medium text-slate-700 hover:bg-slate-50 sm:w-auto"
               >
-                {t("buttons.close") || "Close"}
+                Close
               </Button>
             </div>
           )}

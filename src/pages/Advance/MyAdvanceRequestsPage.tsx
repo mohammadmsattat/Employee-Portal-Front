@@ -298,31 +298,6 @@ const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
           </div>
         )}
 
-        {/* ========== Summary Cards ========== */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <SummaryCard
-            title={t("myAdvanceRequestsPage.totalAmount")}
-            value={totalAmount}
-            icon={<HandCoins className="h-4 w-4 text-blue-500" />}
-            bordered
-          />
-          <SummaryCard
-            title={t("myAdvanceRequestsPage.approved")}
-            value={approvedAmount}
-            icon={<CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-          />
-          <SummaryCard
-            title={t("myAdvanceRequestsPage.pending")}
-            value={pendingCount}
-            icon={<Clock className="h-4 w-4 text-amber-500" />}
-          />
-          <SummaryCard
-            title={t("myAdvanceRequestsPage.rejected")}
-            value={rejectedCount}
-            icon={<XCircle className="h-4 w-4 text-rose-500" />}
-          />
-        </div>
-
         {/* ========== Filters Section ========== */}
         <PortalCard className="!p-0 overflow-hidden">
           <button
@@ -630,6 +605,15 @@ const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
                       ))}
                     </TableBody>
                   </Table>
+                        {/* ========== Pagination ========== */}
+        <UnifiedPagination
+          currentPage={page}
+          totalPages={totalPages}
+          setCurrentPage={setPage}
+          perPage={limit}
+          setPerPage={setLimit}
+          className="mt-2"
+        />
                 </div>
               ) : (
                 <EmptyState t={t} />
@@ -829,15 +813,7 @@ const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
           )}
         </div>
 
-        {/* ========== Pagination ========== */}
-        <UnifiedPagination
-          currentPage={page}
-          totalPages={totalPages}
-          setCurrentPage={setPage}
-          perPage={limit}
-          setPerPage={setLimit}
-          className="mt-2"
-        />
+  
       </div>
 
       {!embedded && isModalOpen && (
@@ -855,32 +831,6 @@ const MyAdvanceRequests = ({ embedded = false }: MyAdvanceRequestsProps) => {
 export default MyAdvanceRequests;
 
 // ============= Sub-Components =============
-
-const SummaryCard = ({
-  title,
-  value,
-  icon,
-  bordered = false,
-}: {
-  title: string;
-  value: number;
-  icon?: React.ReactNode;
-  bordered?: boolean;
-}) => (
-  <div
-    className={`rounded-lg border border-slate-200 ${
-      bordered ? "border-l-4 border-l-blue-600" : ""
-    } bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)]`}
-  >
-    <div className="flex items-center justify-between">
-      <p className="text-sm font-medium text-slate-500">{title}</p>
-      {icon && <span className="text-slate-400">{icon}</span>}
-    </div>
-    <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-      {value}
-    </p>
-  </div>
-);
 
 const StatsCard = ({
   label,
