@@ -1,15 +1,18 @@
 // ===================== AUTH TYPES =====================
 
 // ===== LOGIN =====
+// ===== LOGIN =====
+
 export interface LoginRequest {
   email: string;
   password: string;
 }
+
 export interface User {
   _id: string;
   fullName: string;
   email: string;
-  companyId: string;
+  companyId?: string;
   groupId: any;
 
   branch?: any;
@@ -21,11 +24,49 @@ export interface User {
 
   [key: string]: any;
 }
+
+// companies returned when user has multiple companies
+export interface StaffCompany {
+  staffId: string;
+  companyId: string;
+  publicId?: string;
+  companyName: string;
+  companyLogo?: string;
+}
+
 export interface LoginResponse {
-  status: string;
-  company: string;
+  status: boolean;
+
+  // normal login
+  token?: string;
+
+  data?: User;
+
+  // multiple companies login
+  needCompanySelection?: boolean;
+
+  companies?: StaffCompany[];
+}
+
+// ===== SWITCH COMPANY =====
+
+export interface SwitchCompanyRequest {
+  staffId: string;
+  companyId: string;
+}
+
+export interface SwitchCompanyResponse {
+  status: boolean;
+
   token: string;
+
   data: User;
+
+  company?: {
+    companyName: string;
+    companyLogo?: string;
+    publicId?: string;
+  };
 }
 // ===== SIGN OUT =====
 export interface SignOutRequest {
@@ -142,7 +183,7 @@ export interface LeaveRequest {
   startDate: string;
   endDate: string;
   reason: string;
-  days: number;
+  days: string;
   attachment?: string | null;
   status: LeaveStatus;
   createdAt: string;
@@ -155,9 +196,6 @@ export interface LeaveRequestsResponse {
   totalPages: number;
   results: number;
   totalItems: number;
-  paginationResult : {
-    totalDocuments:number
-  };
   summary?: {
     totalBalance: number;
     used: number;
@@ -178,6 +216,9 @@ export interface LeaveLog {
   companyId: string;
   leaveType: { _id: string; typeKey: string; name?: string };
   leaveRequestId: string;
+  paginationResult: {
+    totalDocuments: number;
+  };
   startDate: string;
   endDate: string;
   days: number;

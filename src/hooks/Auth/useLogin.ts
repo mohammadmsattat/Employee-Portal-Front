@@ -15,8 +15,9 @@ export const useLogin = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("sara.mohamed@gmail.com");
-  const [password, setPassword] = useState("112233");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
 
   const [logIn, { isLoading }] = useHrLoginMutation();
@@ -26,7 +27,11 @@ export const useLogin = () => {
 
     if (!msg) return "SERVER_ERROR";
 
-    if (msg.includes("Invalid") || msg.includes("credentials")) {
+    if (
+      msg.includes("Invalid") ||
+      msg.includes("credentials") ||
+      msg.includes("password")
+    ) {
       return "INVALID_CREDENTIALS";
     }
 
@@ -40,38 +45,78 @@ export const useLogin = () => {
 
     return "SERVER_ERROR";
   };
+
+  const saveLoginData = (data: any) => {
+    localStorage.setItem("token", data.token);
+
+    localStorage.setItem("user", JSON.stringify(data.data));
+
+    localStorage.setItem("company", data.data.companyId);
+
+    localStorage.setItem(
+      "location",
+      JSON.stringify(data.data.groupId?.locationId || null),
+    );
+
+    localStorage.setItem("group", JSON.stringify(data.data.groupId || null));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setError("");
 
     try {
-      const res = await logIn({ email, password } as LoginRequest).unwrap();
-      if (res.token) {
-        localStorage.setItem("token", res.token);
-        localStorage.setItem("user", JSON.stringify(res.data));
-        localStorage.setItem("company", res.data.companyId);
-        localStorage.setItem(
-          "location",
-          JSON.stringify(res.data.groupId?.locationId || null),
-        );
-        localStorage.setItem("group", JSON.stringify(res.data.groupId || null));
+      const res = await logIn({
+        email: email.trim().toLowerCase(),
+        password,
+      } as LoginRequest).unwrap();
+
+      /*
+        Multiple companies
+        Go to company selection page
+      */
+      if (res.needCompanySelection && res.companies) {
+        navigate("/select-company", {
+          state: {
+            companies: res.companies,
+          },
+        });
+
+        return;
       }
 
-      navigate("/");
+      /*
+        Single company login
+      */
+      if (res.token && res.data) {
+        saveLoginData(res);
+
+        navigate("/");
+        return;
+      }
+
+      setError("Something went wrong. Please try again later");
     } catch (err: any) {
       const code = mapErrorToCode(err);
-      setError(AUTH_ERROR_MESSAGES[code]);
+
+      setError(AUTH_ERROR_MESSAGES[code as keyof typeof AUTH_ERROR_MESSAGES]);
     }
   };
 
   return {
     email,
     setEmail,
+
     password,
     setPassword,
+
     error,
+
     isLoading,
+
     handleSubmit,
+
     t,
   };
 };

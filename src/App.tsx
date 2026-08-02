@@ -22,6 +22,7 @@ import TasksPage from "./pages/Tasks/TasksPage";
 import OvertimePage from "./pages/Overtime/OvertimePage";
 import AdvancePage from "./pages/Advance/AdvancePage";
 import NotificationsPage from "./pages/Notifications/NotificationsPage";
+import SelectCompany from "./pages/Auth/SelectCompany";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/verify-code" element={<VerifyCode />} />
             <Route path="/new-password" element={<NewPassword />} />
+            <Route path="/select-company" element={<SelectCompany />} />
 
             {/* Protected routes (require login) */}
             <Route element={<PrivateRoute />}>
