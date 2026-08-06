@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import Layout from "@/components/layout/Layout";
 import TasksTableView from "@/components/Tasks/TasksTableView";
+import TasksTableViewMobile from "@/components/Tasks/mobile/TasksTableView.mobile";
 import TaskFilters from "@/components/Tasks/TaskFilters";
+import TaskFiltersMobile from "@/components/Tasks/mobile/TaskFilters.mobile";
+import FolderSidebar from "@/components/Tasks/FolderSidebar";
+import FolderSidebarMobile from "@/components/Tasks/mobile/FolderSidebar.mobile";
 
 import { useGetAllTasksQuery, useGetTaskByIdQuery } from "@/rtk/Tasks/tasksApi";
 import { useGetWorkspaceTreeQuery } from "@/rtk/Tasks/workspaceApi";
@@ -11,8 +16,6 @@ import AddTaskModal from "@/components/Tasks/CreateModels/AddTaskModal";
 import TaskDetailsModal from "@/components/Tasks/DetailsModels/TaskDetailsModal";
 
 import { Button } from "@/components/ui/button";
-
-import FolderSidebar from "@/components/Tasks/FolderSidebar";
 
 import { Inbox, WifiOff, RefreshCw } from "lucide-react";
 
@@ -27,7 +30,9 @@ import {
   useDeleteSubTaskMutation,
   useGetSubTaskByIdQuery,
 } from "@/rtk/Tasks/subTasksApi";
-import { useSearchParams } from "react-router-dom";
+
+// هوك مخصص للكشف عن حجم الشاشة
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 /* =========================
    SKELETONS
@@ -44,6 +49,12 @@ const SidebarSkeleton = () => (
   </div>
 );
 
+const SidebarSkeletonMobile = () => (
+  <div className="fixed bottom-4 right-4 z-50 lg:hidden">
+    <div className="h-14 w-14 animate-pulse rounded-full bg-slate-200 shadow-lg" />
+  </div>
+);
+
 const FiltersSkeleton = () => (
   <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
     <div className="flex flex-wrap gap-3">
@@ -53,6 +64,15 @@ const FiltersSkeleton = () => (
           className="h-10 w-32 animate-pulse rounded-2xl bg-slate-100"
         />
       ))}
+    </div>
+  </div>
+);
+
+const FiltersSkeletonMobile = () => (
+  <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="flex items-center justify-between">
+      <div className="h-6 w-24 animate-pulse rounded-lg bg-slate-200" />
+      <div className="h-6 w-20 animate-pulse rounded-lg bg-slate-200" />
     </div>
   </div>
 );
@@ -91,6 +111,31 @@ const TableSkeleton = () => (
         </div>
       ))}
     </div>
+  </div>
+);
+
+const TableSkeletonMobile = () => (
+  <div className="space-y-4">
+    {[...Array(4)].map((_, i) => (
+      <div key={i} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="h-5 w-40 animate-pulse rounded-lg bg-slate-200" />
+            <div className="flex gap-1">
+              {[...Array(4)].map((_, j) => (
+                <div key={j} className="h-8 w-8 animate-pulse rounded-lg bg-slate-200" />
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[...Array(3)].map((_, j) => (
+              <div key={j} className="h-6 w-16 animate-pulse rounded-full bg-slate-200" />
+            ))}
+          </div>
+          <div className="h-2 w-full animate-pulse rounded-full bg-slate-200" />
+        </div>
+      </div>
+    ))}
   </div>
 );
 
@@ -165,6 +210,9 @@ const TasksPage = () => {
   const [deleteTask] = useDeleteTaskMutation();
   const [deleteSubTask] = useDeleteSubTaskMutation();
 
+  // كشف حجم الشاشة
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   const {
     data: workspaceTree,
     isLoading: wsLoading,
@@ -193,7 +241,6 @@ const TasksPage = () => {
       refetchOnReconnect: true,
     },
   );
-console.log(tasksError);
 
   const tasks = tasksData?.data || [];
 
@@ -206,7 +253,6 @@ console.log(tasksError);
       skip: !taskId || !listId,
     },
   );
-console.log(singleTaskData);
 
   const singleTask = singleTaskData?.data;
 
@@ -223,11 +269,10 @@ console.log(singleTaskData);
 
   const singleSubTask = singleSubTaskData?.data;
 
-console.log(singleSubTaskData);
-
   const shouldShowFullSkeleton = (tasksLoading || tasksFetching) && !tasksData;
   const isFirstWorkspaceLoad = wsLoading && !workspaceTree;
 
+  // اختيار الـ List و Context من الـ URL
   useEffect(() => {
     const tree = Array.isArray(workspaceTree)
       ? workspaceTree
@@ -278,6 +323,7 @@ console.log(singleSubTaskData);
     }
   }, [workspaceTree, workspaceId, folderId, listId, type]);
 
+  // تحميل بيانات Task واحدة من الـ URL
   useEffect(() => {
     if (taskId && singleTask) {
       if (mode === "edit") setEditTask(singleTask);
@@ -356,10 +402,29 @@ console.log(singleSubTaskData);
 
   const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
 
+  // دالة مساعدة لتحديد أي Skeleton نعرض
+  const renderSkeletons = () => {
+    if (shouldShowFullSkeleton) {
+      return isMobile ? (
+        <>
+          <FiltersSkeletonMobile />
+          <TableSkeletonMobile />
+        </>
+      ) : (
+        <>
+          <FiltersSkeleton />
+          <TableSkeleton />
+        </>
+      );
+    }
+    return null;
+  };
+
   return (
     <Layout>
       <div className="flex h-full gap-4">
-        <div className="shrink-0">
+        {/* ========== SIDEBAR - ويب ========== */}
+        <div className="hidden lg:block shrink-0">
           {isFirstWorkspaceLoad && <SidebarSkeleton />}
 
           {!isFirstWorkspaceLoad && wsError && (
@@ -376,13 +441,31 @@ console.log(singleSubTaskData);
           )}
         </div>
 
+        {/* ========== SIDEBAR - موبايل ========== */}
+        {isMobile && (
+          <>
+            {isFirstWorkspaceLoad && <SidebarSkeletonMobile />}
+            {/* {!isFirstWorkspaceLoad && workspaceTree && (
+              <FolderSidebarMobile
+                onSelectList={setSelectedList}
+                onSelectContext={setSelectedContext}
+                workspaceTree={workspaceTree}
+                refetchTree={refetchTree}
+              />
+            )} */}
+          </>
+        )}
+
+        {/* ========== المحتوى الرئيسي ========== */}
         <div className="flex-1 space-y-4">
+          {/* حالة الاتصال */}
           {isOffline && (
-            <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-black-700">
-              You are offline
+            <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+              ⚠️ You are offline. Changes may not be saved.
             </div>
           )}
 
+          {/* زر إضافة Task */}
           {selectedList && permissions.canCreateTask && (
             <div className="flex justify-end">
               <Button
@@ -390,52 +473,82 @@ console.log(singleSubTaskData);
                   setSubTaskParent(null);
                   setOpenTaskModal(true);
                 }}
+                className="w-full sm:w-auto"
               >
                 + Add Task
               </Button>
             </div>
           )}
 
-          {selectedList &&
-            (shouldShowFullSkeleton ? (
-              <FiltersSkeleton />
+          {/* الفلاتر */}
+          {selectedList && shouldShowFullSkeleton ? (
+            isMobile ? <FiltersSkeletonMobile /> : <FiltersSkeleton />
+          ) : selectedList ? (
+            isMobile ? (
+              <TaskFiltersMobile onChange={setFilters} />
             ) : (
               <TaskFilters onChange={setFilters} />
-            ))}
+            )
+          ) : null}
 
+          {/* حالة عدم اختيار قائمة */}
           {!selectedList && <EmptyState text="Select a list to view tasks" />}
 
-          {selectedList && shouldShowFullSkeleton && <TableSkeleton />}
+          {/* Skeleton للجدول */}
+          {selectedList && renderSkeletons()}
 
+          {/* حالة الخطأ */}
           {selectedList && tasksError && (
             <ErrorState text="Failed to load tasks" onRetry={refetchTasks} />
           )}
 
+          {/* حالة عدم وجود مهام */}
           {selectedList &&
             !tasksLoading &&
             !tasksFetching &&
             !tasksError &&
             tasks.length === 0 && <EmptyState text="No tasks yet" />}
 
+          {/* عرض المهام */}
           {selectedList && tasks.length > 0 && (
-            <TasksTableView
-              tasks={tasks}
-              permissions={permissions}
-              onAddSubTask={(task) => {
-                setSubTaskParent(task);
-                setOpenTaskModal(true);
-              }}
-              onOpenEditModal={setEditTask}
-              onOpenDetailsModal={setDetailsTask}
-              onOpenChecklistModal={setChecklistTask}
-              onDeleteTask={handleDeleteTask}
-              onDeleteSubTask={handleDeleteSubTask}
-              toast={toast}
-            />
+            isMobile ? (
+              <TasksTableViewMobile
+                tasks={tasks}
+                permissions={permissions}
+                onAddSubTask={(task) => {
+                  setSubTaskParent(task);
+                  setOpenTaskModal(true);
+                }}
+                onOpenEditModal={setEditTask}
+                onOpenDetailsModal={setDetailsTask}
+                onOpenChecklistModal={setChecklistTask}
+                onDeleteTask={handleDeleteTask}
+                onDeleteSubTask={handleDeleteSubTask}
+                toast={toast}
+              />
+            ) : (
+              <TasksTableView
+                tasks={tasks}
+                permissions={permissions}
+                onAddSubTask={(task) => {
+                  setSubTaskParent(task);
+                  setOpenTaskModal(true);
+                }}
+                onOpenEditModal={setEditTask}
+                onOpenDetailsModal={setDetailsTask}
+                onOpenChecklistModal={setChecklistTask}
+                onDeleteTask={handleDeleteTask}
+                onDeleteSubTask={handleDeleteSubTask}
+                toast={toast}
+              />
+            )
           )}
         </div>
       </div>
 
+      {/* ========== MODALS ========== */}
+
+      {/* Add Task / SubTask Modal */}
       {!subTaskParent ? (
         <AddTaskModal
           isOpen={openTaskModal}
@@ -454,6 +567,7 @@ console.log(singleSubTaskData);
         />
       )}
 
+      {/* Task Details Modal */}
       <TaskDetailsModal
         entity={editTask}
         isOpen={!!editTask}
@@ -465,6 +579,7 @@ console.log(singleSubTaskData);
         refetchTasks={refetchTasks}
       />
 
+      {/* Task Checklist Modal */}
       <TaskChecklistModal
         isOpen={!!checklistTask}
         taskId={checklistTask?._id}
@@ -474,6 +589,7 @@ console.log(singleSubTaskData);
         onClose={() => setChecklistTask(null)}
       />
 
+      {/* Global Timer */}
       <GlobalTaskTimer
         tasksMap={Object.fromEntries(tasks.map((t) => [t._id, t.title]))}
       />

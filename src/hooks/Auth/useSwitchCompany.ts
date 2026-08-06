@@ -1,3 +1,4 @@
+// hooks/Auth/useSwitchCompany.ts
 import { useNavigate } from "react-router-dom";
 import { useHrSwitchCompanyMutation } from "@/rtk/Auth/AuthApi";
 
@@ -8,16 +9,12 @@ export const useSwitchCompany = () => {
 
   const saveLoginData = (res: any) => {
     localStorage.setItem("token", res.token);
-
     localStorage.setItem("user", JSON.stringify(res.data));
-
     localStorage.setItem("company", res.data.companyId);
-
     localStorage.setItem(
       "location",
       JSON.stringify(res.data.groupId?.locationId || null),
     );
-
     localStorage.setItem("group", JSON.stringify(res.data.groupId || null));
   };
 
@@ -30,7 +27,6 @@ export const useSwitchCompany = () => {
 
       if (res.token && res.data) {
         saveLoginData(res);
-
         navigate("/");
       }
 

@@ -1,6 +1,6 @@
 // src/Api/GlobalData.ts
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8006";
+const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
 
 // ================= AUTH =================
 export const HrLogInEndPoint = "/api/hrauth/login";
