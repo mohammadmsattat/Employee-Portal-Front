@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Menu, Filter, Plus, X, ChevronLeft } from "lucide-react";
 
 import Layout from "@/components/layout/Layout";
 import TasksTableView from "@/components/Tasks/TasksTableView";
@@ -7,7 +8,6 @@ import TasksTableViewMobile from "@/components/Tasks/mobile/TasksTableView.mobil
 import TaskFilters from "@/components/Tasks/TaskFilters";
 import TaskFiltersMobile from "@/components/Tasks/mobile/TaskFilters.mobile";
 import FolderSidebar from "@/components/Tasks/FolderSidebar";
-import FolderSidebarMobile from "@/components/Tasks/mobile/FolderSidebar.mobile";
 
 import { useGetAllTasksQuery, useGetTaskByIdQuery } from "@/rtk/Tasks/tasksApi";
 import { useGetWorkspaceTreeQuery } from "@/rtk/Tasks/workspaceApi";
@@ -31,7 +31,6 @@ import {
   useGetSubTaskByIdQuery,
 } from "@/rtk/Tasks/subTasksApi";
 
-// هوك مخصص للكشف عن حجم الشاشة
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 /* =========================
@@ -50,8 +49,10 @@ const SidebarSkeleton = () => (
 );
 
 const SidebarSkeletonMobile = () => (
-  <div className="fixed bottom-4 right-4 z-50 lg:hidden">
-    <div className="h-14 w-14 animate-pulse rounded-full bg-slate-200 shadow-lg" />
+  <div className="space-y-3 p-2">
+    {[...Array(5)].map((_, i) => (
+      <div key={i} className="h-12 animate-pulse rounded-xl bg-slate-100" />
+    ))}
   </div>
 );
 
@@ -69,10 +70,10 @@ const FiltersSkeleton = () => (
 );
 
 const FiltersSkeletonMobile = () => (
-  <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+  <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
     <div className="flex items-center justify-between">
-      <div className="h-6 w-24 animate-pulse rounded-lg bg-slate-200" />
       <div className="h-6 w-20 animate-pulse rounded-lg bg-slate-200" />
+      <div className="h-6 w-16 animate-pulse rounded-lg bg-slate-200" />
     </div>
   </div>
 );
@@ -144,18 +145,18 @@ const TableSkeletonMobile = () => (
 ========================= */
 
 const EmptyState = ({ text }) => (
-  <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white text-slate-400">
-    <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100">
-      <Inbox className="h-10 w-10" />
+  <div className="flex min-h-[300px] sm:min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white text-slate-400">
+    <div className="mb-4 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-slate-100">
+      <Inbox className="h-8 w-8 sm:h-10 sm:w-10" />
     </div>
-    <p className="text-sm font-medium">{text}</p>
+    <p className="text-sm font-medium px-4 text-center">{text}</p>
   </div>
 );
 
 const ErrorState = ({ text, onRetry }) => (
-  <div className="flex min-h-[420px] flex-col items-center justify-center rounded-3xl border border-red-100 bg-white px-6 text-center">
-    <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-red-50">
-      <WifiOff className="h-10 w-10 text-red-500" />
+  <div className="flex min-h-[300px] sm:min-h-[420px] flex-col items-center justify-center rounded-3xl border border-red-100 bg-white px-4 sm:px-6 text-center">
+    <div className="mb-4 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-red-50">
+      <WifiOff className="h-8 w-8 sm:h-10 sm:w-10 text-red-500" />
     </div>
 
     <h3 className="text-base font-semibold text-slate-800">
@@ -167,7 +168,7 @@ const ErrorState = ({ text, onRetry }) => (
     {onRetry && (
       <Button
         onClick={onRetry}
-        className="mt-5 rounded-2xl bg-blue-600 hover:bg-blue-700"
+        className="mt-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-sm sm:text-base"
       >
         <RefreshCw className="mr-2 h-4 w-4" />
         Retry
@@ -210,8 +211,16 @@ const TasksPage = () => {
   const [deleteTask] = useDeleteTaskMutation();
   const [deleteSubTask] = useDeleteSubTaskMutation();
 
-  // كشف حجم الشاشة
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  // كشف حجم الشاشة - استخدام نقاط توقف متعددة
+  const isMobile = useMediaQuery("(max-width: 640px)");
+  const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1024px)");
+  const isDesktop = useMediaQuery("(min-width: 1025px)");
+  
+  // حالة للتحكم في ظهور الفلاتر في الموبايل
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // حالة للتحكم في ظهور السايدبار في الموبايل
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const {
     data: workspaceTree,
@@ -420,53 +429,166 @@ const TasksPage = () => {
     return null;
   };
 
+  // منع التمرير عند فتح السايدبار
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [sidebarOpen]);
+
   return (
     <Layout>
-      <div className="flex h-full gap-4">
+      <div className="flex h-full gap-2 sm:gap-4">
         {/* ========== SIDEBAR - ويب ========== */}
-        <div className="hidden lg:block shrink-0">
-          {isFirstWorkspaceLoad && <SidebarSkeleton />}
+        {isDesktop && (
+          <div className="hidden lg:block shrink-0">
+            {isFirstWorkspaceLoad && <SidebarSkeleton />}
 
-          {!isFirstWorkspaceLoad && wsError && (
-            <ErrorState text="Failed to load workspace" onRetry={refetchTree} />
-          )}
+            {!isFirstWorkspaceLoad && wsError && (
+              <ErrorState text="Failed to load workspace" onRetry={refetchTree} />
+            )}
 
-          {!isFirstWorkspaceLoad && workspaceTree && (
-            <FolderSidebar
-              onSelectList={setSelectedList}
-              onSelectContext={setSelectedContext}
-              workspaceTree={workspaceTree}
-              refetchTree={refetchTree}
-            />
-          )}
-        </div>
-
-        {/* ========== SIDEBAR - موبايل ========== */}
-        {isMobile && (
-          <>
-            {isFirstWorkspaceLoad && <SidebarSkeletonMobile />}
-            {/* {!isFirstWorkspaceLoad && workspaceTree && (
-              <FolderSidebarMobile
+            {!isFirstWorkspaceLoad && workspaceTree && (
+              <FolderSidebar
                 onSelectList={setSelectedList}
                 onSelectContext={setSelectedContext}
                 workspaceTree={workspaceTree}
                 refetchTree={refetchTree}
               />
-            )} */}
+            )}
+          </div>
+        )}
+
+        {/* ========== SIDEBAR - موبايل و تابلت ========== */}
+        {(isMobile || isTablet) && (
+          <>
+            {/* Overlay */}
+            {sidebarOpen && (
+              <div
+                className="fixed inset-0 bg-black/50 z-40"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+
+            {/* Sidebar - تنزلق من اليسار */}
+            <div
+              className={`fixed top-0 left-0 h-full w-[85%] max-w-sm bg-white shadow-2xl z-50 transition-transform duration-300 ease-in-out ${
+                sidebarOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
+            >
+              <div className="h-full overflow-y-auto p-4">
+                {/* HEADER */}
+                <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-200">
+                  <h2 className="text-lg font-bold text-slate-800">Workspaces</h2>
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-2 rounded-lg hover:bg-slate-100"
+                  >
+                    <X className="h-5 w-5 text-slate-500" />
+                  </button>
+                </div>
+
+                {/* محتوى السايدبار */}
+                {isFirstWorkspaceLoad ? (
+                  <SidebarSkeletonMobile />
+                ) : wsError ? (
+                  <ErrorState text="Failed to load workspace" onRetry={refetchTree} />
+                ) : workspaceTree ? (
+                  <FolderSidebar
+                    onSelectList={(list, workspace, folder) => {
+                      setSelectedList(list);
+                      setSelectedContext({
+                        workspace,
+                        folder,
+                        list: list.name,
+                        listRole: list.role,
+                      });
+                      setSidebarOpen(false);
+                    }}
+                    onSelectContext={setSelectedContext}
+                    workspaceTree={workspaceTree}
+                    refetchTree={refetchTree}
+                    isMobile={true}
+                  />
+                ) : null}
+              </div>
+            </div>
           </>
         )}
 
         {/* ========== المحتوى الرئيسي ========== */}
-        <div className="flex-1 space-y-4">
-          {/* حالة الاتصال */}
-          {isOffline && (
-            <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
-              ⚠️ You are offline. Changes may not be saved.
+        <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
+          {/* ===== هيدر الموبايل والتابلت ===== */}
+          {(isMobile || isTablet) && (
+            <div className="flex items-center justify-between gap-2 bg-white p-2 sm:p-3 rounded-2xl border border-slate-200 shadow-sm">
+              {/* زر فتح السايدبار */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                aria-label="Open sidebar"
+              >
+                <Menu className="h-5 w-5 text-slate-600" />
+              </button>
+
+              {/* عنوان الصفحة */}
+              <h1 className="text-sm sm:text-base font-semibold text-slate-800 flex-1 truncate text-center">
+                {selectedList?.name || "Tasks"}
+              </h1>
+
+              {/* زر الإضافة + زر الفلاتر */}
+              <div className="flex items-center gap-1">
+                {selectedList && permissions.canCreateTask && (
+                  <button
+                    onClick={() => {
+                      setSubTaskParent(null);
+                      setOpenTaskModal(true);
+                    }}
+                    className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    aria-label="Add task"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
+                )}
+
+                {selectedList && (
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      showFilters
+                        ? "bg-blue-100 text-blue-600"
+                        : "hover:bg-slate-100 text-slate-600"
+                    }`}
+                    aria-label="Toggle filters"
+                  >
+                    <Filter className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
-          {/* زر إضافة Task */}
-          {selectedList && permissions.canCreateTask && (
+          {/* ===== الفلاتر - موبايل و تابلت ===== */}
+          {(isMobile || isTablet) && selectedList && showFilters && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-sm animate-slideDown">
+              <TaskFiltersMobile
+                onChange={setFilters}
+                onClose={() => setShowFilters(false)}
+              />
+            </div>
+          )}
+
+          {/* ===== الفلاتر - ويب ===== */}
+          {isDesktop && selectedList && (
+            <TaskFilters onChange={setFilters} />
+          )}
+
+          {/* ===== زر الإضافة - ويب ===== */}
+          {isDesktop && selectedList && permissions.canCreateTask && (
             <div className="flex justify-end">
               <Button
                 onClick={() => {
@@ -480,16 +602,12 @@ const TasksPage = () => {
             </div>
           )}
 
-          {/* الفلاتر */}
-          {selectedList && shouldShowFullSkeleton ? (
-            isMobile ? <FiltersSkeletonMobile /> : <FiltersSkeleton />
-          ) : selectedList ? (
-            isMobile ? (
-              <TaskFiltersMobile onChange={setFilters} />
-            ) : (
-              <TaskFilters onChange={setFilters} />
-            )
-          ) : null}
+          {/* حالة الاتصال */}
+          {isOffline && (
+            <div className="rounded-2xl bg-red-50 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-red-700">
+              ⚠️ You are offline. Changes may not be saved.
+            </div>
+          )}
 
           {/* حالة عدم اختيار قائمة */}
           {!selectedList && <EmptyState text="Select a list to view tasks" />}
@@ -511,7 +629,7 @@ const TasksPage = () => {
 
           {/* عرض المهام */}
           {selectedList && tasks.length > 0 && (
-            isMobile ? (
+            (isMobile || isTablet) ? (
               <TasksTableViewMobile
                 tasks={tasks}
                 permissions={permissions}
