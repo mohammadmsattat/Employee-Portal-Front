@@ -1,3 +1,5 @@
+// TasksPage.jsx - نسخة معدلة مع توحيد العرض مع باقي الصفحات
+
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Menu, Filter, Plus, X, ChevronLeft } from "lucide-react";
@@ -8,6 +10,7 @@ import TasksTableViewMobile from "@/components/Tasks/mobile/TasksTableView.mobil
 import TaskFilters from "@/components/Tasks/TaskFilters";
 import TaskFiltersMobile from "@/components/Tasks/mobile/TaskFilters.mobile";
 import FolderSidebar from "@/components/Tasks/FolderSidebar";
+import FolderSidebarMobile from "@/components/Tasks/mobile/FolderSidebar.mobile";
 
 import { useGetAllTasksQuery, useGetTaskByIdQuery } from "@/rtk/Tasks/tasksApi";
 import { useGetWorkspaceTreeQuery } from "@/rtk/Tasks/workspaceApi";
@@ -32,6 +35,18 @@ import {
 } from "@/rtk/Tasks/subTasksApi";
 
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+
+// ===== استيراد مودلات السايدبار =====
+import { AddWorkspaceModal } from "@/components/Tasks/CreateModels/AddWorkspaceModal";
+import { AddFolderModal } from "@/components/Tasks/CreateModels/AddFolderModal ";
+import { AddListModal } from "@/components/Tasks/CreateModels/AddListModal";
+import { ManageMembersModal } from "@/components/Tasks/UpdatesModels/ManageMembersModal";
+import { FolderMembersModal } from "@/components/Tasks/UpdatesModels/FolderMembersModal";
+import { ListMembersModal } from "@/components/Tasks/UpdatesModels/ManageListMembersModal";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+
+// ===== استيراد الـ Hook الخاص بالحذف =====
+import { useFolderSidebarController } from "@/hooks/Tasks/useFolderSidebarController";
 
 /* =========================
    SKELETONS
@@ -118,19 +133,28 @@ const TableSkeleton = () => (
 const TableSkeletonMobile = () => (
   <div className="space-y-4">
     {[...Array(4)].map((_, i) => (
-      <div key={i} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div
+        key={i}
+        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div className="space-y-3">
           <div className="flex items-start justify-between">
             <div className="h-5 w-40 animate-pulse rounded-lg bg-slate-200" />
             <div className="flex gap-1">
               {[...Array(4)].map((_, j) => (
-                <div key={j} className="h-8 w-8 animate-pulse rounded-lg bg-slate-200" />
+                <div
+                  key={j}
+                  className="h-8 w-8 animate-pulse rounded-lg bg-slate-200"
+                />
               ))}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
             {[...Array(3)].map((_, j) => (
-              <div key={j} className="h-6 w-16 animate-pulse rounded-full bg-slate-200" />
+              <div
+                key={j}
+                className="h-6 w-16 animate-pulse rounded-full bg-slate-200"
+              />
             ))}
           </div>
           <div className="h-2 w-full animate-pulse rounded-full bg-slate-200" />
@@ -211,17 +235,15 @@ const TasksPage = () => {
   const [deleteTask] = useDeleteTaskMutation();
   const [deleteSubTask] = useDeleteSubTaskMutation();
 
-  // كشف حجم الشاشة - استخدام نقاط توقف متعددة
+  // كشف حجم الشاشة
   const isMobile = useMediaQuery("(max-width: 640px)");
   const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1024px)");
   const isDesktop = useMediaQuery("(min-width: 1025px)");
-  
-  // حالة للتحكم في ظهور الفلاتر في الموبايل
+
   const [showFilters, setShowFilters] = useState(false);
-  
-  // حالة للتحكم في ظهور السايدبار في الموبايل
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // ===== تعريف useGetWorkspaceTreeQuery أولاً =====
   const {
     data: workspaceTree,
     isLoading: wsLoading,
@@ -230,6 +252,17 @@ const TasksPage = () => {
   } = useGetWorkspaceTreeQuery(undefined, {
     refetchOnFocus: true,
     refetchOnReconnect: true,
+  });
+
+  // ===== الآن يمكن استخدام refetchTree في useFolderSidebarController =====
+  const {
+    deleteState,
+    setDeleteState,
+    deleteLoading,
+    handleDelete,
+    requestDelete,
+  } = useFolderSidebarController({
+    refetchTree: refetchTree,
   });
 
   const {
@@ -281,7 +314,21 @@ const TasksPage = () => {
   const shouldShowFullSkeleton = (tasksLoading || tasksFetching) && !tasksData;
   const isFirstWorkspaceLoad = wsLoading && !workspaceTree;
 
-  // اختيار الـ List و Context من الـ URL
+  const [sidebarModals, setSidebarModals] = useState({
+    workspaceModal: false,
+    folderModal: false,
+    listModal: false,
+    manageMembers: false,
+    folderMembers: false,
+    listMembers: false,
+  });
+
+  const [modalData, setModalData] = useState({
+    workspace: null,
+    folder: null,
+    list: null,
+  });
+
   useEffect(() => {
     const tree = Array.isArray(workspaceTree)
       ? workspaceTree
@@ -332,7 +379,6 @@ const TasksPage = () => {
     }
   }, [workspaceTree, workspaceId, folderId, listId, type]);
 
-  // تحميل بيانات Task واحدة من الـ URL
   useEffect(() => {
     if (taskId && singleTask) {
       if (mode === "edit") setEditTask(singleTask);
@@ -411,7 +457,6 @@ const TasksPage = () => {
 
   const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
 
-  // دالة مساعدة لتحديد أي Skeleton نعرض
   const renderSkeletons = () => {
     if (shouldShowFullSkeleton) {
       return isMobile ? (
@@ -429,244 +474,291 @@ const TasksPage = () => {
     return null;
   };
 
-  // منع التمرير عند فتح السايدبار
   useEffect(() => {
     if (sidebarOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [sidebarOpen]);
 
+  const openWorkspaceModal = () => {
+    setSidebarModals((prev) => ({ ...prev, workspaceModal: true }));
+  };
+
+  const openFolderModal = (workspace) => {
+    setModalData((prev) => ({ ...prev, workspace }));
+    setSidebarModals((prev) => ({ ...prev, folderModal: true }));
+  };
+
+  const openListModal = (folder) => {
+    setModalData((prev) => ({ ...prev, folder }));
+    setSidebarModals((prev) => ({ ...prev, listModal: true }));
+  };
+
+  const openManageMembers = (workspace) => {
+    setModalData((prev) => ({ ...prev, workspace }));
+    setSidebarModals((prev) => ({ ...prev, manageMembers: true }));
+  };
+
+  const openFolderMembers = (folder) => {
+    setModalData((prev) => ({ ...prev, folder }));
+    setSidebarModals((prev) => ({ ...prev, folderMembers: true }));
+  };
+
+  const openListMembers = (listId) => {
+    setModalData((prev) => ({ ...prev, list: listId }));
+    setSidebarModals((prev) => ({ ...prev, listMembers: true }));
+  };
+
+  const openDeleteConfirm = (type, item, workspaceId) => {
+    requestDelete({ type, item, workspaceId });
+  };
+
+  const closeAllSidebarModals = () => {
+    setSidebarModals({
+      workspaceModal: false,
+      folderModal: false,
+      listModal: false,
+      manageMembers: false,
+      folderMembers: false,
+      listMembers: false,
+    });
+    setModalData({
+      workspace: null,
+      folder: null,
+      list: null,
+    });
+    setDeleteState({ open: false });
+  };
+
+  const handleSelectList = (list, workspace, folder) => {
+    setSelectedList(list);
+    setSelectedContext({
+      workspace,
+      folder,
+      list: list.name,
+      listRole: list.role,
+    });
+    if (isMobile || isTablet) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <Layout>
-      <div className="flex h-full gap-2 sm:gap-4">
-        {/* ========== SIDEBAR - ويب ========== */}
-        {isDesktop && (
-          <div className="hidden lg:block shrink-0">
-            {isFirstWorkspaceLoad && <SidebarSkeleton />}
+      {/* ✅ إضافة max-w-7xl ونفس padding مثل صفحة Attendance */}
+      <div className="mx-auto max-w-7xl px-2 py-3 sm:px-6 sm:py-6 lg:px-8 w-full">
+        <div className="flex h-full gap-2 sm:gap-4">
+          {/* ========== SIDEBAR  ========== */}
+          {isDesktop && (
+            <div className="hidden lg:block shrink-0">
+              {isFirstWorkspaceLoad && <SidebarSkeleton />}
 
-            {!isFirstWorkspaceLoad && wsError && (
-              <ErrorState text="Failed to load workspace" onRetry={refetchTree} />
-            )}
+              {!isFirstWorkspaceLoad && wsError && (
+                <ErrorState
+                  text="Failed to load workspace"
+                  onRetry={refetchTree}
+                />
+              )}
 
-            {!isFirstWorkspaceLoad && workspaceTree && (
-              <FolderSidebar
-                onSelectList={setSelectedList}
-                onSelectContext={setSelectedContext}
-                workspaceTree={workspaceTree}
-                refetchTree={refetchTree}
-              />
-            )}
-          </div>
-        )}
-
-        {/* ========== SIDEBAR - موبايل و تابلت ========== */}
-        {(isMobile || isTablet) && (
-          <>
-            {/* Overlay */}
-            {sidebarOpen && (
-              <div
-                className="fixed inset-0 bg-black/50 z-40"
-                onClick={() => setSidebarOpen(false)}
-              />
-            )}
-
-            {/* Sidebar - تنزلق من اليسار */}
-            <div
-              className={`fixed top-0 left-0 h-full w-[85%] max-w-sm bg-white shadow-2xl z-50 transition-transform duration-300 ease-in-out ${
-                sidebarOpen ? "translate-x-0" : "-translate-x-full"
-              }`}
-            >
-              <div className="h-full overflow-y-auto p-4">
-                {/* HEADER */}
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-200">
-                  <h2 className="text-lg font-bold text-slate-800">Workspaces</h2>
-                  <button
-                    onClick={() => setSidebarOpen(false)}
-                    className="p-2 rounded-lg hover:bg-slate-100"
-                  >
-                    <X className="h-5 w-5 text-slate-500" />
-                  </button>
-                </div>
-
-                {/* محتوى السايدبار */}
-                {isFirstWorkspaceLoad ? (
-                  <SidebarSkeletonMobile />
-                ) : wsError ? (
-                  <ErrorState text="Failed to load workspace" onRetry={refetchTree} />
-                ) : workspaceTree ? (
-                  <FolderSidebar
-                    onSelectList={(list, workspace, folder) => {
-                      setSelectedList(list);
-                      setSelectedContext({
-                        workspace,
-                        folder,
-                        list: list.name,
-                        listRole: list.role,
-                      });
-                      setSidebarOpen(false);
-                    }}
-                    onSelectContext={setSelectedContext}
-                    workspaceTree={workspaceTree}
-                    refetchTree={refetchTree}
-                    isMobile={true}
-                  />
-                ) : null}
-              </div>
+              {!isFirstWorkspaceLoad && workspaceTree && (
+                <FolderSidebar
+                  onSelectList={handleSelectList}
+                  onSelectContext={setSelectedContext}
+                  workspaceTree={workspaceTree}
+                  refetchTree={refetchTree}
+                  onOpenWorkspaceModal={openWorkspaceModal}
+                  onOpenFolderModal={openFolderModal}
+                  onOpenListModal={openListModal}
+                  onOpenManageMembers={openManageMembers}
+                  onOpenFolderMembers={openFolderMembers}
+                  onOpenListMembers={openListMembers}
+                  onOpenDeleteConfirm={openDeleteConfirm}
+                />
+              )}
             </div>
-          </>
-        )}
+          )}
 
-        {/* ========== المحتوى الرئيسي ========== */}
-        <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
-          {/* ===== هيدر الموبايل والتابلت ===== */}
+          {/* ========== SIDEBAR ========== */}
           {(isMobile || isTablet) && (
-            <div className="flex items-center justify-between gap-2 bg-white p-2 sm:p-3 rounded-2xl border border-slate-200 shadow-sm">
-              {/* زر فتح السايدبار */}
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-                aria-label="Open sidebar"
+            <>
+              {sidebarOpen && (
+                <div
+                  className="fixed inset-0 bg-black/50 z-40"
+                  onClick={() => setSidebarOpen(false)}
+                />
+              )}
+
+              <div
+                className={`fixed top-0 left-0 h-full w-[85%] max-w-sm bg-white shadow-2xl z-50 transition-transform duration-300 ease-in-out ${
+                  sidebarOpen ? "translate-x-0" : "-translate-x-full"
+                }`}
               >
-                <Menu className="h-5 w-5 text-slate-600" />
-              </button>
-
-              {/* عنوان الصفحة */}
-              <h1 className="text-sm sm:text-base font-semibold text-slate-800 flex-1 truncate text-center">
-                {selectedList?.name || "Tasks"}
-              </h1>
-
-              {/* زر الإضافة + زر الفلاتر */}
-              <div className="flex items-center gap-1">
-                {selectedList && permissions.canCreateTask && (
-                  <button
-                    onClick={() => {
-                      setSubTaskParent(null);
-                      setOpenTaskModal(true);
-                    }}
-                    className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                    aria-label="Add task"
-                  >
-                    <Plus className="h-5 w-5" />
-                  </button>
-                )}
-
-                {selectedList && (
-                  <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      showFilters
-                        ? "bg-blue-100 text-blue-600"
-                        : "hover:bg-slate-100 text-slate-600"
-                    }`}
-                    aria-label="Toggle filters"
-                  >
-                    <Filter className="h-5 w-5" />
-                  </button>
-                )}
+                <div className="h-full overflow-y-auto">
+                  {isFirstWorkspaceLoad ? (
+                    <div className="p-4">
+                      <SidebarSkeletonMobile />
+                    </div>
+                  ) : wsError ? (
+                    <div className="p-4">
+                      <ErrorState
+                        text="Failed to load workspace"
+                        onRetry={refetchTree}
+                      />
+                    </div>
+                  ) : workspaceTree ? (
+                    <FolderSidebarMobile
+                      onSelectList={handleSelectList}
+                      onSelectContext={setSelectedContext}
+                      workspaceTree={workspaceTree}
+                      refetchTree={refetchTree}
+                      onClose={() => setSidebarOpen(false)}
+                      onOpenWorkspaceModal={openWorkspaceModal}
+                      onOpenFolderModal={openFolderModal}
+                      onOpenListModal={openListModal}
+                      onOpenManageMembers={openManageMembers}
+                      onOpenFolderMembers={openFolderMembers}
+                      onOpenListMembers={openListMembers}
+                      onOpenDeleteConfirm={openDeleteConfirm}
+                    />
+                  ) : null}
+                </div>
               </div>
-            </div>
+            </>
           )}
 
-          {/* ===== الفلاتر - موبايل و تابلت ===== */}
-          {(isMobile || isTablet) && selectedList && showFilters && (
-            <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-sm animate-slideDown">
-              <TaskFiltersMobile
-                onChange={setFilters}
-                onClose={() => setShowFilters(false)}
-              />
-            </div>
-          )}
+          <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
+            {(isMobile || isTablet) && (
+              <div className="flex items-center justify-between gap-2 bg-white p-2 sm:p-3 rounded-2xl border border-slate-200 shadow-sm">
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  aria-label="Open sidebar"
+                >
+                  <Menu className="h-5 w-5 text-slate-600" />
+                </button>
 
-          {/* ===== الفلاتر - ويب ===== */}
-          {isDesktop && selectedList && (
-            <TaskFilters onChange={setFilters} />
-          )}
+                <h1 className="text-sm sm:text-base font-semibold text-slate-800 flex-1 truncate text-center">
+                  {selectedList?.name || "Tasks"}
+                </h1>
 
-          {/* ===== زر الإضافة - ويب ===== */}
-          {isDesktop && selectedList && permissions.canCreateTask && (
-            <div className="flex justify-end">
-              <Button
-                onClick={() => {
-                  setSubTaskParent(null);
-                  setOpenTaskModal(true);
-                }}
-                className="w-full sm:w-auto"
-              >
-                + Add Task
-              </Button>
-            </div>
-          )}
+                <div className="flex items-center gap-1">
+                  {selectedList && permissions.canCreateTask && (
+                    <button
+                      onClick={() => {
+                        setSubTaskParent(null);
+                        setOpenTaskModal(true);
+                      }}
+                      className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                      aria-label="Add task"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </button>
+                  )}
 
-          {/* حالة الاتصال */}
-          {isOffline && (
-            <div className="rounded-2xl bg-red-50 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-red-700">
-              ⚠️ You are offline. Changes may not be saved.
-            </div>
-          )}
+                  {selectedList && (
+                    <button
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        showFilters
+                          ? "bg-blue-100 text-blue-600"
+                          : "hover:bg-slate-100 text-slate-600"
+                      }`}
+                      aria-label="Toggle filters"
+                    >
+                      <Filter className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            {isDesktop && selectedList && permissions.canCreateTask && (
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => {
+                    setSubTaskParent(null);
+                    setOpenTaskModal(true);
+                  }}
+                  className="h-11 rounded-xl bg-blue-600 px-5 font-medium text-white shadow-lg hover:bg-blue-700 transition-colors shrink-0"
+                >
+                  + Add Task
+                </Button>
+              </div>
+            )}
+            {(isMobile || isTablet) && selectedList && showFilters && (
+              <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-sm animate-slideDown">
+                <TaskFiltersMobile
+                  onChange={setFilters}
+                  onClose={() => setShowFilters(false)}
+                />
+              </div>
+            )}
 
-          {/* حالة عدم اختيار قائمة */}
-          {!selectedList && <EmptyState text="Select a list to view tasks" />}
+            {isDesktop && selectedList && <TaskFilters onChange={setFilters} />}
 
-          {/* Skeleton للجدول */}
-          {selectedList && renderSkeletons()}
+            {isOffline && (
+              <div className="rounded-2xl bg-red-50 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-red-700">
+                ⚠️ You are offline. Changes may not be saved.
+              </div>
+            )}
 
-          {/* حالة الخطأ */}
-          {selectedList && tasksError && (
-            <ErrorState text="Failed to load tasks" onRetry={refetchTasks} />
-          )}
+            {!selectedList && <EmptyState text="Select a list to view tasks" />}
 
-          {/* حالة عدم وجود مهام */}
-          {selectedList &&
-            !tasksLoading &&
-            !tasksFetching &&
-            !tasksError &&
-            tasks.length === 0 && <EmptyState text="No tasks yet" />}
+            {selectedList && renderSkeletons()}
 
-          {/* عرض المهام */}
-          {selectedList && tasks.length > 0 && (
-            (isMobile || isTablet) ? (
-              <TasksTableViewMobile
-                tasks={tasks}
-                permissions={permissions}
-                onAddSubTask={(task) => {
-                  setSubTaskParent(task);
-                  setOpenTaskModal(true);
-                }}
-                onOpenEditModal={setEditTask}
-                onOpenDetailsModal={setDetailsTask}
-                onOpenChecklistModal={setChecklistTask}
-                onDeleteTask={handleDeleteTask}
-                onDeleteSubTask={handleDeleteSubTask}
-                toast={toast}
-              />
-            ) : (
-              <TasksTableView
-                tasks={tasks}
-                permissions={permissions}
-                onAddSubTask={(task) => {
-                  setSubTaskParent(task);
-                  setOpenTaskModal(true);
-                }}
-                onOpenEditModal={setEditTask}
-                onOpenDetailsModal={setDetailsTask}
-                onOpenChecklistModal={setChecklistTask}
-                onDeleteTask={handleDeleteTask}
-                onDeleteSubTask={handleDeleteSubTask}
-                toast={toast}
-              />
-            )
-          )}
+            {selectedList && tasksError && (
+              <ErrorState text="Failed to load tasks" onRetry={refetchTasks} />
+            )}
+
+            {selectedList &&
+              !tasksLoading &&
+              !tasksFetching &&
+              !tasksError &&
+              tasks.length === 0 && <EmptyState text="No tasks yet" />}
+
+            {selectedList &&
+              tasks.length > 0 &&
+              (isMobile || isTablet ? (
+                <TasksTableViewMobile
+                  tasks={tasks}
+                  permissions={permissions}
+                  onAddSubTask={(task) => {
+                    setSubTaskParent(task);
+                    setOpenTaskModal(true);
+                  }}
+                  onOpenEditModal={setEditTask}
+                  onOpenDetailsModal={setDetailsTask}
+                  onOpenChecklistModal={setChecklistTask}
+                  onDeleteTask={handleDeleteTask}
+                  onDeleteSubTask={handleDeleteSubTask}
+                  toast={toast}
+                />
+              ) : (
+                <TasksTableView
+                  tasks={tasks}
+                  permissions={permissions}
+                  onAddSubTask={(task) => {
+                    setSubTaskParent(task);
+                    setOpenTaskModal(true);
+                  }}
+                  onOpenEditModal={setEditTask}
+                  onOpenDetailsModal={setDetailsTask}
+                  onOpenChecklistModal={setChecklistTask}
+                  onDeleteTask={handleDeleteTask}
+                  onDeleteSubTask={handleDeleteSubTask}
+                  toast={toast}
+                />
+              ))}
+          </div>
         </div>
       </div>
 
       {/* ========== MODALS ========== */}
 
-      {/* Add Task / SubTask Modal */}
       {!subTaskParent ? (
         <AddTaskModal
           isOpen={openTaskModal}
@@ -685,7 +777,6 @@ const TasksPage = () => {
         />
       )}
 
-      {/* Task Details Modal */}
       <TaskDetailsModal
         entity={editTask}
         isOpen={!!editTask}
@@ -697,7 +788,6 @@ const TasksPage = () => {
         refetchTasks={refetchTasks}
       />
 
-      {/* Task Checklist Modal */}
       <TaskChecklistModal
         isOpen={!!checklistTask}
         taskId={checklistTask?._id}
@@ -707,7 +797,61 @@ const TasksPage = () => {
         onClose={() => setChecklistTask(null)}
       />
 
-      {/* Global Timer */}
+      <AddWorkspaceModal
+        isOpen={sidebarModals.workspaceModal}
+        onClose={closeAllSidebarModals}
+      />
+
+      <AddFolderModal
+        isOpen={sidebarModals.folderModal}
+        onClose={closeAllSidebarModals}
+        workspaceId={modalData.workspace?._id}
+        refetchTree={refetchTree}
+      />
+
+      <AddListModal
+        isOpen={sidebarModals.listModal}
+        onClose={closeAllSidebarModals}
+        workspaceId={
+          modalData.workspace?._id || selectedContext?.workspace?._id
+        }
+        folderId={modalData.folder?._id}
+        refetchTree={refetchTree}
+      />
+
+      <ManageMembersModal
+        isOpen={sidebarModals.manageMembers}
+        onClose={closeAllSidebarModals}
+        workspace={modalData.workspace}
+      />
+
+      <FolderMembersModal
+        isOpen={sidebarModals.folderMembers}
+        folder={modalData.folder}
+        workspace={selectedContext?.workspace || modalData.workspace}
+        onClose={closeAllSidebarModals}
+      />
+
+      <ListMembersModal
+        isOpen={sidebarModals.listMembers}
+        onClose={closeAllSidebarModals}
+        list={modalData.list ? { _id: modalData.list } : null}
+        workspace={selectedContext?.workspace || modalData.workspace}
+        folderId={selectedContext?.folder?._id || modalData.folder?._id}
+      />
+
+      <DeleteConfirmModal
+        isOpen={deleteState.open}
+        loading={deleteLoading}
+        title={`Delete ${deleteState.type}`}
+        description={`Are you sure you want to delete "${deleteState.name}"? This action cannot be undone.`}
+        stateName={deleteState.name}
+        onClose={() => setDeleteState({ open: false })}
+        onConfirm={() => {
+          handleDelete();
+        }}
+      />
+
       <GlobalTaskTimer
         tasksMap={Object.fromEntries(tasks.map((t) => [t._id, t.title]))}
       />

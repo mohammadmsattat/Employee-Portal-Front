@@ -29,18 +29,18 @@ const TaskFilters = ({ onChange }) => {
   const isActive = Object.values(filters).some((v) => v);
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+    <div className="bg-whie border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
       {/* 🔹 HEADER */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700">Filters</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Filters</h3>
 
         {isActive && (
           <button
             onClick={clear}
             className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
           >
-            <X className="h-3.5 w-3.5" />
             Clear all
+            <X className="h-3.5 w-3.5" />
           </button>
         )}
       </div>

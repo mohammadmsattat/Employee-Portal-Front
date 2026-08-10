@@ -1,4 +1,4 @@
-// TasksTableViewMobile.jsx - نسخة مع خطوط شجرة مضمونة الظهور
+// TasksTableViewMobile.jsx - نسخة محسنة مع عرض أفضل للمكونات الفرعية
 
 import { useState } from "react";
 import {
@@ -22,6 +22,7 @@ import {
   AlertCircle,
   X,
   ArrowUp,
+  ChevronLeft,
 } from "lucide-react";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 
@@ -65,11 +66,11 @@ const StatusBadge = ({ status }) => {
     </span>
   );
 };
+
 const PriorityBadge = ({ priority }) => {
   const config = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
   const isHigh = priority === "high" || priority === "urgent";
-  
-  // ألوان مخصصة لكل priority
+
   const priorityStyles = {
     low: {
       border: "border-emerald-400",
@@ -98,7 +99,7 @@ const PriorityBadge = ({ priority }) => {
   };
 
   const style = priorityStyles[priority] || priorityStyles.medium;
-  
+
   return (
     <span
       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap border-2 transition-all duration-200 ${style.border} ${style.text} ${style.bg} ${style.hover}`}
@@ -138,7 +139,7 @@ const ActionButton = ({ icon: Icon, label, onClick, size = "h-4 w-4" }) => (
   </button>
 );
 
-// ==================== SubTask Item مع خطوط الشجرة ====================
+// ==================== SubTask Item - نسخة محسنة ====================
 const SubTaskItem = ({
   sub,
   taskId,
@@ -147,14 +148,16 @@ const SubTaskItem = ({
   setDeleteState,
   isFirst,
   isLast,
+  index,
+  total,
 }) => {
   const isCompleted = sub.status === "done" || sub.status === "completed";
 
   return (
     <div className="relative pl-10 py-1.5 group/subtask">
-      {/* ===== الخط العمودي الرئيسي (الخط الطويل) ===== */}
+      {/* ===== الخط العمودي الرئيسي ===== */}
       <div
-        className="absolute left-5 top-0 bottom-0 w-[2px] bg-black"
+        className="absolute left-5 w-[2px] bg-slate-300/70"
         style={{
           zIndex: 1,
           top: isFirst ? "50%" : "0",
@@ -162,56 +165,81 @@ const SubTaskItem = ({
         }}
       />
 
-      {/* ===== الخط الأفقي (الخط اللي يربط النقطة بالكارت) ===== */}
+      {/* ===== الخط الأفقي ===== */}
       <div
-        className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-[2px] bg-black"
+        className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-[2px] bg-slate-300/70"
         style={{ zIndex: 1 }}
       />
 
-      {/* ===== نقطة الاتصال (دائرة سوداء) ===== */}
+      {/* ===== نقطة الاتصال ===== */}
       <div
-        className="absolute left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-black border-2 border-white shadow-sm"
+        className="absolute left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-sm ring-1 ring-blue-200"
         style={{ zIndex: 2 }}
       />
 
       {/* ===== محتوى الـ SubTask ===== */}
       <div
-        className="relative bg-white rounded-[12px] px-3 py-2.5 shadow-sm border border-slate-200 hover:border-slate-300 transition-all duration-200 ml-2 group-hover/subtask:shadow-md"
+        className="relative bg-white rounded-xl px-3 py-3 shadow-sm border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 ml-2 group-hover/subtask:shadow-lg"
         style={{ zIndex: 3 }}
       >
-        <div className="flex items-center gap-2 flex-wrap">
-          <button className="shrink-0" onClick={(e) => e.stopPropagation()}>
-            {isCompleted ? (
-              <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-            ) : (
-              <Circle className="h-4 w-4 text-slate-300 shrink-0" />
-            )}
-          </button>
+        {/* شريط الحالة الجانبي */}
+        <div
+          className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
+            isCompleted ? "bg-emerald-500" : "bg-blue-500"
+          }`}
+        />
 
-          <span
-            className={`flex-1 text-xs truncate min-w-[50px] ${isCompleted ? "line-through text-slate-400" : "text-slate-700"}`}
-          >
-            {sub.title}
-          </span>
+        <div className="flex flex-col gap-2 pl-3">
+          {/* الصف الأول: العنوان والحالة */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button className="shrink-0" onClick={(e) => e.stopPropagation()}>
+              {isCompleted ? (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+              ) : (
+                <Circle className="h-4 w-4 text-slate-300 shrink-0" />
+              )}
+            </button>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <StatusBadge status={sub.status} />
-            <PriorityBadge priority={sub.priority} />
+            <span
+              className={`flex-1 text-sm font-medium truncate min-w-[50px] ${
+                isCompleted ? "line-through text-slate-400" : "text-slate-700"
+              }`}
+            >
+              {sub.title}
+            </span>
+
+            {/* رقم الترتيب */}
+            <span className="text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200 shrink-0">
+              #{index + 1}/{total}
+            </span>
           </div>
 
-          <span className="text-[10px] text-slate-400 whitespace-nowrap shrink-0">
-            {formatDate(sub.dueDate)}
-          </span>
+          {/* الصف الثاني: البادجات والمعلومات */}
+          <div className="flex flex-wrap items-center gap-2 pl-6">
+            <StatusBadge status={sub.status} />
+            <PriorityBadge priority={sub.priority} />
 
-          {sub.assignedTo?.length > 0 && (
-            <div className="flex items-center -space-x-1 shrink-0">
-              <div className="w-5 h-5 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[8px] font-medium text-slate-600">
-                JD
+            <span className="text-[10px] text-slate-400 flex items-center gap-1 shrink-0">
+              <Calendar className="h-3 w-3" />
+              {formatDate(sub.dueDate)}
+            </span>
+
+            {sub.assignedTo?.length > 0 && (
+              <div className="flex items-center -space-x-1 shrink-0">
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 border-2 border-white flex items-center justify-center text-[8px] font-medium text-white shadow-sm">
+                  {sub.assignedTo[0]?.fullName?.charAt(0) || "U"}
+                </div>
+                {sub.assignedTo.length > 1 && (
+                  <div className="w-5 h-5 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[8px] font-medium text-slate-600">
+                    +{sub.assignedTo.length - 1}
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/subtask:opacity-100 transition-opacity duration-200">
+          {/* الصف الثالث: الأزرار */}
+          <div className="flex items-center gap-0.5 pl-6 pt-0.5 border-t border-slate-100/60">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -221,19 +249,23 @@ const SubTaskItem = ({
                   parentTaskId: taskId,
                 });
               }}
-              className="p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-amber-600 transition-all duration-200 flex items-center gap-1"
             >
-              <Pencil className="h-3 w-3 shrink-0" />
+              <Pencil className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-[10px] font-medium">Edit</span>
             </button>
+
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onOpenChecklistModal?.(sub);
               }}
-              className="p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-all duration-200 flex items-center gap-1"
             >
-              <ListChecks className="h-3 w-3 shrink-0" />
+              <ListChecks className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-[10px] font-medium">Checklist</span>
             </button>
+
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -245,9 +277,10 @@ const SubTaskItem = ({
                   title: sub.title,
                 });
               }}
-              className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition"
+              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-all duration-200 flex items-center gap-1"
             >
-              <Trash2 className="h-3 w-3 shrink-0" />
+              <Trash2 className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-[10px] font-medium">Delete</span>
             </button>
           </div>
         </div>
@@ -321,325 +354,305 @@ const TasksTableViewMobile = ({
   };
 
   return (
-    <div className="w-full max-w-full space-y-4 pb-20 overflow-hidden px-1">
-      {tasks.map((task, index) => {
-        const subTasks = task.subTasks || [];
-        const hasChildren = subTasks.length > 0;
-        const isOpen = expanded[task._id] || false;
-        const assigneesCount = task.assignedTo?.length || 0;
+    <div>
+      <div className="w-full max-w-full space-y-4 pb-20 overflow-hidden px-1">
+        {tasks.map((task, index) => {
+          const subTasks = task.subTasks || [];
+          const hasChildren = subTasks.length > 0;
+          const isOpen = expanded[task._id] || false;
+          const assigneesCount = task.assignedTo?.length || 0;
 
-        const completedSubtasks = subTasks.filter(
-          (st) => st.status === "done" || st.status === "completed",
-        ).length;
-        const progress =
-          subTasks.length > 0
-            ? Math.round((completedSubtasks / subTasks.length) * 100)
-            : 0;
+          const completedSubtasks = subTasks.filter(
+            (st) => st.status === "done" || st.status === "completed",
+          ).length;
+          const progress =
+            subTasks.length > 0
+              ? Math.round((completedSubtasks / subTasks.length) * 100)
+              : 0;
 
-        const isPinned =
-          index === 0 || task.priority === "urgent" || task.priority === "high";
+          const isPinned =
+            index === 0 ||
+            task.priority === "urgent" ||
+            task.priority === "high";
 
-        return (
-          <div key={task._id} className="relative w-full max-w-full">
-            {/* ===== MAIN TASK CARD ===== */}
-            <div
-              onClick={(e) => {
-                if (hasChildren) {
-                  handleCardClick(task._id, e);
-                }
-              }}
-              className={`group/task relative p-5 bg-gradient-to-br from-white via-slate-50/30 to-white rounded-2xl border transition-all duration-300 overflow-hidden ${
-                hasChildren ? "cursor-pointer" : "cursor-default"
-              } hover:shadow-xl ${
-                isPinned
-                  ? "border-blue-200 shadow-xl shadow-blue-100/40 ring-1 ring-blue-200/30"
-                  : "border-slate-200/80 shadow-sm hover:shadow-lg hover:border-slate-300/60"
-              } ${isOpen && hasChildren ? "rounded-b-none border-b-0" : ""}`}
-            >
-              {/* ===== SHIMMER EFFECT ===== */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/task:translate-x-full transition-transform duration-700 pointer-events-none" />
-
-              {/* ===== HEADER ROW ===== */}
-           <div className="flex items-center gap-1.5 w-full">
-  {/* ===== زر التوسيع ===== */}
-  {hasChildren ? (
-    <button
-      onClick={(e) => toggle(task._id, e)}
-      className="shrink-0 p-0.5 hover:bg-slate-100/80 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
-      aria-label={isOpen ? "Collapse" : "Expand"}
-    >
-      {isOpen ? (
-        <ChevronDown className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-      ) : (
-        <ChevronRight className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-      )}
-    </button>
-  ) : (
-    <div className="w-4 shrink-0" />
-  )}
-
-  <div className="shrink-0">
-    <StatusIcon status={task.status} />
-  </div>
-
-  <h3 className="flex-1 font-medium text-slate-800 text-[13px] leading-tight truncate min-w-0">
-    {task.title}
-  </h3>
-
-  <div className="shrink-0">
-    <PriorityBadge priority={task.priority} />
-  </div>
-
-  <button
-    onClick={(e) => e.stopPropagation()}
-    className="shrink-0 p-0.5 hover:bg-slate-100/80 rounded-lg transition-all duration-200 opacity-0 group-hover/task:opacity-100"
-  >
-    <MoreHorizontal className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-  </button>
-</div>
-
-              {/* ===== BADGES ROW ===== */}
+          return (
+            <div key={task._id} className="relative w-full max-w-full">
+              {/* ===== MAIN TASK CARD ===== */}
               <div
-                className="flex flex-wrap items-center gap-2 mt-3.5"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  if (hasChildren) {
+                    handleCardClick(task._id, e);
+                  }
+                }}
+                className={`group/task relative p-5 bg-gradient-to-br from-white via-slate-50/30 to-white rounded-2xl border transition-all duration-300 overflow-hidden ${
+                  hasChildren ? "cursor-pointer" : "cursor-default"
+                } hover:shadow-xl ${
+                  isPinned
+                    ? "border-blue-200 shadow-xl shadow-blue-100/40 ring-1 ring-blue-200/30"
+                    : "border-slate-200/80 shadow-sm hover:shadow-lg hover:border-slate-300/60"
+                } ${isOpen && hasChildren ? "rounded-b-none border-b-0" : ""}`}
               >
-                <StatusBadge status={task.status} />
+                {/* ===== SHIMMER EFFECT ===== */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/task:translate-x-full transition-transform duration-700 pointer-events-none" />
 
-                {task.department && (
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50/80 text-indigo-600 whitespace-nowrap border border-indigo-100/50 backdrop-blur-sm">
-                    {task.department}
-                  </span>
-                )}
-                {task.sprint && (
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50/80 text-amber-600 whitespace-nowrap border border-amber-100/50 backdrop-blur-sm">
-                    {task.sprint}
-                  </span>
-                )}
-              </div>
+                {/* ===== HEADER ROW ===== */}
+                <div className="flex items-center gap-1.5 w-full">
+                  {hasChildren ? (
+                    <button
+                      onClick={(e) => toggle(task._id, e)}
+                      className="shrink-0 p-0.5 hover:bg-slate-100/80 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
+                      aria-label={isOpen ? "Collapse" : "Expand"}
+                    >
+                      {isOpen ? (
+                        <ChevronDown className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                      )}
+                    </button>
+                  ) : (
+                    <div className="w-4 shrink-0" />
+                  )}
 
-              {/* ===== METADATA ROW ===== */}
-              <div
-                className="flex flex-wrap items-center gap-2 mt-3.5 bg-slate-50/70 rounded-xl px-3.5 py-2.5 border border-slate-100/60 backdrop-blur-sm"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span className="whitespace-nowrap text-[11px] font-medium text-slate-600">
-                    {formatDate(task.startDate)}
-                  </span>
-                  <ArrowRight className="h-3 w-3 text-slate-300 shrink-0" />
-                  <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span className="whitespace-nowrap text-[11px] font-medium text-slate-600">
-                    {formatDate(task.dueDate)}
-                  </span>
-                </div>
-
-                <span className="w-px h-4 bg-slate-200/80" />
-
-                <span className="w-px h-4 bg-slate-200/80" />
-
-                <div className="flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span className="text-[11px] font-medium text-slate-600">
-                    {assigneesCount}
-                  </span>
-                </div>
-
-                <span className="w-px h-4 bg-slate-200/80" />
-
-                <div className="flex items-center gap-1.5">
-                  <Paperclip className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span className="text-[11px] font-medium text-slate-600">
-                    {task.attachments?.length || 0}
-                  </span>
-                </div>
-
-                <span className="w-px h-4 bg-slate-200/80" />
-
-                <div className="flex items-center gap-1.5">
-                  <MessageCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span className="text-[11px] font-medium text-slate-600">
-                    {task.comments?.length || 0}
-                  </span>
-                </div>
-              </div>
-
-              {/* ===== PROGRESS BAR ===== */}
-              {hasChildren && (
-                <div className="mt-4" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1.5 px-0.5">
-                    <span className="font-semibold flex items-center gap-1.5 text-slate-600">
-                      <ListChecks className="h-3.5 w-3.5 text-slate-400" />
-                      Subtasks
-                    </span>
-                    <span className="text-slate-400">
-                      {completedSubtasks} / {subTasks.length} Completed
-                    </span>
-                    <span className="font-bold text-blue-600 bg-blue-50/80 px-2.5 py-0.5 rounded-full border border-blue-100/50 backdrop-blur-sm">
-                      {progress}%
-                    </span>
-                  </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden ring-1 ring-slate-200/50">
-                    <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700 ease-out"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* ===== ACTION ROW ===== */}
-              {permissions?.canUpdateTask && (
-                <div
-                  className="flex items-center justify-between mt-4 pt-3.5 border-t border-slate-200/60"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex items-center gap-0.5">
-                    <ActionButton
-                      icon={Plus}
-                      label="Add Subtask"
-                      onClick={() => onAddSubTask?.(task)}
-                    />
-
-                    <ActionButton
-                      icon={ListChecks}
-                      label="Checklist"
-                      onClick={() => onOpenChecklistModal?.(task)}
-                    />
-
-                    <ActionButton
-                      icon={Pencil}
-                      label="Edit Task"
-                      onClick={() =>
-                        onOpenEditModal?.({ type: "task", data: task })
-                      }
-                    />
-
-                    <ActionButton
-                      icon={Eye}
-                      label="View Details"
-                      onClick={() => onOpenDetailsModal?.(task)}
-                    />
+                  <div className="shrink-0">
+                    <StatusIcon status={task.status} />
                   </div>
 
-                  <ActionButton
-                    icon={Trash2}
-                    label="Delete Task"
-                    onClick={() => {
-                      if (task.subTasks?.length > 0) {
-                        toast({
-                          title: "Cannot delete task",
-                          description: "Delete all subtasks first.",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-                      setDeleteState({
-                        open: true,
-                        type: "task",
-                        taskId: task._id,
-                        subTaskId: null,
-                        title: task.title,
-                      });
-                    }}
-                  />
-                </div>
-              )}
-            </div>
+                  <h3 className="flex-1 font-medium text-slate-800 text-[13px] leading-tight truncate min-w-0">
+                    {task.title}
+                  </h3>
 
-            {/* ===== SUBTASKS SECTION مع خطوط الشجرة ===== */}
-            {isOpen && hasChildren && (
-              <div
-                className="relative bg-[#F8FAFC] border-x border-b border-[#EDF2F7] px-3 py-2.5 rounded-b-[22px] animate-in slide-in-from-top-2 duration-200"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* ===== الخط العمودي من الأب (يربط الكارت بأول ابن) ===== */}
-                <div
-                  className="absolute left-5 top-0 w-[2px] h-4 bg-black"
-                  style={{ zIndex: 1 }}
-                />
-
-                {/* ===== الخط العمودي الرئيسي (يمتد طول المنطقة) ===== */}
-                <div
-                  className="absolute left-5 top-4 bottom-0 w-[2px] bg-black"
-                  style={{ zIndex: 1 }}
-                />
-
-                {subTasks.map((sub, subIndex) => (
-                  <SubTaskItem
-                    key={sub._id || subIndex}
-                    sub={sub}
-                    taskId={task._id}
-                    onOpenEditModal={onOpenEditModal}
-                    onOpenChecklistModal={onOpenChecklistModal}
-                    setDeleteState={setDeleteState}
-                    isFirst={subIndex === 0}
-                    isLast={subIndex === subTasks.length - 1}
-                  />
-                ))}
-
-                {/* ===== زر إضافة Subtask مع شجرة ===== */}
-                <div className="relative pl-10 py-1.5 group/add">
-                  {/* الخط العمودي */}
-                  <div
-                    className="absolute left-5 top-0 bottom-1/2 w-[2px] bg-black"
-                    style={{ zIndex: 1 }}
-                  />
-
-                  {/* نقطة */}
-                  <div
-                    className="absolute left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-black border-2 border-white shadow-sm"
-                    style={{ zIndex: 2 }}
-                  />
-
-                  {/* الخط الأفقي */}
-                  <div
-                    className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-[2px] bg-black"
-                    style={{ zIndex: 1 }}
-                  />
+                  <div className="shrink-0">
+                    <PriorityBadge priority={task.priority} />
+                  </div>
 
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAddSubTask?.(task);
-                    }}
-                    className="relative flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 transition-colors ml-2 hover:bg-blue-50 rounded-lg"
-                    style={{ zIndex: 3 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 p-0.5 hover:bg-slate-100/80 rounded-lg transition-all duration-200 opacity-0 group-hover/task:opacity-100"
                   >
-                    <Plus className="h-3.5 w-3.5 shrink-0" />
-                    Add subtask
+                    <MoreHorizontal className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                   </button>
                 </div>
 
-                {/* ===== نهاية الخط العمودي ===== */}
+                {/* ===== BADGES ROW ===== */}
                 <div
-                  className="absolute left-5 bottom-3 w-[2px] h-3 bg-black"
-                  style={{ zIndex: 1 }}
-                />
-              </div>
-            )}
-          </div>
-        );
-      })}
+                  className="flex flex-wrap items-center gap-2 mt-3.5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <StatusBadge status={task.status} />
 
-      {/* ===== DELETE MODAL ===== */}
-      <DeleteConfirmModal
-        isOpen={deleteState.open}
-        loading={deleteLoading}
-        title={`Delete ${deleteState.type}`}
-        description={`Are you sure you want to delete "${deleteState.title}"? This action cannot be undone.`}
-        stateName={deleteState.title}
-        onClose={() =>
-          setDeleteState({
-            open: false,
-            type: null,
-            taskId: null,
-            subTaskId: null,
-            title: "",
-          })
-        }
-        onConfirm={handleDelete}
-      />
+                  {task.department && (
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50/80 text-indigo-600 whitespace-nowrap border border-indigo-100/50 backdrop-blur-sm">
+                      {task.department}
+                    </span>
+                  )}
+                  {task.sprint && (
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50/80 text-amber-600 whitespace-nowrap border border-amber-100/50 backdrop-blur-sm">
+                      {task.sprint}
+                    </span>
+                  )}
+                </div>
+
+                {/* ===== METADATA ROW ===== */}
+                <div
+                  className="flex flex-wrap items-center gap-2 mt-3.5 bg-slate-50/70 rounded-xl px-3.5 py-2.5 border border-slate-100/60 backdrop-blur-sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span className="whitespace-nowrap text-[11px] font-medium text-slate-600">
+                      {formatDate(task.startDate)}
+                    </span>
+                    <ArrowRight className="h-3 w-3 text-slate-300 shrink-0" />
+                    <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span className="whitespace-nowrap text-[11px] font-medium text-slate-600">
+                      {formatDate(task.dueDate)}
+                    </span>
+                  </div>
+
+                  <span className="w-px h-4 bg-slate-200/80" />
+
+                  <span className="w-px h-4 bg-slate-200/80" />
+
+                  <div className="flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span className="text-[11px] font-medium text-slate-600">
+                      {assigneesCount}
+                    </span>
+                  </div>
+
+                  <span className="w-px h-4 bg-slate-200/80" />
+
+                  <div className="flex items-center gap-1.5">
+                    <Paperclip className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span className="text-[11px] font-medium text-slate-600">
+                      {task.attachments?.length || 0}
+                    </span>
+                  </div>
+
+                  <span className="w-px h-4 bg-slate-200/80" />
+
+                  <div className="flex items-center gap-1.5">
+                    <MessageCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span className="text-[11px] font-medium text-slate-600">
+                      {task.comments?.length || 0}
+                    </span>
+                  </div>
+                </div>
+
+                {/* ===== PROGRESS BAR ===== */}
+                {hasChildren && (
+                  <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1.5 px-0.5">
+                      <span className="font-semibold flex items-center gap-1.5 text-slate-600">
+                        <ListChecks className="h-3.5 w-3.5 text-slate-400" />
+                        Subtasks
+                      </span>
+                      <span className="text-slate-400">
+                        {completedSubtasks} / {subTasks.length} Completed
+                      </span>
+                      <span className="font-bold text-blue-600 bg-blue-50/80 px-2.5 py-0.5 rounded-full border border-blue-100/50 backdrop-blur-sm">
+                        {progress}%
+                      </span>
+                    </div>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden ring-1 ring-slate-200/50">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700 ease-out"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ===== ACTION ROW ===== */}
+                {permissions?.canUpdateTask && (
+                  <div
+                    className="flex items-center justify-between mt-4 pt-3.5 border-t border-slate-200/60"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center gap-0.5">
+                      <ActionButton
+                        icon={Plus}
+                        label="Add Subtask"
+                        onClick={() => onAddSubTask?.(task)}
+                      />
+
+                      <ActionButton
+                        icon={ListChecks}
+                        label="Checklist"
+                        onClick={() => onOpenChecklistModal?.(task)}
+                      />
+
+                      <ActionButton
+                        icon={Pencil}
+                        label="Edit Task"
+                        onClick={() =>
+                          onOpenEditModal?.({ type: "task", data: task })
+                        }
+                      />
+
+                      <ActionButton
+                        icon={Eye}
+                        label="View Details"
+                        onClick={() => onOpenDetailsModal?.(task)}
+                      />
+                    </div>
+
+                    <ActionButton
+                      icon={Trash2}
+                      label="Delete Task"
+                      onClick={() => {
+                        if (task.subTasks?.length > 0) {
+                          toast({
+                            title: "Cannot delete task",
+                            description: "Delete all subtasks first.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setDeleteState({
+                          open: true,
+                          type: "task",
+                          taskId: task._id,
+                          subTaskId: null,
+                          title: task.title,
+                        });
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* ===== SUBTASKS SECTION مع خطوط الشجرة ===== */}
+              {isOpen && hasChildren && (
+                <div
+                  className="relative bg-gradient-to-b from-[#F8FAFC] to-[#F1F5F9] border-x border-b border-[#E2E8F0] px-3 py-3 rounded-b-[22px] animate-in slide-in-from-top-2 duration-200"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* رأس قسم الـ Subtasks */}
+                  <div className="flex items-center justify-between mb-3 px-2">
+                    <div className="flex items-center gap-2">
+                      <ListChecks className="h-4 w-4 text-blue-500" />
+                      <span className="text-sm font-semibold text-slate-700">
+                        Subtasks
+                      </span>
+                      <span className="text-xs text-slate-400 bg-white/80 px-2 py-0.5 rounded-full border border-slate-200/50">
+                        {subTasks.length}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddSubTask?.(task);
+                      }}
+                      className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 bg-white/80 px-3 py-1.5 rounded-lg border border-blue-200/50 hover:bg-blue-50 transition-all duration-200"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add
+                    </button>
+                  </div>
+
+                  {/* قائمة الـ Subtasks */}
+                  <div className="relative">
+                    {subTasks.map((sub, subIndex) => (
+                      <SubTaskItem
+                        key={sub._id || subIndex}
+                        sub={sub}
+                        taskId={task._id}
+                        onOpenEditModal={onOpenEditModal}
+                        onOpenChecklistModal={onOpenChecklistModal}
+                        setDeleteState={setDeleteState}
+                        isFirst={subIndex === 0}
+                        isLast={subIndex === subTasks.length - 1}
+                        index={subIndex}
+                        total={subTasks.length}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>{" "}
+
+        {/* ===== DELETE MODAL ===== */}
+        <DeleteConfirmModal
+          isOpen={deleteState.open}
+          loading={deleteLoading}
+          title={`Delete ${deleteState.type}`}
+          description={`Are you sure you want to delete "${deleteState.title}"? This action cannot be undone.`}
+          stateName={deleteState.title}
+          onClose={() =>
+            setDeleteState({
+              open: false,
+              type: null,
+              taskId: null,
+              subTaskId: null,
+              title: "",
+            })
+          }
+          onConfirm={handleDelete}
+        />
     </div>
   );
 };

@@ -1,3 +1,5 @@
+// FolderSidebar.jsx - نسخة معدلة مع إزالة المودلات وإضافة props
+
 import {
   ChevronRight,
   Folder,
@@ -14,12 +16,6 @@ import {
   X,
 } from "lucide-react";
 
-import { AddWorkspaceModal } from "./CreateModels/AddWorkspaceModal";
-import { ManageMembersModal } from "./UpdatesModels/ManageMembersModal";
-import { ListMembersModal } from "./UpdatesModels/ManageListMembersModal";
-import { AddFolderModal } from "./CreateModels/AddFolderModal ";
-import { AddListModal } from "./CreateModels/AddListModal";
-
 import {
   canManageWorkspace,
   canManageFolder,
@@ -29,9 +25,6 @@ import {
 import { useFolderSidebar } from "@/hooks/Tasks/useFolderSidebar";
 import { useFolderSidebarController } from "@/hooks/Tasks/useFolderSidebarController";
 import { HierarchyActionsMenu } from "./HierarchyActionsMenu";
-
-import DeleteConfirmModal from "../DeleteConfirmModal";
-import { FolderMembersModal } from "./UpdatesModels/FolderMembersModal";
 
 /* =========================
    ICON SYSTEM
@@ -86,6 +79,14 @@ const FolderSidebar = ({
   onSelectContext,
   workspaceTree,
   refetchTree,
+  // ===== Props للمودلات من الأب =====
+  onOpenWorkspaceModal,
+  onOpenFolderModal,
+  onOpenListModal,
+  onOpenManageMembers,
+  onOpenFolderMembers,
+  onOpenListMembers,
+  onOpenDeleteConfirm,
 }) => {
   const { state, actions } = useFolderSidebar({
     onSelectList,
@@ -104,6 +105,35 @@ const FolderSidebar = ({
     refetchTree,
   });
 
+  // ===== دوال استدعاء المودلات من الأب =====
+  const handleOpenWorkspaceModal = () => {
+    if (onOpenWorkspaceModal) onOpenWorkspaceModal();
+  };
+
+  const handleOpenFolderModal = (workspace) => {
+    if (onOpenFolderModal) onOpenFolderModal(workspace);
+  };
+
+  const handleOpenListModal = (folder) => {
+    if (onOpenListModal) onOpenListModal(folder);
+  };
+
+  const handleOpenManageMembers = (workspace) => {
+    if (onOpenManageMembers) onOpenManageMembers(workspace);
+  };
+
+  const handleOpenFolderMembers = (folder) => {
+    if (onOpenFolderMembers) onOpenFolderMembers(folder);
+  };
+
+  const handleOpenListMembers = (listId) => {
+    if (onOpenListMembers) onOpenListMembers(listId);
+  };
+
+  const handleOpenDeleteConfirm = (type, item, workspaceId) => {
+    if (onOpenDeleteConfirm) onOpenDeleteConfirm(type, item, workspaceId);
+  };
+
   return (
     <div className="w-fit h-full p-2 bg-white border rounded-xl min-w-[220px]">
       {/* TOP */}
@@ -118,7 +148,7 @@ const FolderSidebar = ({
 
         {state.user?.canCreateWorkspace && (
           <button
-            onClick={() => actions.setOpenWorkspaceModal(true)}
+            onClick={handleOpenWorkspaceModal}
             className="flex items-center gap-1 text-xs hover:text-blue-600"
           >
             <Plus className="h-4 w-4" />
@@ -216,24 +246,17 @@ const FolderSidebar = ({
                       })
                     }
                     onManageMembers={() => {
-                      actions.setMembersWorkspace(workspace);
-
+                      handleOpenManageMembers(workspace);
                       actions.setMenuWorkspace(null);
                     }}
                     onAddFolder={() => {
-                      actions.setOpenFolderModal(true);
-
-                      actions.setActiveWorkspace(workspace);
-
+                      handleOpenFolderModal(workspace);
                       actions.setMenuWorkspace(null);
                     }}
-                    onDelete={() =>
-                      requestDelete({
-                        type: "workspace",
-                        item: workspace,
-                        workspaceId: workspace._id,
-                      })
-                    }
+                    onDelete={() => {
+                      handleOpenDeleteConfirm("workspace", workspace, workspace._id);
+                      actions.setMenuWorkspace(null);
+                    }}
                   />
                 </div>
               )}
@@ -332,23 +355,15 @@ const FolderSidebar = ({
                                 })
                               }
                               onAddList={() => {
-                                actions.setActiveFolder(folder);
-
-                                actions.setOpenListModal(true);
-
+                                handleOpenListModal(folder);
                                 actions.setMenuFolder(null);
                               }}
                               onManageFolderMembers={() => {
-                                actions.setMembersFolder(folder);
-
+                                handleOpenFolderMembers(folder);
                                 actions.setMenuFolder(null);
                               }}
                               onDelete={() =>
-                                requestDelete({
-                                  type: "folder",
-                                  item: folder,
-                                  workspaceId: workspace._id,
-                                })
+                                handleOpenDeleteConfirm("folder", folder, workspace._id)
                               }
                             />
                           </div>
@@ -460,16 +475,11 @@ const FolderSidebar = ({
                                           })
                                         }
                                         onManageListMembers={() => {
-                                          actions.setMembersList(list._id);
-
+                                          handleOpenListMembers(list._id);
                                           actions.setMenuList(null);
                                         }}
                                         onDelete={() =>
-                                          requestDelete({
-                                            type: "list",
-                                            item: list,
-                                            workspaceId: workspace._id,
-                                          })
+                                          handleOpenDeleteConfirm("list", list, workspace._id)
                                         }
                                       />
                                     </div>
@@ -488,65 +498,6 @@ const FolderSidebar = ({
           </div>
         );
       })}
-
-      {/* MODALS */}
-
-      <AddWorkspaceModal
-        isOpen={state.openWorkspaceModal}
-        onClose={() => actions.setOpenWorkspaceModal(false)}
-      />
-
-      <AddFolderModal
-        isOpen={state.openFolderModal}
-        onClose={() => actions.setOpenFolderModal(false)}
-        workspaceId={state.activeWorkspace?._id}
-        refetchTree={refetchTree}
-      />
-
-      <AddListModal
-        isOpen={state.openListModal}
-        onClose={() => actions.setOpenListModal(false)}
-        workspaceId={state.activeWorkspace?._id}
-        folderId={state.activeFolder?._id}
-        refetchTree={refetchTree}
-      />
-
-      <ManageMembersModal
-        isOpen={!!state.membersWorkspace}
-        onClose={() => actions.setMembersWorkspace(null)}
-        workspace={state.membersWorkspace}
-      />
-
-      <FolderMembersModal
-        isOpen={!!state.membersFolder}
-        folder={state.membersFolder}
-        workspace={state.activeWorkspace}
-        onClose={() => actions.setMembersFolder(null)}
-      />
-
-      <ListMembersModal
-        isOpen={!!state.membersList}
-        onClose={() => actions.setMembersList(null)}
-        list={
-          state.membersList
-            ? {
-                _id: state.membersList,
-              }
-            : null
-        }
-        workspace={state.activeWorkspace}
-        folderId={state.activeFolder?._id}
-      />
-
-      <DeleteConfirmModal
-        isOpen={deleteState.open}
-        loading={deleteLoading}
-        title={`Delete ${deleteState.type}`}
-        description={`Are you sure you want to delete "${deleteState.name}"? This action cannot be undone.`}
-        stateName={deleteState.name}
-        onClose={() => setDeleteState({ open: false })}
-        onConfirm={handleDelete}
-      />
     </div>
   );
 };
