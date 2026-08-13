@@ -73,7 +73,9 @@
     "newOvertimeRequest": "New Overtime Request",
     "submitRequest": "Submit Request",
     "cancel": "Cancel",
-    "submitting": "Submitting..."
+    "submitting": "Submitting...",
+    "create": "Create",
+    "creating": "Creating..."
   },
   "overtimeModal": {
     "overtimeType": "Overtime Type",
@@ -326,11 +328,18 @@
     "createTask": "Create Task",
     "fillDetails": "Fill in the details below to create a new task",
     "title": "Title",
+    "titlePlaceholder": "Enter task title...",
     "description": "Description",
+    "descriptionPlaceholder": "Enter task description...",
     "status": "Status",
     "priority": "Priority",
     "assignTo": "Assign To",
+    "searchEmployee": "Search employee...",
     "dueDate": "Due Date",
-    "tags": "Tags"
+    "startDate": "Start Date",
+    "selectStartDate": "Select start date",
+    "selectDueDate": "Select due date",
+    "tags": "Tags",
+    "addSubtask": "Add Subtask"
   }
 }

@@ -23,9 +23,6 @@ export interface DailyFingerprintGroup {
   totalRecords?: number;
 }
 
-// ===================== LOCAL VARIABLES =====================
-const getCompanyId = () => localStorage.getItem("company");
-
 // ===================== FINGERPRINT API =====================
 export const fingerprintApi = createApi({
   reducerPath: "fingerprintApi",
@@ -52,7 +49,7 @@ export const fingerprintApi = createApi({
       number
     >({
       query: (page = 1) =>
-        `${fingerprintEndPoint}?companyId=${getCompanyId()}&page=${page}`,
+        `${fingerprintEndPoint}?page=${page}`,
 
       providesTags: ["Fingerprint"],
     }),
@@ -63,7 +60,7 @@ export const fingerprintApi = createApi({
       number
     >({
       query: (page = 1) =>
-        `${fingerprintByDayEndPoint}?companyId=${getCompanyId()}&page=${page}`,
+        `${fingerprintByDayEndPoint}?page=${page}`,
 
       providesTags: ["Fingerprint"],
     }),
@@ -79,7 +76,7 @@ export const fingerprintApi = createApi({
       }
     >({
       query: (body) => ({
-        url: `${fingerprintEndPoint}?companyId=${getCompanyId()}`,
+        url: `${fingerprintEndPoint}`,
         method: "POST",
         body,
       }),

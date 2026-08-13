@@ -1,5 +1,3 @@
-// TaskForm.jsx - نسخة محسنة بتصميم متطابق مع المنصة
-
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -15,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Users, Tag, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, Users, ListChecks, AlertCircle } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
 
@@ -25,22 +23,28 @@ interface Props {
   mode: Mode;
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
+  handleFieldChange?: (field: string, value: any) => void;
   onSubmit: () => void;
   isLoading?: boolean;
   t: any;
   staffData?: any[];
+  lists?: any[];
   onClose?: () => void;
+  errors?: any;
 }
 
 const TaskForm = ({
   mode,
   formData,
   setFormData,
+  handleFieldChange,
   onSubmit,
   isLoading,
   t,
   staffData = [],
+  lists = [],
   onClose,
+  errors = {},
 }: Props) => {
   // Format date for display
   const formatDate = (date: Date | null) => {
@@ -52,31 +56,65 @@ const TaskForm = ({
     });
   };
 
-  // Status color mapping
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      todo: "bg-slate-100 text-slate-700",
-      in_progress: "bg-blue-100 text-blue-700",
-      review: "bg-amber-100 text-amber-700",
-      done: "bg-emerald-100 text-emerald-700",
-      cancelled: "bg-red-100 text-red-700",
-    };
-    return colors[status] || "bg-slate-100 text-slate-700";
-  };
-
-  // Priority color mapping
-  const getPriorityColor = (priority: string) => {
-    const colors: Record<string, string> = {
-      low: "bg-slate-100 text-slate-600",
-      medium: "bg-blue-100 text-blue-600",
-      high: "bg-amber-100 text-amber-600",
-      urgent: "bg-red-100 text-red-600",
-    };
-    return colors[priority] || "bg-slate-100 text-slate-600";
-  };
+  // Use handleFieldChange from props or fallback to direct setFormData
+  const onFieldChange = handleFieldChange || ((field: string, value: any) => {
+    setFormData((p: any) => ({ ...p, [field]: value }));
+  });
 
   return (
     <div className="grid gap-4 sm:gap-5">
+      {/* LIST SELECT - Only for task mode */}
+      {mode === "task" && (
+        <div>
+          <Label className="mb-1.5 block text-sm font-medium text-slate-700">
+            <ListChecks className="mr-1.5 inline h-4 w-4 text-blue-500" />
+            List <span className="text-red-500">*</span>
+          </Label>
+
+          <Select
+            value={formData.list || ""}
+            onValueChange={(value) => onFieldChange("list", value)}
+          >
+            <SelectTrigger
+              className={`h-11 w-full rounded-2xl border ${
+                errors.list ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+              } bg-white text-slate-900 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
+            >
+              <SelectValue placeholder={t("tasks.selectList") || "Select a list..."} />
+            </SelectTrigger>
+
+            <SelectContent className="z-[9999] rounded-2xl border-slate-200 bg-white sm:rounded-lg max-h-[300px]">
+              {lists.length === 0 ? (
+                <div className="px-4 py-8 text-center text-sm text-slate-500">
+                  {t("tasks.noListsFound") || "No lists found"}
+                </div>
+              ) : (
+                lists.map((list) => (
+                  <SelectItem key={list._id} value={list._id}>
+                    <div className="flex items-center gap-2">
+                      <ListChecks className="h-4 w-4 text-blue-500" />
+                      <span>{list.name}</span>
+                      {list._id === formData.list && (
+                        <span className="ml-auto text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                          Selected
+                        </span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+
+          {errors.list && (
+            <p className="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {errors.list}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* TITLE */}
       <div>
         <Label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -84,13 +122,20 @@ const TaskForm = ({
         </Label>
 
         <input
-          className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg"
+          className={`h-11 w-full rounded-2xl border ${
+            errors.title ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+          } bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
           placeholder={t("tasks.titlePlaceholder") || "Enter task title..."}
           value={formData.title}
-          onChange={(e) =>
-            setFormData((p) => ({ ...p, title: e.target.value }))
-          }
+          onChange={(e) => onFieldChange("title", e.target.value)}
         />
+
+        {errors.title && (
+          <p className="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+            <AlertCircle className="h-3.5 w-3.5" />
+            {errors.title}
+          </p>
+        )}
       </div>
 
       {/* STATUS + PRIORITY */}
@@ -98,16 +143,18 @@ const TaskForm = ({
         {/* STATUS */}
         <div>
           <Label className="mb-1.5 block text-sm font-medium text-slate-700">
-            {t("tasks.status")}
+            {t("tasks.status")} <span className="text-red-500">*</span>
           </Label>
 
           <Select
             value={formData.status}
-            onValueChange={(value) =>
-              setFormData((p) => ({ ...p, status: value }))
-            }
+            onValueChange={(value) => onFieldChange("status", value)}
           >
-            <SelectTrigger className="h-11 w-full rounded-2xl border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 sm:rounded-lg">
+            <SelectTrigger
+              className={`h-11 w-full rounded-2xl border ${
+                errors.status ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+              } bg-white text-slate-900 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
+            >
               <SelectValue />
             </SelectTrigger>
 
@@ -128,21 +175,30 @@ const TaskForm = ({
               ))}
             </SelectContent>
           </Select>
+
+          {errors.status && (
+            <p className="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {errors.status}
+            </p>
+          )}
         </div>
 
         {/* PRIORITY */}
         <div>
           <Label className="mb-1.5 block text-sm font-medium text-slate-700">
-            {t("tasks.priority")}
+            {t("tasks.priority")} <span className="text-red-500">*</span>
           </Label>
 
           <Select
             value={formData.priority}
-            onValueChange={(value) =>
-              setFormData((p) => ({ ...p, priority: value }))
-            }
+            onValueChange={(value) => onFieldChange("priority", value)}
           >
-            <SelectTrigger className="h-11 w-full rounded-2xl border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 sm:rounded-lg">
+            <SelectTrigger
+              className={`h-11 w-full rounded-2xl border ${
+                errors.priority ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+              } bg-white text-slate-900 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
+            >
               <SelectValue />
             </SelectTrigger>
 
@@ -162,6 +218,13 @@ const TaskForm = ({
               ))}
             </SelectContent>
           </Select>
+
+          {errors.priority && (
+            <p className="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {errors.priority}
+            </p>
+          )}
         </div>
       </div>
 
@@ -170,14 +233,16 @@ const TaskForm = ({
         {/* START DATE */}
         <div>
           <Label className="mb-1.5 block text-sm font-medium text-slate-700">
-            {t("tasks.startDate") || "Start Date"}
+            {t("tasks.startDate") || "Start Date"} <span className="text-red-500">*</span>
           </Label>
 
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="h-11 w-full justify-start rounded-2xl border-slate-200 bg-white text-slate-900 hover:bg-slate-50 sm:rounded-lg"
+                className={`h-11 w-full justify-start rounded-2xl border ${
+                  errors.startDate ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+                } bg-white text-slate-900 hover:bg-slate-50 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
                 {formData.startDate ? (
@@ -192,26 +257,33 @@ const TaskForm = ({
               <Calendar
                 mode="single"
                 selected={formData.startDate}
-                onSelect={(date) =>
-                  setFormData((p) => ({ ...p, startDate: date }))
-                }
+                onSelect={(date) => onFieldChange("startDate", date)}
                 className="pointer-events-auto"
               />
             </PopoverContent>
           </Popover>
+
+          {errors.startDate && (
+            <p className="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {errors.startDate}
+            </p>
+          )}
         </div>
 
         {/* DUE DATE */}
         <div>
           <Label className="mb-1.5 block text-sm font-medium text-slate-700">
-            {t("tasks.dueDate")}
+            {t("tasks.dueDate")} <span className="text-red-500">*</span>
           </Label>
 
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="h-11 w-full justify-start rounded-2xl border-slate-200 bg-white text-slate-900 hover:bg-slate-50 sm:rounded-lg"
+                className={`h-11 w-full justify-start rounded-2xl border ${
+                  errors.dueDate ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+                } bg-white text-slate-900 hover:bg-slate-50 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
                 {formData.dueDate ? (
@@ -226,13 +298,18 @@ const TaskForm = ({
               <Calendar
                 mode="single"
                 selected={formData.dueDate}
-                onSelect={(date) =>
-                  setFormData((p) => ({ ...p, dueDate: date }))
-                }
+                onSelect={(date) => onFieldChange("dueDate", date)}
                 className="pointer-events-auto"
               />
             </PopoverContent>
           </Popover>
+
+          {errors.dueDate && (
+            <p className="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {errors.dueDate}
+            </p>
+          )}
         </div>
       </div>
 
@@ -240,23 +317,27 @@ const TaskForm = ({
       <div>
         <Label className="mb-1.5 block text-sm font-medium text-slate-700">
           <Users className="mr-1.5 inline h-4 w-4 text-blue-500" />
-          {t("tasks.assignTo")}
+          {t("tasks.assignTo")} <span className="text-red-500">*</span>
         </Label>
 
-        <MemberSearchSelect
-          options={staffData || []}
-          selectedValue={formData.assignedTo?.[0] || ""}
-          onChange={(id) =>
-            setFormData((prev) => ({
-              ...prev,
-              assignedTo: id ? [id] : [],
-            }))
-          }
-          placeholder="Search employee..."
-        />
+        <div className={errors.assignedTo ? "border border-red-300 rounded-2xl sm:rounded-lg focus-within:ring-4 focus-within:ring-red-100" : ""}>
+          <MemberSearchSelect
+            options={staffData || []}
+            selectedValue={formData.assignedTo?.[0] || ""}
+            onChange={(id) => onFieldChange("assignedTo", id ? [id] : [])}
+            placeholder="Search employee..."
+          />
+        </div>
+
+        {errors.assignedTo && (
+          <p className="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+            <AlertCircle className="h-3.5 w-3.5" />
+            {errors.assignedTo}
+          </p>
+        )}
       </div>
 
-      {/* DESCRIPTION */}
+      {/* DESCRIPTION - No validation */}
       <div>
         <Label className="mb-1.5 block text-sm font-medium text-slate-700">
           {t("tasks.description")}
@@ -264,7 +345,7 @@ const TaskForm = ({
 
         <Textarea
           rows={4}
-          className="min-h-[100px] resize-none rounded-2xl border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500 sm:rounded-lg"
+          className="min-h-[100px] resize-none rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg"
           placeholder={t("tasks.descriptionPlaceholder") || "Enter task description..."}
           value={formData.description}
           onChange={(e) =>
@@ -282,7 +363,7 @@ const TaskForm = ({
           <Button
             variant="outline"
             onClick={onClose}
-            className="h-11 w-full rounded-2xl border-slate-200 font-medium text-slate-700 hover:bg-slate-50 sm:w-auto sm:rounded-lg"
+            className="h-11 w-full rounded-2xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:w-auto sm:rounded-lg"
           >
             {t("buttons.cancel") || "Cancel"}
           </Button>
@@ -290,7 +371,7 @@ const TaskForm = ({
 
         <Button
           onClick={onSubmit}
-          disabled={isLoading || !formData.title?.trim()}
+          disabled={isLoading}
           className="h-11 w-full rounded-2xl bg-blue-600 px-6 font-medium text-white hover:bg-blue-700 disabled:opacity-60 sm:w-auto sm:rounded-lg"
         >
           {isLoading ? (
@@ -299,7 +380,7 @@ const TaskForm = ({
               {t("buttons.creating") || "Creating..."}
             </span>
           ) : (
-            mode === "task" ? t("buttons.create") || "Create Task" : "Add Subtask"
+            mode === "task" ? t("buttons.create") || "Create Task" : t("tasks.addSubtask") || "Add Subtask"
           )}
         </Button>
       </div>

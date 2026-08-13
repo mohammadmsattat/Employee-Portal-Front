@@ -1,4 +1,4 @@
-// FolderSidebarMobile.jsx - نسخة معدلة مع إزالة المودلات وإضافة props
+// FolderSidebarMobile.jsx - نسخة معدلة مع تمرير workspace و folder معاً
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -12,7 +12,7 @@ import {
   Users,
   Trash2,
   Edit2,
-  MoreVertical,
+  MoreHorizontal,
   Archive,
   Copy,
   UserPlus,
@@ -136,7 +136,7 @@ const FolderSidebarMobile = ({
     closeContextMenu();
   };
 
-  // ===== دوال استدعاء المودلات من الأب =====
+  // ===== دوال استدعاء المودلات من الأب (مطابقة للويب) =====
   const handleOpenWorkspaceModal = () => {
     if (onOpenWorkspaceModal) onOpenWorkspaceModal();
   };
@@ -145,25 +145,30 @@ const FolderSidebarMobile = ({
     if (onOpenFolderModal) onOpenFolderModal(workspace);
   };
 
-  const handleOpenListModal = (folder) => {
-    if (onOpenListModal) onOpenListModal(folder);
+  // ✅ تصحيح: تمرير workspace و folder معاً (مطابق للويب)
+  const handleOpenListModal = (workspace, folder) => {
+    if (onOpenListModal) onOpenListModal(workspace, folder);
   };
 
   const handleOpenManageMembers = (workspace) => {
     if (onOpenManageMembers) onOpenManageMembers(workspace);
   };
 
-  const handleOpenFolderMembers = (folder) => {
-    if (onOpenFolderMembers) onOpenFolderMembers(folder);
+  // ✅ تصحيح: تمرير folder و workspace معاً
+  const handleOpenFolderMembers = (folder, workspace) => {
+    if (onOpenFolderMembers) onOpenFolderMembers(folder, workspace);
   };
 
-  const handleOpenListMembers = (listId) => {
-    if (onOpenListMembers) onOpenListMembers(listId);
+  // ✅ تصحيح: تمرير listId, workspaceId, folderId
+  const handleOpenListMembers = (listId, workspaceId, folderId) => {
+    if (onOpenListMembers) onOpenListMembers(listId, workspaceId, folderId);
   };
 
-  const handleOpenDeleteConfirm = (type, item, workspaceId) => {
-    if (onOpenDeleteConfirm) onOpenDeleteConfirm(type, item, workspaceId);
+  // ✅ تصحيح: تمرير type, item, workspaceId, folderId
+  const handleOpenDeleteConfirm = (type, item, workspaceId, folderId) => {
+    if (onOpenDeleteConfirm) onOpenDeleteConfirm(type, item, workspaceId, folderId);
   };
+
   const getContextMenuItems = () => {
     const { type, item } = contextMenu;
     if (!item) return [];
@@ -196,7 +201,8 @@ const FolderSidebarMobile = ({
         label: "Add List",
         onClick: () => {
           handleAction(() => {
-            handleOpenListModal(item);
+            // ✅ تمرير workspace و folder
+            handleOpenListModal(selectedWorkspace, item);
           });
         },
       });
@@ -211,9 +217,17 @@ const FolderSidebarMobile = ({
             if (type === "workspace") {
               handleOpenManageMembers(item);
             } else if (type === "folder") {
-              handleOpenFolderMembers(item);
+              // ✅ تمرير folder و workspace
+              handleOpenFolderMembers(item, selectedWorkspace);
             } else if (type === "list") {
-              handleOpenListMembers(item._id);
+              // ✅ تمرير listId, workspaceId, folderId
+              handleOpenListMembers(
+                item._id,
+                selectedWorkspace?._id,
+                item.folderId || selectedWorkspace?.folders?.find(f => 
+                  f.lists?.some(l => l._id === item._id)
+                )?._id
+              );
             }
           });
         },
@@ -225,7 +239,21 @@ const FolderSidebarMobile = ({
         danger: true,
         onClick: () => {
           handleAction(() => {
-            handleOpenDeleteConfirm(type, item, selectedWorkspace?._id);
+            // ✅ تمرير type, item, workspaceId, folderId
+            let folderId = null;
+            if (type === "list") {
+              // البحث عن folderId من الـ list
+              const workspace = selectedWorkspace;
+              if (workspace) {
+                for (const folder of workspace.folders || []) {
+                  if (folder.lists?.some(l => l._id === item._id)) {
+                    folderId = folder._id;
+                    break;
+                  }
+                }
+              }
+            }
+            handleOpenDeleteConfirm(type, item, selectedWorkspace?._id, folderId);
           });
         },
       },
@@ -233,6 +261,7 @@ const FolderSidebarMobile = ({
 
     return items;
   };
+
   // منع السكرول في الخلفية عند فتح القائمة السياقية
   useEffect(() => {
     if (contextMenu.open) {
@@ -417,7 +446,7 @@ const FolderSidebarMobile = ({
                         }}
                         className="shrink-0 p-1.5 rounded-lg bg-slate-100/70 hover:bg-slate-200/70 active:bg-slate-300/70 transition-all duration-200"
                       >
-                        <MoreVertical className="h-4 w-4 text-slate-600" />
+                        <MoreHorizontal className="h-4 w-4 text-slate-600" />
                       </button>
                     </div>
 
@@ -546,7 +575,7 @@ const FolderSidebarMobile = ({
                                     }}
                                     className="shrink-0 p-1 rounded-lg bg-slate-100/70 hover:bg-slate-200/70 active:bg-slate-300/70 transition-all duration-200"
                                   >
-                                    <MoreVertical className="h-3.5 w-3.5 text-slate-600" />
+                                    <MoreHorizontal className="h-3.5 w-3.5 text-slate-600" />
                                   </button>
                                 </div>
 
@@ -681,7 +710,7 @@ const FolderSidebarMobile = ({
                                             }}
                                             className="shrink-0 p-1 rounded-lg bg-slate-100/70 hover:bg-slate-200/70 active:bg-slate-300/70 transition-all duration-200 mr-1"
                                           >
-                                            <MoreVertical className="h-3.5 w-3.5 text-slate-600" />
+                                            <MoreHorizontal className="h-3.5 w-3.5 text-slate-600" />
                                           </button>
                                         </div>
                                       );

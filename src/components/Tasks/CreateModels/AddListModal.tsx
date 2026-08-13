@@ -18,6 +18,9 @@ export const AddListModal = ({
   folderId,
   refetchTree,
 }) => {
+  console.log(workspaceId);
+  console.log(folderId);
+  
   const {
     name,
     setName,

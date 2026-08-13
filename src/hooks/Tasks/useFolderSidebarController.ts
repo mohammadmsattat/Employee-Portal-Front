@@ -25,6 +25,7 @@ export const useFolderSidebarController = ({ refetchTree }) => {
     id?: string;
     type?: DeleteType;
     workspaceId?: string;
+    folderId?: string;
     name?: string;
   }>({
     open: false,
@@ -138,7 +139,7 @@ export const useFolderSidebarController = ({ refetchTree }) => {
      OPEN DELETE MODAL
   ========================= */
 
-  const requestDelete = ({ type, item, workspaceId }) => {
+  const requestDelete = ({ type, item, workspaceId, folderId }) => {
     const validation = validateDelete({
       type,
       item,
@@ -158,6 +159,7 @@ export const useFolderSidebarController = ({ refetchTree }) => {
       open: true,
       id: item._id,
       type,
+      folderId,
       workspaceId,
       name: item.name,
     });
@@ -187,6 +189,7 @@ export const useFolderSidebarController = ({ refetchTree }) => {
       if (deleteState.type === "list") {
         await deleteList({
           workspaceId: deleteState.workspaceId,
+          folderId: deleteState.folderId,
           id: deleteState.id,
         }).unwrap();
       }

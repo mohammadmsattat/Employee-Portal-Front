@@ -1,38 +1,56 @@
-// AddTaskModal.jsx - نسخة محسنة بتصميم متطابق مع المنصة
+// AddTaskModal.jsx - النسخة المُصححة
 
 import { useTranslation } from "react-i18next";
-import { X, Plus, ClipboardList } from "lucide-react";
+import { X, Plus, ClipboardList, ListChecks } from "lucide-react";
 import { useAddTaskModal } from "@/hooks/Tasks/CreateModels/useCreateTaskModal";
 import TaskForm from "./TaskForm";
+import { useEffect } from "react";
 
-const AddTaskModal = ({ isOpen, onClose, listId, workspaceId }) => {
+const AddTaskModal = ({ isOpen, onClose, listId, workspaceId, allLists }) => {
   const { t } = useTranslation();
 
-  const { data, formData, setFormData, handleSubmit, isLoading } =
-    useAddTaskModal({
-      isOpen,
-      onClose,
-      listId,
-    });
+  const {
+    data,
+    formData,
+    setFormData,
+    handleFieldChange,
+    handleSubmit,
+    isLoading,
+    errors,
+  } = useAddTaskModal({
+    isOpen,
+    onClose,
+    listId,
+  });
+
+  // ✅ استخدام useEffect بدلاً من التنفيذ المباشر
+  useEffect(() => {
+    if (isOpen && workspaceId && formData.workspace !== workspaceId) {
+      setFormData((prev) => ({
+        ...prev,
+        workspace: workspaceId || "",
+      }));
+    }
+  }, [isOpen, workspaceId, formData.workspace, setFormData]);
+
+  // ✅ تحديث الـ List عند تغيير الـ workspace أو listId
+  useEffect(() => {
+    if (isOpen && listId && formData.list !== listId) {
+      setFormData((prev) => ({
+        ...prev,
+        list: listId || "",
+      }));
+    }
+  }, [isOpen, listId, formData.list, setFormData]);
 
   if (!isOpen) return null;
 
-  // 🔥 inject list + workspace into formData once modal opens
-  if (
-    isOpen &&
-    (formData.list !== listId || formData.workspace !== workspaceId)
-  ) {
-    setFormData((prev) => ({
-      ...prev,
-      list: listId || "",
-      workspace: workspaceId || "",
-    }));
-  }
+  // الحصول على الـ List الحالية
+  const currentList = allLists?.find((l) => l._id === formData.list);
 
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-950/55 backdrop-blur-sm sm:items-center sm:p-4 md:p-6">
-      <div className="flex max-h-[96vh] w-full flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-20px_80px_rgba(15,23,42,0.28)] sm:max-h-[92vh] sm:max-w-3xl sm:rounded-2xl">
-        
+      <div className="flex max-h-[96vh] w-full flex-col rounded-t-[28px] bg-white shadow-[0_-20px_80px_rgba(15,23,42,0.28)] sm:max-h-[92vh] sm:max-w-3xl sm:rounded-2xl">
         {/* ===== HEADER ===== */}
         <div
           className="relative shrink-0 overflow-hidden px-4 py-3.5 sm:px-6 sm:py-4 md:px-7 md:py-5"
@@ -62,6 +80,18 @@ const AddTaskModal = ({ isOpen, onClose, listId, workspaceId }) => {
                 <h3 className="text-base font-bold text-blue-900 sm:text-lg">
                   {t("tasks.createTask")}
                 </h3>
+
+                {currentList && (
+                  <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                    <ListChecks className="h-3 w-3" />
+                    {t("tasks.inList") || "In list"}: {currentList.name}
+                    {currentList.folderName && (
+                      <span className="text-slate-400">
+                        ({currentList.folderName})
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -80,11 +110,14 @@ const AddTaskModal = ({ isOpen, onClose, listId, workspaceId }) => {
             mode="task"
             formData={formData}
             setFormData={setFormData}
+            handleFieldChange={handleFieldChange}
             onSubmit={handleSubmit}
             isLoading={isLoading}
             t={t}
             staffData={data?.data}
+            lists={allLists || []}
             onClose={onClose}
+            errors={errors}
           />
         </div>
       </div>

@@ -1,24 +1,20 @@
 import { useAttendance } from "@/hooks/Attendance/useAttendance";
 import { useHome } from "@/hooks/home/useHome";
-import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-
 import {
-  CalendarDays,
   Clock3,
   FileText,
-  Fingerprint,
   MapPin,
-  ChevronRight,
   CheckCircle2,
-  AlertCircle,
-  User,
   Briefcase,
   Gift,
   Inbox,
 } from "lucide-react";
-import { useState, useRef } from "react";
-import { cn } from "@/lib/utils";
+import { StatCardMobile } from "@/components/home/StatCardMobile";
+import { StatCardWeb } from "@/components/home/StatCardWeb";
+import { LeaveBalanceItem } from "@/components/home/LeaveBalanceItem";
+import { PendingRequestItem } from "@/components/home/PendingRequestItem";
+import { AttendanceCard } from "@/components/home/AttendanceCard";
 
 const leaveTypeLabels: Record<string, string> = {
   annual: "Annual Leave",
@@ -40,9 +36,6 @@ const Home = () => {
     useAttendance();
 
   const pendingCount = pendingRequests?.length || 0;
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchEndX, setTouchEndX] = useState(0);
 
   // Helper function to safely get department name
   const getDepartmentName = (dept: any): string => {
@@ -63,33 +56,6 @@ const Home = () => {
     return "Employee";
   };
 
-  // دوال التنقل
-  const goToPrevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? 3 : prev - 1));
-  };
-
-  const goToNextSlide = () => {
-    setCurrentSlide((prev) => (prev === 3 ? 0 : prev + 1));
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEndX(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    const swipeThreshold = 50;
-    if (touchStartX - touchEndX > swipeThreshold) {
-      goToNextSlide();
-    }
-    if (touchStartX - touchEndX < -swipeThreshold) {
-      goToPrevSlide();
-    }
-  };
-
   return (
     <Layout>
       <div className="min-h-screen">
@@ -98,48 +64,38 @@ const Home = () => {
           <div className="mb-4 sm:mb-8">
             {/* Mobile Header (No Card) */}
             <div className="sm:hidden mb-6">
-              {/* Stats Row - Mobile Slider with Swipe */}
-              <div className="sm:hidden mb-6">
-                {/* Stats Row - Mobile Grid 2x2 */}
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Stat 1: Worked Today */}
-                  <StatCardMobile
-                    icon={<Clock3 className="h-4 w-4" />}
-                    label="Worked Today"
-                    value={workedTimeText || "0h"}
-                    color="blue"
-                  />
-
-                  {/* Stat 2: Location */}
-                  <StatCardMobile
-                    icon={<MapPin className="h-4 w-4" />}
-                    label="Location"
-                    value={
-                      locationLoading
-                        ? "..."
-                        : isWithinDistance
-                          ? "In Range"
-                          : "Outside"
-                    }
-                    color={isWithinDistance ? "emerald" : "red"}
-                  />
-
-                  {/* Stat 3: Leave Balance */}
-                  <StatCardMobile
-                    icon={<Gift className="h-4 w-4" />}
-                    label="Leave Balance"
-                    value={`${leaveBalances?.reduce((acc, l) => acc + l.remainingDays, 0) || 0} Days`}
-                    color="purple"
-                  />
-
-                  {/* Stat 4: Pending Requests */}
-                  <StatCardMobile
-                    icon={<FileText className="h-4 w-4" />}
-                    label="Pending Requests"
-                    value={pendingCount.toString()}
-                    color={pendingCount > 0 ? "orange" : "gray"}
-                  />
-                </div>
+              {/* Stats Row - Mobile Grid 2x2 */}
+              <div className="grid grid-cols-2 gap-2">
+                <StatCardMobile
+                  icon={<Clock3 className="h-4 w-4" />}
+                  label="Worked Today"
+                  value={workedTimeText || "0h"}
+                  color="blue"
+                />
+                <StatCardMobile
+                  icon={<MapPin className="h-4 w-4" />}
+                  label="Location"
+                  value={
+                    locationLoading
+                      ? "..."
+                      : isWithinDistance
+                        ? "In Range"
+                        : "Outside"
+                  }
+                  color={isWithinDistance ? "emerald" : "red"}
+                />
+                <StatCardMobile
+                  icon={<Gift className="h-4 w-4" />}
+                  label="Leave Balance"
+                  value={`${leaveBalances?.reduce((acc, l) => acc + l.remainingDays, 0) || 0} Days`}
+                  color="purple"
+                />
+                <StatCardMobile
+                  icon={<FileText className="h-4 w-4" />}
+                  label="Pending Requests"
+                  value={pendingCount.toString()}
+                  color={pendingCount > 0 ? "orange" : "gray"}
+                />
               </div>
             </div>
 
@@ -173,7 +129,7 @@ const Home = () => {
                     )}
                   </div>
 
-                  {/* معلومات المستخدم */}
+                  {/* User Info */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-blue-600">
@@ -247,100 +203,12 @@ const Home = () => {
           {/* Main Grid */}
           <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
             {/* Attendance Card */}
-            <div className="hidden md:block">
-              <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 transition-shadow hover:shadow-md">
-                {/* Header Section */}
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 sm:px-6 sm:py-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-medium text-blue-100/80 sm:text-sm">
-                        Attendance Status
-                      </p>
-                      <div className="mt-1 flex items-center gap-2">
-                        <p className="text-lg font-semibold text-white sm:text-xl">
-                          {mode === "Check-in" ? "Checked In" : "Checked Out"}
-                        </p>
-                      </div>
-                    </div>
-                    <div
-                      className={`rounded-full p-2 ${
-                        mode === "Check-in"
-                          ? "bg-emerald-500/20"
-                          : "bg-amber-500/20"
-                      }`}
-                    >
-                      <Fingerprint
-                        className={`h-5 w-5 ${
-                          mode === "Check-in"
-                            ? "text-emerald-400"
-                            : "text-red-400"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </div>
+            <AttendanceCard
+              mode={mode}
+              canAction={canAction}
+              openAttendanceModal={openAttendanceModal}
+            />
 
-                {/* Content Section */}
-                <div className="p-4 sm:p-6">
-                  {/* Desktop Action Button */}
-                  <button
-                    type="button"
-                    onClick={openAttendanceModal}
-                    disabled={!canAction}
-                    className="group hidden w-full rounded-xl border border-slate-200 bg-white px-4 py-4 text-left transition-all duration-200 hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:shadow-none md:block"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 transition-colors group-hover:bg-blue-100">
-                          <Fingerprint className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-slate-900">
-                            {canAction ? "Check In / Out" : "Attendance Locked"}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {canAction
-                              ? "Tap to record your attendance"
-                              : "Outside working hours"}
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-slate-400 transition-all duration-200 group-hover:translate-x-1 group-hover:text-blue-500" />
-                    </div>
-                  </button>
-
-                  {/* Mobile Info */}
-                  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 md:hidden">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                      <Fingerprint className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">
-                        Attendance available from Bottom Bar
-                      </p>
-                      <p className="mt-0.5 text-xs leading-4 text-slate-500">
-                        Use the fingerprint button below to check in or check
-                        out.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Location Status */}
-                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2.5 sm:mt-4">
-                    <div
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        canAction ? "bg-emerald-500" : "bg-slate-400"
-                      }`}
-                    />
-                    <span className="text-xs text-slate-600">
-                      {canAction
-                        ? "Location verified. Attendance is ready"
-                        : "You are outside the allowed area. Attendance is unavailable"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
             {/* Leave Balances */}
             <div className="lg:col-span-1">
               <div className="flex h-[420px] flex-col rounded-2xl bg-white shadow-sm ring-1 ring-black/5 transition-shadow hover:shadow-md sm:h-[420px] lg:h-[440px]">
@@ -428,263 +296,3 @@ const Home = () => {
 };
 
 export default Home;
-
-// Sub-components
-const LeaveBalanceItem = ({
-  type,
-  used,
-  total,
-  remaining,
-}: {
-  type: string;
-  used: number;
-  total: number;
-  remaining: number;
-}) => {
-  const percentage = (used / total) * 100;
-  const isLow = remaining <= 2;
-
-  return (
-    <div className="group rounded-xl border border-slate-200/60 bg-white p-4 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50/30 hover:shadow-sm active:scale-[0.99] sm:p-4">
-      <div className="flex items-center justify-between gap-2 sm:gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2">
-            <p className="text-sm font-medium text-slate-700 sm:text-sm truncate">
-              {type}
-            </p>
-            {isLow && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 sm:px-2 sm:py-0.5 sm:text-[10px]">
-                <AlertCircle className="h-3 w-3 sm:h-3 sm:w-3" />
-                Low
-              </span>
-            )}
-          </div>
-          <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-500 sm:mt-1.5 sm:gap-2 sm:text-xs">
-            <span>{used}d used</span>
-            <span className="h-0.5 w-0.5 rounded-full bg-slate-300 sm:h-1 sm:w-1" />
-            <span>{total}d total</span>
-          </div>
-          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-slate-100 sm:mt-2">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${
-                isLow ? "bg-red-400" : "bg-blue-500"
-              }`}
-              style={{ width: `${Math.min(percentage, 100)}%` }}
-            />
-          </div>
-        </div>
-        <div className="flex min-w-[58px] shrink-0 flex-col items-center rounded-lg bg-slate-50 px-2.5 py-2 sm:min-w-[58px] sm:px-2.5 sm:py-2">
-          <p
-            className={`text-lg font-semibold ${isLow ? "text-red-500" : "text-slate-800"} sm:text-lg`}
-          >
-            {remaining}
-          </p>
-          <p className="text-xs text-slate-500 sm:text-[10px]">days left</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const PendingRequestItem = ({ request }: { request: any }) => {
-  const navigate = useNavigate();
-
-  const requestTypeLabels: Record<string, string> = {
-    Leave: "Leave",
-    Advance: "Advance",
-    Overtime: "Overtime",
-  };
-
-  const getStatusStyles = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "approved":
-        return "bg-emerald-50 text-emerald-600";
-      case "rejected":
-        return "bg-red-50 text-red-600";
-      default:
-        return "bg-amber-50 text-amber-600";
-    }
-  };
-
-  const getRequestDetails = (request: any) => {
-    switch (request.requestType) {
-      case "Leave":
-        return `${request.days} days`;
-      case "Advance":
-        return `$${request.amount}`;
-      case "Overtime":
-        return `${request.hours} hrs`;
-      default:
-        return "";
-    }
-  };
-
-  const getRequestDate = (request: any) => {
-    const date = new Date(request.createdAt);
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-    });
-  };
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "Leave":
-        return <CalendarDays className="h-4 w-4 text-blue-500 sm:h-4 sm:w-4" />;
-      case "Advance":
-        return <FileText className="h-4 w-4 text-emerald-500 sm:h-4 sm:w-4" />;
-      default:
-        return <Clock3 className="h-4 w-4 text-purple-500 sm:h-4 sm:w-4" />;
-    }
-  };
-
-  const handleRequestClick = () => {
-    switch (request.requestType) {
-      case "Leave":
-        navigate("/leaves/Leaves");
-        break;
-      case "Advance":
-        navigate("/advance/my-advance-requests");
-        break;
-      case "Overtime":
-        navigate("/overtime/my-overtime-requests");
-        break;
-      default:
-        break;
-    }
-  };
-
-  return (
-    <div
-      className="group rounded-xl border border-slate-200/60 bg-white p-4 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50/30 hover:shadow-sm active:scale-[0.99] cursor-pointer sm:p-4"
-      onClick={handleRequestClick}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2">
-            <span className="rounded-lg bg-slate-100 p-1.5 text-slate-500 sm:p-1.5">
-              {getIcon(request.requestType)}
-            </span>
-            <p className="text-sm font-medium text-slate-700 sm:text-sm truncate">
-              {requestTypeLabels[request.requestType] || request.requestType}
-            </p>
-            <span
-              className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium sm:px-2 sm:py-0.5 sm:text-[10px] ${getStatusStyles(
-                request.status,
-              )}`}
-            >
-              {request.status}
-            </span>
-          </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 sm:mt-1.5 sm:gap-2 sm:text-xs">
-            <span className="font-medium text-slate-600">
-              {getRequestDetails(request)}
-            </span>
-            <span className="h-0.5 w-0.5 rounded-full bg-slate-300 sm:h-1 sm:w-1" />
-            <span>{getRequestDate(request)}</span>
-          </div>
-        </div>
-        <ChevronRight className="h-4 w-4 text-slate-300 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-blue-400 sm:h-4 sm:w-4" />
-      </div>
-    </div>
-  );
-};
-
-// Mobile Stat Card
-const StatCardMobile = ({
-  icon,
-  label,
-  value,
-  color,
-  large = false,
-}: {
-  icon: JSX.Element;
-  label: string;
-  value: string;
-  color: "blue" | "emerald" | "purple" | "orange" | "red" | "gray";
-  large?: boolean;
-}) => {
-  const colorMap = {
-    blue: "bg-blue-50 text-blue-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    purple: "bg-purple-50 text-purple-600",
-    orange: "bg-amber-50 text-amber-600",
-    red: "bg-red-50 text-red-600",
-    gray: "bg-slate-100 text-slate-600",
-  };
-
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border border-slate-300/50 bg-transparent transition-all duration-200 hover:border-blue-300 hover:bg-blue-50/30",
-        large ? "p-4" : "p-3",
-      )}
-    >
-      <div className="flex items-start justify-between">
-        <div className="min-w-0 flex-1">
-          <p
-            className={cn(
-              "font-medium text-slate-500",
-              large ? "text-sm" : "text-[10px]",
-            )}
-          >
-            {label}
-          </p>
-          <p
-            className={cn(
-              "font-semibold text-blue-900",
-              large ? "mt-1 text-xl" : "mt-0.5 text-base",
-            )}
-          >
-            {value}
-          </p>
-        </div>
-        <div
-          className={cn(
-            "shrink-0 rounded-xl",
-            large ? "ml-2 p-2.5" : "ml-1.5 p-1.5",
-            colorMap[color],
-          )}
-        >
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Web Stat Card
-const StatCardWeb = ({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: JSX.Element;
-  label: string;
-  value: string;
-  color: "blue" | "emerald" | "purple" | "orange" | "red" | "gray";
-}) => {
-  const colorMap = {
-    blue: "bg-blue-50 text-blue-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    purple: "bg-purple-50 text-purple-600",
-    orange: "bg-amber-50 text-amber-600",
-    red: "bg-red-50 text-red-600",
-    gray: "bg-slate-100 text-slate-600",
-  };
-
-  return (
-    <div className="group rounded-2xl bg-whte p-4 shadow-sm ring-1 ring-black/5 transition-all duration-200 hover:shadow-md hover:ring-blue-300/50">
-      <div className="flex items-start justify-between">
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium text-slate-500">{label}</p>
-          <p className="mt-1 text-lg font-semibold text-blue-900">{value}</p>
-        </div>
-        <div className={`ml-3 shrink-0 rounded-xl p-2.5 ${colorMap[color]}`}>
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-};

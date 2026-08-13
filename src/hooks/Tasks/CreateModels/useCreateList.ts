@@ -120,9 +120,14 @@ export const useCreateList = ({
   ========================= */
 
   const submit = async () => {
+    console.log("---");
+    console.log(folderId);
+    console.log(workspaceId);
+    
     if (!name.trim() || !workspaceId || !folderId) {
       return;
     }
+    console.log("-||||");
 
     try {
       await createList({

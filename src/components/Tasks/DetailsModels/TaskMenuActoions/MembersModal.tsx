@@ -1,6 +1,7 @@
 import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
 import { useMembersModal } from "@/hooks/Tasks/DetailsModels/TaskMenuActions/useMembersModal";
 import { X, UserMinus } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const UpdateTaskMembersModal = ({
   isOpen,
@@ -20,6 +21,17 @@ const UpdateTaskMembersModal = ({
       refetchTasks,
     });
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const task = entity?.data;
 
   if (!isOpen || !task) return null;
@@ -29,19 +41,29 @@ const UpdateTaskMembersModal = ({
   const availableStaff = staff.filter((u) => !selectedMembers.includes(u._id));
 
   return (
-    <div className="w-[320px] bg-white border rounded-2xl shadow-xl p-4 ">
+    <div className={`
+      bg-white border rounded-2xl shadow-xl p-4
+      ${isMobile ? "w-[280px]" : "w-[320px]"}
+    `}>
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-3 ">
-        <h2 className="text-sm font-semibold">Task Members</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className={`font-semibold ${isMobile ? "text-sm" : "text-sm"}`}>
+          Task Members
+        </h2>
 
-        <button onClick={onClose}>
-          <X className="h-4 w-4" />
+        <button 
+          onClick={onClose}
+          className={isMobile ? "p-1" : ""}
+        >
+          <X className={`${isMobile ? "w-5 h-5" : "h-4 w-4"}`} />
         </button>
       </div>
 
       {/* ADD MEMBER */}
       <div className="mb-3">
-        <p className="text-xs text-slate-500 mb-1">Add Member</p>
+        <p className={`text-xs text-slate-500 mb-1 ${isMobile ? "text-sm" : "text-xs"}`}>
+          Add Member
+        </p>
 
         <MemberSearchSelect
           options={availableStaff || []}
@@ -57,7 +79,9 @@ const UpdateTaskMembersModal = ({
 
       {/* CURRENT MEMBERS */}
       <div>
-        <p className="text-xs text-slate-500 mb-1">Current Members</p>
+        <p className={`text-xs text-slate-500 mb-1.5 ${isMobile ? "text-sm" : "text-xs"}`}>
+          Current Members
+        </p>
 
         <div className="flex flex-wrap gap-2">
           {selectedStaff.length === 0 && (
@@ -67,15 +91,20 @@ const UpdateTaskMembersModal = ({
           {selectedStaff.map((user) => (
             <div
               key={user._id}
-              className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full text-xs"
+              className={`
+                flex items-center gap-2 bg-slate-100 rounded-full text-xs
+                ${isMobile ? "px-3.5 py-1.5 text-sm" : "px-3 py-1 text-xs"}
+              `}
             >
-              <span>{user.fullName}</span>
+              <span className={isMobile ? "text-sm" : "text-xs"}>
+                {user.fullName}
+              </span>
 
               <button
                 onClick={() => removeMember(user._id)}
-                className="text-red-500"
+                className="text-red-500 hover:text-red-600 transition active:scale-90"
               >
-                <UserMinus className="h-3.5 w-3.5" />
+                <UserMinus className={`${isMobile ? "h-4 w-4" : "h-3.5 w-3.5"}`} />
               </button>
             </div>
           ))}
@@ -83,17 +112,25 @@ const UpdateTaskMembersModal = ({
       </div>
 
       {/* ACTIONS */}
-      <div className="mt-4 flex gap-2">
+      <div className={`mt-4 flex gap-2 ${isMobile ? "flex-col" : "flex-row"}`}>
         <button
           onClick={handleSave}
-          className="flex-1 bg-blue-600 text-white py-2 text-xs rounded-md"
+          className={`
+            bg-blue-600 text-white rounded-md font-medium
+            hover:bg-blue-700 transition active:scale-[0.98]
+            ${isMobile ? "py-3 text-sm" : "flex-1 py-2 text-xs"}
+          `}
         >
           Save
         </button>
 
         <button
           onClick={onClose}
-          className="flex-1 bg-slate-100 py-2 text-xs rounded-md"
+          className={`
+            bg-slate-100 text-slate-700 rounded-md font-medium
+            hover:bg-slate-200 transition active:scale-[0.98]
+            ${isMobile ? "py-3 text-sm" : "flex-1 py-2 text-xs"}
+          `}
         >
           Cancel
         </button>

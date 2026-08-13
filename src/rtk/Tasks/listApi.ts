@@ -2,7 +2,6 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import baseURL, { buildListUrl } from "@/Api/GlobalData";
 
 const getJWT = () => localStorage.getItem("token");
-const getCompanyId = () => localStorage.getItem("company");
 
 export const listApi = createApi({
   reducerPath: "listApi",
@@ -25,7 +24,7 @@ export const listApi = createApi({
     // =========================
     getLists: builder.query<any, { workspaceId: string; folderId: string }>({
       query: ({ workspaceId, folderId }) =>
-        `${buildListUrl(workspaceId, folderId)}?companyId=${getCompanyId()}`,
+        `${buildListUrl(workspaceId, folderId)}`,
       providesTags: ["List"],
     }),
 
@@ -38,7 +37,7 @@ export const listApi = createApi({
       { workspaceId: string; id: string; folderId: string }
     >({
       query: ({ workspaceId, id, folderId }) =>
-        `${buildListUrl(workspaceId, folderId)}/${id}?companyId=${getCompanyId()}`,
+        `${buildListUrl(workspaceId, folderId)}/${id}`,
       providesTags: ["List"],
     }),
 
@@ -51,7 +50,7 @@ export const listApi = createApi({
       { workspaceId: string; folderId: string; data: any }
     >({
       query: ({ workspaceId, folderId, data }) => ({
-        url: `${buildListUrl(workspaceId, folderId)}?companyId=${getCompanyId()}`,
+        url: `${buildListUrl(workspaceId, folderId)}`,
         method: "POST",
         body: data,
       }),
@@ -67,7 +66,7 @@ export const listApi = createApi({
       { workspaceId: string; id: string; data: any; folderId: string }
     >({
       query: ({ workspaceId, id, data, folderId }) => ({
-        url: `${buildListUrl(workspaceId, folderId)}/${id}?companyId=${getCompanyId()}`,
+        url: `${buildListUrl(workspaceId, folderId)}/${id}`,
         method: "PATCH",
         body: data,
       }),
@@ -83,7 +82,7 @@ export const listApi = createApi({
       { workspaceId: string; id: string; folderId: string }
     >({
       query: ({ workspaceId, id, folderId }) => ({
-        url: `${buildListUrl(workspaceId, folderId)}/${id}?companyId=${getCompanyId()}`,
+        url: `${buildListUrl(workspaceId, folderId)}/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["List"],
@@ -112,7 +111,7 @@ export const listApi = createApi({
         folderId,
         notificationsEnabled,
       }) => ({
-        url: `${buildListUrl(workspaceId, folderId)}/${id}/members?companyId=${getCompanyId()}`,
+        url: `${buildListUrl(workspaceId, folderId)}/${id}/members`,
         method: "POST",
         body: { userId, role, notificationsEnabled },
       }),
@@ -128,7 +127,7 @@ export const listApi = createApi({
       { workspaceId: string; id: string; userId: string; folderId: string }
     >({
       query: ({ workspaceId, id, userId, folderId }) => ({
-        url: `${buildListUrl(workspaceId, folderId)}/${id}/members/${userId}?companyId=${getCompanyId()}`,
+        url: `${buildListUrl(workspaceId, folderId)}/${id}/members/${userId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["List"],

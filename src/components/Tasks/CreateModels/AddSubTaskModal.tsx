@@ -1,27 +1,64 @@
 // components/SubTasks/AddSubTaskModal.tsx
 
 import { useCreateSubTask } from "@/hooks/Tasks/CreateModels/useCreateSubTask";
-import { X, Plus, ListChecks } from "lucide-react";
+import { X, ListChecks } from "lucide-react";
 import TaskForm from "./TaskForm";
 import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
 
-const AddSubTaskModal = ({ isOpen, onClose, taskId, listId, workspaceId, refetchTasks }) => {
+// ===== Types =====
+interface AddSubTaskModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  taskId: string;
+  listId: string;
+  workspaceId: string;
+  refetchTasks: () => void;
+}
+
+const AddSubTaskModal = ({
+  isOpen,
+  onClose,
+  taskId,
+  listId,
+  workspaceId,
+  refetchTasks,
+}: AddSubTaskModalProps) => {
   const { t } = useTranslation();
 
-  const { data, formData, setFormData, handleSubmit, isLoading } =
-    useCreateSubTask({
-      taskId,
-      workspaceId,
-      onClose,
-      refetchTasks,
-    });
+  const {
+    data,
+    formData,
+    setFormData,
+    handleFieldChange,
+    handleSubmit,
+    isLoading,
+    errors,
+    reset,
+  } = useCreateSubTask({
+    taskId,
+    workspaceId,
+    onClose,
+    refetchTasks,
+    isOpen,
+  });
 
+  // ===== Clean up form when modal closes =====
+  useEffect(() => {
+    if (!isOpen) {
+      const timeout = setTimeout(() => {
+        reset();
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [isOpen, reset]);
+
+  // ===== Don't render if not open or missing required data =====
   if (!isOpen || !taskId || !workspaceId) return null;
 
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-950/55 backdrop-blur-sm sm:items-center sm:p-4 md:p-6">
       <div className="flex max-h-[96vh] w-full flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-20px_80px_rgba(15,23,42,0.28)] sm:max-h-[92vh] sm:max-w-3xl sm:rounded-2xl">
-        
         {/* ===== HEADER ===== */}
         <div
           className="relative shrink-0 overflow-hidden px-4 py-3.5 sm:px-6 sm:py-4 md:px-7 md:py-5"
@@ -69,11 +106,13 @@ const AddSubTaskModal = ({ isOpen, onClose, taskId, listId, workspaceId, refetch
             mode="subtask"
             formData={formData}
             setFormData={setFormData}
+            handleFieldChange={handleFieldChange}
             onSubmit={handleSubmit}
             isLoading={isLoading}
             t={t}
             staffData={data?.data}
             onClose={onClose}
+            errors={errors}
           />
         </div>
       </div>

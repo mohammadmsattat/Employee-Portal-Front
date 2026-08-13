@@ -50,11 +50,11 @@ export const AddWorkspaceModal = ({ isOpen, onClose }: Props) => {
 
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-950/55 backdrop-blur-sm sm:items-center sm:p-4 md:p-6">
-      <div className="flex max-h-[96vh] w-full flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-20px_80px_rgba(15,23,42,0.28)] sm:max-h-[92vh] sm:max-w-xl md:max-w-2xl sm:rounded-2xl">
+      <div className="flex max-h-[96vh] w-full flex-col  rounded-t-[28px] bg-white shadow-[0_-20px_80px_rgba(15,23,42,0.28)] sm:max-h-[92vh] sm:max-w-xl md:max-w-2xl sm:rounded-2xl">
         
         {/* ===== HEADER ===== */}
         <div
-          className="relative shrink-0 overflow-hidden px-4 py-3.5 sm:px-6 sm:py-4 md:px-7 md:py-5"
+          className="relative shrink-0 overflow-hiden px-4 py-3.5 sm:px-6 sm:py-4 md:px-7 md:py-5"
           style={{
             background:
               "linear-gradient(180deg, rgba(37, 99, 235, 0.12), rgba(244, 247, 251, 0))",

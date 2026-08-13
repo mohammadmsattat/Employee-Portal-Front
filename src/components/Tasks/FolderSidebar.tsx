@@ -114,8 +114,8 @@ const FolderSidebar = ({
     if (onOpenFolderModal) onOpenFolderModal(workspace);
   };
 
-  const handleOpenListModal = (folder) => {
-    if (onOpenListModal) onOpenListModal(folder);
+  const handleOpenListModal = (workspace, folder) => {
+    if (onOpenListModal) onOpenListModal(workspace, folder);
   };
 
   const handleOpenManageMembers = (workspace) => {
@@ -130,8 +130,13 @@ const FolderSidebar = ({
     if (onOpenListMembers) onOpenListMembers(listId);
   };
 
-  const handleOpenDeleteConfirm = (type, item, workspaceId) => {
-    if (onOpenDeleteConfirm) onOpenDeleteConfirm(type, item, workspaceId);
+  const handleOpenDeleteConfirm = (type, item, workspaceId ,folder) => {
+    console.log(type);
+    console.log(item);
+    console.log(workspaceId);
+    console.log(folder);
+    
+    if (onOpenDeleteConfirm) onOpenDeleteConfirm(type, item, workspaceId, folder);
   };
 
   return (
@@ -159,6 +164,7 @@ const FolderSidebar = ({
 
       {/* TREE */}
       {workspaceTree?.data?.map((workspace) => {
+        
         const isWsOpen = state.openWorkspaces[workspace._id];
 
         const Icon = getWorkspaceIcon(workspace._id);
@@ -254,7 +260,11 @@ const FolderSidebar = ({
                       actions.setMenuWorkspace(null);
                     }}
                     onDelete={() => {
-                      handleOpenDeleteConfirm("workspace", workspace, workspace._id);
+                      handleOpenDeleteConfirm(
+                        "workspace",
+                        workspace,
+                        workspace._id,
+                      );
                       actions.setMenuWorkspace(null);
                     }}
                   />
@@ -266,6 +276,7 @@ const FolderSidebar = ({
             {isWsOpen && (
               <div className="ml-3 space-y-1">
                 {workspace.folders?.map((folder) => {
+                  
                   const isOpen = state.openFolders[folder._id];
 
                   const isFolderMenuOpen = state.menuFolder?._id === folder._id;
@@ -355,7 +366,7 @@ const FolderSidebar = ({
                                 })
                               }
                               onAddList={() => {
-                                handleOpenListModal(folder);
+                                handleOpenListModal(workspace,folder);
                                 actions.setMenuFolder(null);
                               }}
                               onManageFolderMembers={() => {
@@ -363,7 +374,11 @@ const FolderSidebar = ({
                                 actions.setMenuFolder(null);
                               }}
                               onDelete={() =>
-                                handleOpenDeleteConfirm("folder", folder, workspace._id)
+                                handleOpenDeleteConfirm(
+                                  "folder",
+                                  folder,
+                                  workspace._id,
+                                )
                               }
                             />
                           </div>
@@ -374,6 +389,7 @@ const FolderSidebar = ({
                       {isOpen && (
                         <div className="ml-6 border-l pl-3">
                           {folder.lists?.map((list) => {
+                            
                             const isActive = state.activeList === list._id;
 
                             const isListMenuOpen =
@@ -479,7 +495,12 @@ const FolderSidebar = ({
                                           actions.setMenuList(null);
                                         }}
                                         onDelete={() =>
-                                          handleOpenDeleteConfirm("list", list, workspace._id)
+                                          handleOpenDeleteConfirm(
+                                            "list",
+                                            list,
+                                            workspace._id,
+                                            folder._id,
+                                          )
                                         }
                                       />
                                     </div>

@@ -25,10 +25,8 @@ export const useTaskDetailsModal = ({
 
   const isSubTask = type === "subtask";
   const id = data?._id;
-  console.log(data);
 
   const parentTaskId = data?.parentTaskId;
-  console.log(data);
 
   const [openPanel, setOpenPanel] = useState(null);
   const [position, setPosition] = useState("bottom");

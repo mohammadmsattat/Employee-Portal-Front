@@ -1,4 +1,4 @@
-// TasksPage.jsx - نسخة معدلة مع توحيد العرض مع باقي الصفحات
+// TasksPage.jsx - النسخة المعدلة
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -329,6 +329,31 @@ const TasksPage = () => {
     list: null,
   });
 
+  // ===== جمع جميع الـ Lists من جميع الـ Folders =====
+  const allLists = useMemo(() => {
+    const tree = Array.isArray(workspaceTree)
+      ? workspaceTree
+      : workspaceTree?.data || [];
+
+    const lists: any[] = [];
+
+    tree.forEach((workspace) => {
+      (workspace.folders || []).forEach((folder) => {
+        (folder.lists || []).forEach((list) => {
+          lists.push({
+            ...list,
+            folderName: folder.name,
+            workspaceName: workspace.name,
+            folderId: folder._id,
+            workspaceId: workspace._id,
+          });
+        });
+      });
+    });
+
+    return lists;
+  }, [workspaceTree]);
+
   useEffect(() => {
     const tree = Array.isArray(workspaceTree)
       ? workspaceTree
@@ -401,7 +426,18 @@ const TasksPage = () => {
 
   const listRole = selectedContext?.listRole || "viewer";
 
+  // ✅ تعديل منطق الصلاحيات - إظهار الزر دائماً
   const permissions = useMemo(() => {
+    // إذا لم يتم تحديد List، نمنح صلاحية مؤقتة للضغط على الزر
+    if (!selectedList) {
+      return {
+        canCreateTask: true, // ✅ يظهر الزر دائماً
+        canUpdateTask: false,
+        canDeleteTask: false,
+        canManageMembers: false,
+      };
+    }
+    
     const isViewer = listRole === "viewer";
     return {
       canCreateTask: !isViewer,
@@ -409,7 +445,31 @@ const TasksPage = () => {
       canDeleteTask: !isViewer,
       canManageMembers: !isViewer,
     };
-  }, [listRole]);
+  }, [selectedList, listRole]);
+
+  // ✅ دالة لفتح مودال إضافة Task مع التحقق
+  const handleOpenAddTask = () => {
+    // if (!selectedList) {
+    //   toast({
+    //     title: "No List Selected",
+    //     description: "Please select a list first to create a task.",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
+    
+    if (!permissions.canCreateTask) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to create tasks in this list.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSubTaskParent(null);
+    setOpenTaskModal(true);
+  };
 
   const handleDeleteTask = async (taskId) => {
     try {
@@ -494,8 +554,11 @@ const TasksPage = () => {
     setSidebarModals((prev) => ({ ...prev, folderModal: true }));
   };
 
-  const openListModal = (folder) => {
-    setModalData((prev) => ({ ...prev, folder }));
+  const openListModal = (workspace, folder) => {
+    console.log(workspace);
+    console.log(folder);
+    
+    setModalData((prev) => ({ ...prev, workspace, folder }));
     setSidebarModals((prev) => ({ ...prev, listModal: true }));
   };
 
@@ -514,8 +577,10 @@ const TasksPage = () => {
     setSidebarModals((prev) => ({ ...prev, listMembers: true }));
   };
 
-  const openDeleteConfirm = (type, item, workspaceId) => {
-    requestDelete({ type, item, workspaceId });
+  const openDeleteConfirm = (type, item, workspaceId, folderId) => {
+    console.log("folderId",folderId);
+    
+    requestDelete({ type, item, workspaceId, folderId });
   };
 
   const closeAllSidebarModals = () => {
@@ -550,7 +615,6 @@ const TasksPage = () => {
 
   return (
     <Layout>
-      {/* ✅ إضافة max-w-7xl ونفس padding مثل صفحة Attendance */}
       <div className="mx-auto max-w-7xl px-2 py-3 sm:px-6 sm:py-6 lg:px-8 w-full">
         <div className="flex h-full gap-2 sm:gap-4">
           {/* ========== SIDEBAR  ========== */}
@@ -647,18 +711,24 @@ const TasksPage = () => {
                 </h1>
 
                 <div className="flex items-center gap-1">
-                  {selectedList && permissions.canCreateTask && (
-                    <button
-                      onClick={() => {
-                        setSubTaskParent(null);
-                        setOpenTaskModal(true);
-                      }}
-                      className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                      aria-label="Add task"
-                    >
-                      <Plus className="h-5 w-5" />
-                    </button>
-                  )}
+                  <button
+                    onClick={handleOpenAddTask}
+                    className={`p-2 rounded-lg transition-colors ${
+                      selectedList && permissions.canCreateTask
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-blue-600 text-white hover:bg-blue-700" 
+                    }`}
+                    aria-label="Add task"
+                    title={
+                      !selectedList 
+                        ? "Select a list first" 
+                        : !permissions.canCreateTask 
+                        ? "You don't have permission" 
+                        : "Add task"
+                    }
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
 
                   {selectedList && (
                     <button
@@ -676,19 +746,18 @@ const TasksPage = () => {
                 </div>
               </div>
             )}
-            {isDesktop && selectedList && permissions.canCreateTask && (
+
+            {isDesktop && (
               <div className="flex justify-end">
                 <Button
-                  onClick={() => {
-                    setSubTaskParent(null);
-                    setOpenTaskModal(true);
-                  }}
+                  onClick={handleOpenAddTask}
                   className="h-11 rounded-xl bg-blue-600 px-5 font-medium text-white shadow-lg hover:bg-blue-700 transition-colors shrink-0"
                 >
                   + Add Task
                 </Button>
               </div>
             )}
+
             {(isMobile || isTablet) && selectedList && showFilters && (
               <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-sm animate-slideDown">
                 <TaskFiltersMobile
@@ -764,6 +833,7 @@ const TasksPage = () => {
           isOpen={openTaskModal}
           onClose={() => setOpenTaskModal(false)}
           listId={selectedList?._id}
+          allLists={allLists}
           workspaceId={selectedContext?.workspace?._id}
         />
       ) : (
