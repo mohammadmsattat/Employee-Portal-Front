@@ -63,7 +63,7 @@ const TasksTableView = ({
   });
 
   const [deleteLoading, setDeleteLoading] = useState(false);
-  
+
   // ✅ State for Task View Modal
   const [viewTask, setViewTask] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -133,7 +133,102 @@ const TasksTableView = ({
     if (progress >= 40) return "bg-amber-500";
     return "bg-slate-400";
   };
+  const getStatusConfig = (status) => {
+    const configs = {
+      todo: {
+        label: "To Do",
+        className: "bg-slate-100 text-slate-600 border-slate-200",
+        dot: "bg-slate-400",
+      },
+      in_progress: {
+        label: "In Progress",
+        className: "bg-blue-50 text-blue-600 border-blue-200",
+        dot: "bg-blue-500",
+      },
+      review: {
+        label: "Review",
+        className: "bg-amber-50 text-amber-600 border-amber-200",
+        dot: "bg-amber-500",
+      },
+      done: {
+        label: "Done",
+        className: "bg-emerald-50 text-emerald-600 border-emerald-200",
+        dot: "bg-emerald-500",
+      },
+      cancelled: {
+        label: "Cancelled",
+        className: "bg-red-50 text-red-600 border-red-200",
+        dot: "bg-red-500",
+      },
+    };
 
+    return (
+      configs[status] || {
+        label: status?.replace("_", " ") || "—",
+        className: "bg-slate-50 text-slate-500 border-slate-200",
+        dot: "bg-slate-400",
+      }
+    );
+  };
+
+  const getPriorityConfig = (priority) => {
+    const configs = {
+      low: {
+        label: "Low",
+        className: "bg-slate-50 text-slate-500 border-slate-200",
+        dot: "bg-slate-400",
+      },
+      medium: {
+        label: "Medium",
+        className: "bg-blue-50 text-blue-600 border-blue-200",
+        dot: "bg-blue-500",
+      },
+      high: {
+        label: "High",
+        className: "bg-amber-50 text-amber-600 border-amber-200",
+        dot: "bg-amber-500",
+      },
+      urgent: {
+        label: "Urgent",
+        className: "bg-red-50 text-red-600 border-red-200",
+        dot: "bg-red-500",
+      },
+    };
+
+    return (
+      configs[priority] || {
+        label: priority || "—",
+        className: "bg-slate-50 text-slate-500 border-slate-200",
+        dot: "bg-slate-400",
+      }
+    );
+  };
+
+  const StatusBadge = ({ status }) => {
+    const config = getStatusConfig(status);
+
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap ${config.className}`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+        {config.label}
+      </span>
+    );
+  };
+
+  const PriorityBadge = ({ priority }) => {
+    const config = getPriorityConfig(priority);
+
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap ${config.className}`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+        {config.label}
+      </span>
+    );
+  };
   return (
     <div>
       <>
@@ -145,7 +240,6 @@ const TasksTableView = ({
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="text-left px-4 py-3">Priority</th>
                 <th className="text-left px-4 py-3">Progress</th>
-                <th className="text-left px-4 py-3">Start</th>
                 <th className="text-left px-4 py-3">Due</th>
                 <th className="text-left px-4 py-3">Employees</th>
               </tr>
@@ -284,13 +378,13 @@ const TasksTableView = ({
                       </td>
 
                       {/* STATUS */}
-                      <td className="px-4 py-3 capitalize text-slate-600">
-                        {task.status}
+                      <td className="px-4 py-3">
+                        <StatusBadge status={task.status} />
                       </td>
 
                       {/* PRIORITY */}
-                      <td className="px-4 py-3 capitalize text-slate-600">
-                        {task.priority}
+                      <td className="px-4 py-3">
+                        <PriorityBadge priority={task.priority} />
                       </td>
 
                       {/* PROGRESS - Updated */}
@@ -309,11 +403,6 @@ const TasksTableView = ({
                             {progress}%
                           </span>
                         </div>
-                      </td>
-
-                      {/* START */}
-                      <td className="px-4 py-3 text-slate-600">
-                        {formatDate(task.startDate)}
                       </td>
 
                       {/* DUE */}

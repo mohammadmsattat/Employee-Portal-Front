@@ -1,5 +1,7 @@
 // src/Api/GlobalData.ts
 
+// const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
+
 const baseURL = "http://192.168.1.102:8001";
 
 // ================= AUTH =================
