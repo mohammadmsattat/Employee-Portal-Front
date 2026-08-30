@@ -119,7 +119,7 @@ const TaskForm = ({
 
   return (
     <div className="grid gap-4 sm:gap-5">
-      {/* LIST SELECT - Only for task mode */}
+      {/* LIST SELECT - Only for task mode
       {mode === "task" && (
         <div>
           <Label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -173,7 +173,7 @@ const TaskForm = ({
             </p>
           )}
         </div>
-      )}
+      )} */}
 
       {/* TITLE */}
       <div>
