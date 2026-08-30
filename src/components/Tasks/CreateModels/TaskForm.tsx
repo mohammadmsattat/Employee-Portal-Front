@@ -13,7 +13,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Users, ListChecks, AlertCircle } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Users,
+  ListChecks,
+  AlertCircle,
+  UserMinus,
+} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
 
@@ -23,7 +29,14 @@ interface Props {
   mode: Mode;
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
+
   handleFieldChange?: (field: string, value: any) => void;
+
+  assignedTo?: string[];
+  addAssignee?: (userId: string) => void;
+  removeAssignee?: (userId: string) => void;
+  toggleAssignee?: (userId: string) => void;
+
   onSubmit: () => void;
   isLoading?: boolean;
   t: any;
@@ -38,6 +51,11 @@ const TaskForm = ({
   formData,
   setFormData,
   handleFieldChange,
+
+  assignedTo,
+  addAssignee,
+  removeAssignee,
+
   onSubmit,
   isLoading,
   t,
@@ -57,9 +75,47 @@ const TaskForm = ({
   };
 
   // Use handleFieldChange from props or fallback to direct setFormData
-  const onFieldChange = handleFieldChange || ((field: string, value: any) => {
-    setFormData((p: any) => ({ ...p, [field]: value }));
-  });
+  const onFieldChange =
+    handleFieldChange ||
+    ((field: string, value: any) => {
+      setFormData((p: any) => ({ ...p, [field]: value }));
+    });
+
+  const assignedMemberIds: string[] = Array.isArray(assignedTo)
+    ? assignedTo
+    : Array.isArray(formData.assignedTo)
+      ? formData.assignedTo
+      : [];
+
+  const staffList = Array.isArray(staffData) ? staffData : [];
+
+  const availableStaff = staffList.filter(
+    (staff) => !assignedMemberIds.includes(staff._id),
+  );
+
+  const handleAddAssignee = (userId: string) => {
+    if (!userId) return;
+
+    if (addAssignee) {
+      addAssignee(userId);
+      return;
+    }
+
+    const nextAssignedTo = Array.from(new Set([...assignedMemberIds, userId]));
+
+    onFieldChange("assignedTo", nextAssignedTo);
+  };
+
+  const handleRemoveAssignee = (userId: string) => {
+    if (removeAssignee) {
+      removeAssignee(userId);
+      return;
+    }
+
+    const nextAssignedTo = assignedMemberIds.filter((id) => id !== userId);
+
+    onFieldChange("assignedTo", nextAssignedTo);
+  };
 
   return (
     <div className="grid gap-4 sm:gap-5">
@@ -77,10 +133,14 @@ const TaskForm = ({
           >
             <SelectTrigger
               className={`h-11 w-full rounded-2xl border ${
-                errors.list ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+                errors.list
+                  ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                  : "border-slate-200"
               } bg-white text-slate-900 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
             >
-              <SelectValue placeholder={t("tasks.selectList") || "Select a list..."} />
+              <SelectValue
+                placeholder={t("tasks.selectList") || "Select a list..."}
+              />
             </SelectTrigger>
 
             <SelectContent className="z-[9999] rounded-2xl border-slate-200 bg-white sm:rounded-lg max-h-[300px]">
@@ -123,7 +183,9 @@ const TaskForm = ({
 
         <input
           className={`h-11 w-full rounded-2xl border ${
-            errors.title ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+            errors.title
+              ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+              : "border-slate-200"
           } bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
           placeholder={t("tasks.titlePlaceholder") || "Enter task title..."}
           value={formData.title}
@@ -152,27 +214,41 @@ const TaskForm = ({
           >
             <SelectTrigger
               className={`h-11 w-full rounded-2xl border ${
-                errors.status ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+                errors.status
+                  ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                  : "border-slate-200"
               } bg-white text-slate-900 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
             >
               <SelectValue />
             </SelectTrigger>
 
             <SelectContent className="z-[9999] rounded-2xl border-slate-200 bg-white sm:rounded-lg">
-              {["todo", "in_progress", "review", "done", "cancelled"].map((status) => (
-                <SelectItem key={status} value={status} className="capitalize">
-                  <span className={`inline-flex items-center gap-2`}>
-                    <span className={`h-2 w-2 rounded-full ${
-                      status === "todo" ? "bg-slate-400" :
-                      status === "in_progress" ? "bg-blue-500" :
-                      status === "review" ? "bg-amber-500" :
-                      status === "done" ? "bg-emerald-500" :
-                      "bg-red-500"
-                    }`} />
-                    {status.replace("_", " ")}
-                  </span>
-                </SelectItem>
-              ))}
+              {["todo", "in_progress", "review", "done", "cancelled"].map(
+                (status) => (
+                  <SelectItem
+                    key={status}
+                    value={status}
+                    className="capitalize"
+                  >
+                    <span className={`inline-flex items-center gap-2`}>
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          status === "todo"
+                            ? "bg-slate-400"
+                            : status === "in_progress"
+                              ? "bg-blue-500"
+                              : status === "review"
+                                ? "bg-amber-500"
+                                : status === "done"
+                                  ? "bg-emerald-500"
+                                  : "bg-red-500"
+                        }`}
+                      />
+                      {status.replace("_", " ")}
+                    </span>
+                  </SelectItem>
+                ),
+              )}
             </SelectContent>
           </Select>
 
@@ -196,7 +272,9 @@ const TaskForm = ({
           >
             <SelectTrigger
               className={`h-11 w-full rounded-2xl border ${
-                errors.priority ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+                errors.priority
+                  ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                  : "border-slate-200"
               } bg-white text-slate-900 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
             >
               <SelectValue />
@@ -204,14 +282,23 @@ const TaskForm = ({
 
             <SelectContent className="z-[9999] rounded-2xl border-slate-200 bg-white sm:rounded-lg">
               {["low", "medium", "high", "urgent"].map((priority) => (
-                <SelectItem key={priority} value={priority} className="capitalize">
+                <SelectItem
+                  key={priority}
+                  value={priority}
+                  className="capitalize"
+                >
                   <span className={`inline-flex items-center gap-2`}>
-                    <span className={`h-2 w-2 rounded-full ${
-                      priority === "low" ? "bg-slate-400" :
-                      priority === "medium" ? "bg-blue-500" :
-                      priority === "high" ? "bg-amber-500" :
-                      "bg-red-500"
-                    }`} />
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        priority === "low"
+                          ? "bg-slate-400"
+                          : priority === "medium"
+                            ? "bg-blue-500"
+                            : priority === "high"
+                              ? "bg-amber-500"
+                              : "bg-red-500"
+                      }`}
+                    />
                     {priority}
                   </span>
                 </SelectItem>
@@ -233,7 +320,8 @@ const TaskForm = ({
         {/* START DATE */}
         <div>
           <Label className="mb-1.5 block text-sm font-medium text-slate-700">
-            {t("tasks.startDate") || "Start Date"} <span className="text-red-500">*</span>
+            {t("tasks.startDate") || "Start Date"}{" "}
+            <span className="text-red-500">*</span>
           </Label>
 
           <Popover>
@@ -241,7 +329,9 @@ const TaskForm = ({
               <Button
                 variant="outline"
                 className={`h-11 w-full justify-start rounded-2xl border ${
-                  errors.startDate ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+                  errors.startDate
+                    ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                    : "border-slate-200"
                 } bg-white text-slate-900 hover:bg-slate-50 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
@@ -282,7 +372,9 @@ const TaskForm = ({
               <Button
                 variant="outline"
                 className={`h-11 w-full justify-start rounded-2xl border ${
-                  errors.dueDate ? "border-red-300 focus:border-red-400 focus:ring-red-100" : "border-slate-200"
+                  errors.dueDate
+                    ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                    : "border-slate-200"
                 } bg-white text-slate-900 hover:bg-slate-50 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg`}
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
@@ -315,23 +407,105 @@ const TaskForm = ({
 
       {/* ASSIGN TO */}
       <div>
-        <Label className="mb-1.5 block text-sm font-medium text-slate-700">
-          <Users className="mr-1.5 inline h-4 w-4 text-blue-500" />
-          {t("tasks.assignTo")} <span className="text-red-500">*</span>
-        </Label>
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <Label className="block text-sm font-medium text-slate-700">
+            <Users className="mr-1.5 inline h-4 w-4 text-blue-500" />
 
-        <div className={errors.assignedTo ? "border border-red-300 rounded-2xl sm:rounded-lg focus-within:ring-4 focus-within:ring-red-100" : ""}>
-          <MemberSearchSelect
-            options={staffData || []}
-            selectedValue={formData.assignedTo?.[0] || ""}
-            onChange={(id) => onFieldChange("assignedTo", id ? [id] : [])}
-            placeholder="Search employee..."
-          />
+            {t("tasks.assignTo")}
+
+            <span className="ml-1 text-red-500">*</span>
+          </Label>
+
+          {assignedMemberIds.length > 0 && (
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">
+              {assignedMemberIds.length}
+            </span>
+          )}
         </div>
+
+        {/* SEARCH AND ADD */}
+        {availableStaff.length > 0 ? (
+          <div
+            className={
+              errors.assignedTo
+                ? `
+              rounded-2xl border border-red-300
+              focus-within:ring-4
+              focus-within:ring-red-100
+              sm:rounded-lg
+            `
+                : ""
+            }
+          >
+            <MemberSearchSelect
+              options={availableStaff}
+              selectedValue=""
+              onChange={(userId) => {
+                if (userId) {
+                  handleAddAssignee(userId);
+                }
+              }}
+              placeholder="Search employee..."
+            />
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-500 sm:rounded-lg">
+            {staffList.length === 0
+              ? "No employees available"
+              : "All employees are assigned"}
+          </div>
+        )}
+
+        {/* SELECTED MEMBERS */}
+        {assignedMemberIds.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {assignedMemberIds.map((userId) => {
+              const staff = staffList.find((item) => item._id === userId);
+
+              const displayName =
+                staff?.fullName || staff?.email || "Selected employee";
+
+              return (
+                <div
+                  key={userId}
+                  className="
+              flex max-w-full items-center gap-2
+              rounded-full border border-blue-100
+              bg-blue-50 px-3 py-1.5
+              text-xs font-medium text-blue-700
+            "
+                >
+                  <span className="max-w-[180px] truncate">{displayName}</span>
+
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => handleRemoveAssignee(userId)}
+                    aria-label={`Remove ${displayName}`}
+                    className="
+                flex h-5 w-5 shrink-0
+                items-center justify-center
+                rounded-full text-red-500
+                transition
+                hover:bg-red-100
+                hover:text-red-600
+                active:scale-90
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+                  >
+                    <UserMinus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {errors.assignedTo && (
           <p className="mt-1.5 flex items-center gap-1 text-sm text-red-500">
             <AlertCircle className="h-3.5 w-3.5" />
+
             {errors.assignedTo}
           </p>
         )}
@@ -346,7 +520,9 @@ const TaskForm = ({
         <Textarea
           rows={4}
           className="min-h-[100px] resize-none rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:rounded-lg"
-          placeholder={t("tasks.descriptionPlaceholder") || "Enter task description..."}
+          placeholder={
+            t("tasks.descriptionPlaceholder") || "Enter task description..."
+          }
           value={formData.description}
           onChange={(e) =>
             setFormData((p) => ({
@@ -379,8 +555,10 @@ const TaskForm = ({
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               {t("buttons.creating") || "Creating..."}
             </span>
+          ) : mode === "task" ? (
+            t("buttons.create") || "Create Task"
           ) : (
-            mode === "task" ? t("buttons.create") || "Create Task" : t("tasks.addSubtask") || "Add Subtask"
+            t("tasks.addSubtask") || "Add Subtask"
           )}
         </Button>
       </div>

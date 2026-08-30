@@ -1,328 +1,803 @@
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 import {
-  X,
   Clock3,
-  Play,
+  Loader2,
   Pause,
+  Play,
   RotateCcw,
   Save,
-  Trash,
   StickyNote,
+  Trash2,
+  X,
 } from "lucide-react";
+
+import { useToast } from "@/hooks/use-toast";
+
 import { usePersistentTaskTimer } from "@/hooks/Tasks/DetailsModels/TaskMenuActions/usePersistentTaskTimer";
+
 import { useCreateTimeLogMutation } from "@/rtk/Tasks/timeTrackingApi";
 
-// ==================== HELPERS ====================
-const formatDuration = (ms = 0) => {
-  const totalSeconds = Math.floor(ms / 1000);
-  return `${String(Math.floor(totalSeconds / 3600)).padStart(2, "0")}:${String(
-    Math.floor((totalSeconds % 3600) / 60),
-  ).padStart(2, "0")}:${String(totalSeconds % 60).padStart(2, "0")}`;
+const formatDate = (value) => {
+  if (!value) return "-";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
-const formatDate = (date) => {
-  if (!date) return "-";
-  return new Date(date).toLocaleString();
+const convertLocalDateToISO = (value) => {
+  if (!value) {
+    throw new Error("Date and time are required.");
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Invalid date and time.");
+  }
+
+  return date.toISOString();
 };
 
-// ==================== MAIN COMPONENT ====================
-const UpdateTaskTimeLogModal = ({ isOpen, onClose, entity, isMobile = false }) => {
+const UpdateTaskTimeLogModal = ({
+  isOpen,
+  onClose,
+  entity,
+  refetchTimeLogs,
+}) => {
+  const { toast } = useToast();
+
   const [mode, setMode] = useState("tracked");
+
   const [sessionNotes, setSessionNotes] = useState({});
+
   const [manualForm, setManualForm] = useState({
     from: "",
     to: "",
     note: "",
   });
 
-  const [createTimeLog, { isLoading }] = useCreateTimeLogMutation();
+  const [savingSessionId, setSavingSessionId] = useState(null);
+
+  const [isSavingManual, setIsSavingManual] = useState(false);
+
+  const [createTimeLog] = useCreateTimeLogMutation();
+
+  const data = entity?.data || entity;
+
+  const entityType =
+    entity?.type === "subtask" || Boolean(data?.task || data?.parentTaskId)
+      ? "subtask"
+      : "task";
+
+  const entityId = data?._id;
 
   const {
     isRunning,
     formattedTime,
+    totalTrackedFormatted,
     start,
     pause,
     reset,
     sessions,
     deleteSession,
-  } = usePersistentTaskTimer(entity?.data?._id);
+    formatDuration,
+  } = usePersistentTaskTimer(entityId);
 
-  const unsavedSessions = useMemo(
-    () => (sessions || []).filter((s) => !s.saved),
-    [sessions],
-  );
+  const unsavedSessions = useMemo(() => {
+    return Array.isArray(sessions)
+      ? sessions.filter((session) => !session.saved)
+      : [];
+  }, [sessions]);
 
-  const handleSessionNoteChange = (id, value) => {
-    setSessionNotes((p) => ({ ...p, [id]: value }));
+  const isSaving = Boolean(savingSessionId) || isSavingManual;
+
+  /*
+   * تنظيف البيانات عند فتح مهمة مختلفة.
+   */
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setMode("tracked");
+    setSessionNotes({});
+    setManualForm({
+      from: "",
+      to: "",
+      note: "",
+    });
+    setSavingSessionId(null);
+    setIsSavingManual(false);
+  }, [isOpen, entityId]);
+
+  const createEntityPayload = () => {
+    if (!entityId) {
+      throw new Error("Task information is missing.");
+    }
+
+    if (entityType === "subtask") {
+      return {
+        subTask: entityId,
+      };
+    }
+
+    return {
+      task: entityId,
+    };
+  };
+
+  const refreshLogs = async () => {
+    try {
+      await Promise.resolve(refetchTimeLogs?.());
+    } catch (error) {
+      console.error("Failed to refresh time logs", error);
+    }
+  };
+
+  const handleSessionNoteChange = (sessionId, value) => {
+    setSessionNotes((previous) => ({
+      ...previous,
+      [sessionId]: value,
+    }));
   };
 
   const handleSaveSession = async (session) => {
+    if (!session?.id || isSaving) return;
+
+    if (!session.from || !session.to) {
+      toast({
+        title: "Invalid session",
+        description: "The session start or end time is missing.",
+        variant: "destructive",
+      });
+
+      return;
+    }
+
+    setSavingSessionId(session.id);
+
     try {
       const payload = {
-        task: entity?.type === "task" ? entity?.data?._id : undefined,
-        subTask: entity?.type === "subtask" ? entity?.data?._id : undefined,
+        ...createEntityPayload(),
         from: session.from,
         to: session.to,
-        note: sessionNotes[session.id] || "",
+        note: sessionNotes[session.id]?.trim() || "",
         type: "tracked",
       };
 
       await createTimeLog(payload).unwrap();
+
+      /*
+       * نحذف الجلسة المحلية فقط بعد نجاح الحفظ.
+       */
       deleteSession(session.id);
-    } catch (err) {
-      console.error(err);
+
+      setSessionNotes((previous) => {
+        const nextNotes = { ...previous };
+
+        delete nextNotes[session.id];
+
+        return nextNotes;
+      });
+
+      await refreshLogs();
+
+      toast({
+        title: "Session saved",
+        description: "The tracked session was saved successfully.",
+      });
+    } catch (error) {
+      console.error("Failed to save session", error);
+
+      toast({
+        title: "Save failed",
+        description:
+          error?.data?.message ||
+          error?.message ||
+          "Failed to save the tracked session.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingSessionId(null);
     }
   };
 
   const handleManualSave = async () => {
+    if (isSaving) return;
+
+    if (!manualForm.from || !manualForm.to) {
+      toast({
+        title: "Missing information",
+        description: "Please select both start and end time.",
+        variant: "destructive",
+      });
+
+      return;
+    }
+
+    const fromTimestamp = new Date(manualForm.from).getTime();
+
+    const toTimestamp = new Date(manualForm.to).getTime();
+
+    if (!Number.isFinite(fromTimestamp) || !Number.isFinite(toTimestamp)) {
+      toast({
+        title: "Invalid time",
+        description: "Please enter valid start and end times.",
+        variant: "destructive",
+      });
+
+      return;
+    }
+
+    if (toTimestamp <= fromTimestamp) {
+      toast({
+        title: "Invalid time range",
+        description: "End time must be after start time.",
+        variant: "destructive",
+      });
+
+      return;
+    }
+
+    setIsSavingManual(true);
+
     try {
       const payload = {
-        task: entity?.type === "task" ? entity?.data?._id : undefined,
-        subTask: entity?.type === "subtask" ? entity?.data?._id : undefined,
-        from: manualForm.from,
-        to: manualForm.to,
-        note: manualForm.note || "",
+        ...createEntityPayload(),
+        from: convertLocalDateToISO(manualForm.from),
+        to: convertLocalDateToISO(manualForm.to),
+        note: manualForm.note.trim(),
         type: "manual",
       };
 
       await createTimeLog(payload).unwrap();
-      setManualForm({ from: "", to: "", note: "" });
-    } catch (err) {
-      console.error(err);
+
+      setManualForm({
+        from: "",
+        to: "",
+        note: "",
+      });
+
+      await refreshLogs();
+
+      toast({
+        title: "Time entry saved",
+        description: "The manual time entry was saved successfully.",
+      });
+    } catch (error) {
+      console.error("Failed to save manual time entry", error);
+
+      toast({
+        title: "Save failed",
+        description:
+          error?.data?.message ||
+          error?.message ||
+          "Failed to save the manual entry.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingManual(false);
     }
   };
 
-  if (!isOpen) return null;
+  const handleReset = () => {
+    if (!isRunning && unsavedSessions.length === 0) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Delete the active timer and all unsaved sessions?",
+    );
+
+    if (confirmed) {
+      reset();
+      setSessionNotes({});
+    }
+  };
+
+  if (!isOpen || !entityId) {
+    return null;
+  }
 
   return (
-    <div className={`
-      bg-white border rounded-2xl shadow-2xl overflow-hidden
-      ${isMobile ? "w-full max-w-[320px]" : "w-[350px]"}
-    `}>
+    <div
+      className="
+    w-[calc(100vw-24px)]
+    max-w-[380px]
+    max-h-[calc(100vh-24px)]
+    overflow-y-auto
+    rounded-2xl
+    border border-slate-200
+    bg-white
+    shadow-2xl
+  "
+    >
       {/* HEADER */}
-      <div className="px-4 py-3 sm:px-5 sm:py-4 border-b flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className={`${isMobile ? "h-8 w-8" : "h-9 w-9"} rounded-2xl bg-blue-50 flex items-center justify-center`}>
-            <Clock3 className={`${isMobile ? "w-3.5 h-3.5" : "w-4 h-4"} text-blue-600`} />
+      <div
+        className="
+          flex items-center justify-between gap-3
+          border-b border-slate-100
+          px-4 py-4
+        "
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className="
+              flex h-9 w-9 shrink-0
+              items-center justify-center
+              rounded-xl bg-blue-50
+            "
+          >
+            <Clock3 className="h-4 w-4 text-blue-600" />
           </div>
 
-          <div>
-            <h2 className={`${isMobile ? "text-sm" : "text-sm"} font-semibold`}>Time Tracker</h2>
-            <p className="text-[11px] text-slate-500">Track and save sessions</p>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-slate-800">
+              {entityType === "subtask"
+                ? "Subtask Time Tracker"
+                : "Task Time Tracker"}
+            </h2>
+
+            <p className="truncate text-[11px] text-slate-400">
+              {data.title || "Track working time"}
+            </p>
           </div>
         </div>
 
-        <button 
+        <button
+          type="button"
+          disabled={isSaving}
           onClick={onClose}
-          className={isMobile ? "p-1 hover:bg-slate-100 rounded-lg transition" : "hover:bg-slate-100 rounded-lg p-1 transition"}
+          aria-label="Close time tracker"
+          className="
+            flex h-8 w-8 shrink-0
+            items-center justify-center
+            rounded-lg text-slate-500
+            transition
+            hover:bg-slate-100
+            hover:text-slate-700
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          "
         >
-          <X className={`${isMobile ? "w-5 h-5" : "w-4 h-4"}`} />
+          <X className="h-4 w-4" />
         </button>
       </div>
 
       {/* MODE */}
-      <div className="p-3 sm:p-4 border-b">
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl">
+      <div className="border-b border-slate-100 px-4 py-3">
+        <div className="flex rounded-xl bg-slate-100 p-1">
           <button
+            type="button"
+            disabled={isSaving}
             onClick={() => setMode("tracked")}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium transition ${
-              mode === "tracked" ? "bg-white shadow text-blue-600" : "text-slate-600"
-            } ${isMobile ? "text-xs py-2.5" : "text-sm"}`}
+            className={`
+              flex-1 rounded-lg px-3 py-2
+              text-xs font-medium transition
+              ${
+                mode === "tracked"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }
+            `}
           >
             Timer
           </button>
 
           <button
+            type="button"
+            disabled={isSaving}
             onClick={() => setMode("manual")}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium transition ${
-              mode === "manual" ? "bg-white shadow text-blue-600" : "text-slate-600"
-            } ${isMobile ? "text-xs py-2.5" : "text-sm"}`}
+            className={`
+              flex-1 rounded-lg px-3 py-2
+              text-xs font-medium transition
+              ${
+                mode === "manual"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }
+            `}
           >
-            Manual
+            Manual Entry
           </button>
         </div>
       </div>
 
-      {/* TRACKED */}
       {mode === "tracked" && (
         <>
           {/* TIMER */}
-          <div className="p-3 border-b bg-slate-50/50">
-            <div className="bg-white border border-slate-200 rounded-3xl p-4 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                {/* TEXT */}
-                <div className="text-left min-w-0">
-                  <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
-                    Current Session
-                  </div>
+          <div className="bg-slate-50/70 p-4">
+            <div
+              className="
+                rounded-2xl border border-slate-200
+                bg-white p-4 shadow-sm
+              "
+            >
+              <div className="text-center">
+                <p
+                  className="
+                    text-[10px] font-medium uppercase
+                    tracking-[0.16em] text-slate-400
+                  "
+                >
+                  Current Session
+                </p>
 
-                  <div className={`font-semibold tracking-tight text-slate-900 ${isMobile ? "text-xl" : "text-2xl"}`}>
-                    {formattedTime}
-                  </div>
+                <div
+                  className="
+                    mt-2 font-mono text-3xl
+                    font-semibold tracking-tight
+                    text-slate-900
+                  "
+                >
+                  {formattedTime}
                 </div>
 
-                {/* ACTIONS */}
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                  {!isRunning ? (
-                    <button
-                      onClick={start}
-                      className={`${isMobile ? "w-9 h-9" : "w-10 h-10"} rounded-2xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition active:scale-95`}
-                    >
-                      <Play className={`${isMobile ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={pause}
-                      className={`${isMobile ? "w-9 h-9" : "w-10 h-10"} rounded-2xl bg-red-500 hover:bg-red-400 text-white flex items-center justify-center transition active:scale-95`}
-                    >
-                      <Pause className={`${isMobile ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
-                    </button>
-                  )}
+                <div className="mt-1 text-[11px] text-slate-400">
+                  Unsaved total: {totalTrackedFormatted}
+                </div>
+              </div>
 
+              <div className="mt-4 flex gap-2">
+                {!isRunning ? (
                   <button
-                    onClick={reset}
-                    className={`${isMobile ? "w-9 h-9" : "w-10 h-10"} rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center transition active:scale-95`}
+                    type="button"
+                    disabled={isSaving}
+                    onClick={start}
+                    className="
+                      flex h-10 flex-1
+                      items-center justify-center gap-2
+                      rounded-xl bg-blue-600
+                      text-sm font-medium text-white
+                      transition
+                      hover:bg-blue-700
+                      active:scale-[0.98]
+                      disabled:cursor-not-allowed
+                      disabled:opacity-60
+                    "
                   >
-                    <RotateCcw className={`${isMobile ? "w-3.5 h-3.5" : "w-4 h-4"} text-slate-600`} />
+                    <Play className="h-4 w-4 fill-current" />
+                    Start
                   </button>
-                </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={pause}
+                    className="
+                      flex h-10 flex-1
+                      items-center justify-center gap-2
+                      rounded-xl bg-red-500
+                      text-sm font-medium text-white
+                      transition
+                      hover:bg-red-600
+                      active:scale-[0.98]
+                      disabled:cursor-not-allowed
+                      disabled:opacity-60
+                    "
+                  >
+                    <Pause className="h-4 w-4 fill-current" />
+                    Pause
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  disabled={
+                    isSaving || (!isRunning && unsavedSessions.length === 0)
+                  }
+                  onClick={handleReset}
+                  aria-label="Reset timer"
+                  title="Delete timer and unsaved sessions"
+                  className="
+                    flex h-10 w-10 shrink-0
+                    items-center justify-center
+                    rounded-xl border border-slate-200
+                    bg-white text-slate-600
+                    transition
+                    hover:border-red-200
+                    hover:bg-red-50
+                    hover:text-red-600
+                    active:scale-95
+                    disabled:cursor-not-allowed
+                    disabled:opacity-40
+                  "
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </div>
 
           {/* SESSIONS */}
-          <div className="px-3 pb-3 sm:px-4 sm:pb-4">
-            <div className="space-y-3 mt-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
-              {!unsavedSessions.length && (
-                <div className="border border-dashed rounded-2xl py-8 text-center bg-slate-50">
-                  <Clock3 className={`${isMobile ? "w-4 h-4" : "w-5 h-5"} mx-auto text-slate-300 mb-2`} />
-                  <p className={`${isMobile ? "text-xs" : "text-sm"} text-slate-500`}>No sessions yet</p>
-                </div>
-              )}
+          <div className="border-t border-slate-100 px-4 py-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-xs font-semibold text-slate-700">
+                Unsaved Sessions
+              </p>
 
-              {unsavedSessions.map((session) => (
+              <span
+                className="
+                  rounded-full bg-blue-50
+                  px-2 py-0.5
+                  text-[10px] font-semibold
+                  text-blue-600
+                "
+              >
+                {unsavedSessions.length}
+              </span>
+            </div>
+
+            <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
+              {unsavedSessions.length === 0 ? (
                 <div
-                  key={session.id}
-                  className="group relative rounded-2xl border bg-white p-3 sm:p-4 transition hover:shadow-md"
+                  className="
+                    rounded-xl border border-dashed
+                    border-slate-200 bg-slate-50
+                    px-4 py-7 text-center
+                  "
                 >
-                  <div className="flex justify-between gap-3">
-                    {/* INFO */}
-                    <div className="flex-1 min-w-0">
-                      <div className={`${isMobile ? "text-[10px]" : "text-[11px]"} text-slate-500 space-y-0.5`}>
-                        <div>From: {formatDate(session.from)}</div>
-                        <div>To: {formatDate(session.to)}</div>
-                      </div>
+                  <Clock3 className="mx-auto h-5 w-5 text-slate-300" />
 
-                      <div className={`font-semibold mt-1 ${isMobile ? "text-sm" : "text-base"}`}>
-                        {formatDuration(session.duration)}
-                      </div>
-                    </div>
-
-                    {/* ACTIONS */}
-                    <div className="flex gap-1.5 shrink-0">
-                      <button
-                        onClick={() => handleSaveSession(session)}
-                        className={`${isMobile ? "w-8 h-8" : "w-7 h-7"} border rounded-lg hover:bg-emerald-50 flex items-center justify-center transition active:scale-95`}
-                      >
-                        <Save className={`${isMobile ? "w-4 h-4" : "w-3.5 h-3.5"}`} />
-                      </button>
-
-                      <button
-                        onClick={() => deleteSession(session.id)}
-                        className={`${isMobile ? "w-8 h-8" : "w-7 h-7"} border rounded-lg hover:bg-red-50 flex items-center justify-center transition active:scale-95`}
-                      >
-                        <Trash className={`${isMobile ? "w-4 h-4" : "w-3.5 h-3.5"}`} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* NOTE ON HOVER */}
-                  <div className="mt-3 hidden group-hover:block animate-in fade-in duration-150">
-                    <div className="flex items-center gap-2 mb-1">
-                      <StickyNote className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="text-[11px] text-slate-400">Session note</span>
-                    </div>
-
-                    <textarea
-                      placeholder="Add note..."
-                      value={sessionNotes[session.id] || ""}
-                      onChange={(e) =>
-                        handleSessionNoteChange(session.id, e.target.value)
-                      }
-                      className={`w-full border border-slate-200/60 rounded-2xl p-3 outline-none bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition resize-none
-                        ${isMobile ? "text-sm min-h-[60px]" : "text-sm min-h-[50px]"}
-                      `}
-                    />
-                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Pause the timer to create a session.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                unsavedSessions.map((session) => {
+                  const savingThisSession = savingSessionId === session.id;
+
+                  return (
+                    <div
+                      key={session.id}
+                      className="
+                        rounded-xl border border-slate-200
+                        bg-white p-3
+                      "
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-base font-semibold text-slate-800">
+                            {formatDuration(session.duration)}
+                          </div>
+
+                          <div className="mt-1 space-y-0.5 text-[10px] text-slate-400">
+                            <p>From: {formatDate(session.from)}</p>
+
+                            <p>To: {formatDate(session.to)}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 gap-1.5">
+                          <button
+                            type="button"
+                            disabled={isSaving}
+                            onClick={() => handleSaveSession(session)}
+                            aria-label="Save session"
+                            className="
+                              flex h-8 w-8
+                              items-center justify-center
+                              rounded-lg border border-emerald-100
+                              text-emerald-600
+                              transition
+                              hover:bg-emerald-50
+                              active:scale-95
+                              disabled:cursor-not-allowed
+                              disabled:opacity-50
+                            "
+                          >
+                            {savingThisSession ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Save className="h-4 w-4" />
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isSaving}
+                            onClick={() => deleteSession(session.id)}
+                            aria-label="Delete session"
+                            className="
+                              flex h-8 w-8
+                              items-center justify-center
+                              rounded-lg border border-red-100
+                              text-red-500
+                              transition
+                              hover:bg-red-50
+                              active:scale-95
+                              disabled:cursor-not-allowed
+                              disabled:opacity-50
+                            "
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* NOTE — always visible on mobile and desktop */}
+                      <div className="mt-3">
+                        <div className="mb-1.5 flex items-center gap-1.5">
+                          <StickyNote className="h-3.5 w-3.5 text-slate-400" />
+
+                          <span className="text-[11px] text-slate-400">
+                            Session note
+                          </span>
+                        </div>
+
+                        <textarea
+                          disabled={isSaving}
+                          value={sessionNotes[session.id] || ""}
+                          onChange={(event) =>
+                            handleSessionNoteChange(
+                              session.id,
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Add an optional note..."
+                          className="
+                            min-h-[58px] w-full resize-none
+                            rounded-xl border border-slate-200
+                            bg-white p-2.5
+                            text-xs text-slate-700
+                            outline-none transition
+                            placeholder:text-slate-300
+                            focus:border-blue-300
+                            focus:ring-2 focus:ring-blue-100
+                            disabled:cursor-not-allowed
+                            disabled:bg-slate-50
+                          "
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </>
       )}
 
-      {/* MANUAL */}
       {mode === "manual" && (
-        <div className={`p-3 sm:p-4 space-y-3`}>
+        <div className="space-y-4 p-4">
           <div className="space-y-1.5">
-            <label className={`${isMobile ? "text-xs" : "text-xs"} font-medium text-slate-600`}>
+            <label
+              htmlFor="time-log-from"
+              className="text-xs font-medium text-slate-600"
+            >
               From
             </label>
+
             <input
+              id="time-log-from"
               type="datetime-local"
-              className={`w-full border rounded-xl outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition
-                ${isMobile ? "p-3 text-sm" : "p-2.5 text-sm"}
-              `}
+              disabled={isSaving}
               value={manualForm.from}
-              onChange={(e) =>
-                setManualForm((p) => ({ ...p, from: e.target.value }))
+              onChange={(event) =>
+                setManualForm((previous) => ({
+                  ...previous,
+                  from: event.target.value,
+                }))
               }
+              className="
+                h-10 w-full rounded-xl
+                border border-slate-200
+                bg-white px-3
+                text-sm text-slate-700
+                outline-none transition
+                focus:border-blue-300
+                focus:ring-2 focus:ring-blue-100
+                disabled:cursor-not-allowed
+                disabled:bg-slate-50
+              "
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className={`${isMobile ? "text-xs" : "text-xs"} font-medium text-slate-600`}>
+            <label
+              htmlFor="time-log-to"
+              className="text-xs font-medium text-slate-600"
+            >
               To
             </label>
+
             <input
+              id="time-log-to"
               type="datetime-local"
-              className={`w-full border rounded-xl outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition
-                ${isMobile ? "p-3 text-sm" : "p-2.5 text-sm"}
-              `}
+              disabled={isSaving}
+              min={manualForm.from || undefined}
               value={manualForm.to}
-              onChange={(e) =>
-                setManualForm((p) => ({ ...p, to: e.target.value }))
+              onChange={(event) =>
+                setManualForm((previous) => ({
+                  ...previous,
+                  to: event.target.value,
+                }))
               }
+              className="
+                h-10 w-full rounded-xl
+                border border-slate-200
+                bg-white px-3
+                text-sm text-slate-700
+                outline-none transition
+                focus:border-blue-300
+                focus:ring-2 focus:ring-blue-100
+                disabled:cursor-not-allowed
+                disabled:bg-slate-50
+              "
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className={`${isMobile ? "text-xs" : "text-xs"} font-medium text-slate-600`}>
+            <label
+              htmlFor="time-log-note"
+              className="text-xs font-medium text-slate-600"
+            >
               Note
             </label>
+
             <textarea
-              className={`w-full border border-slate-200/60 rounded-xl p-3 outline-none bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition resize-none
-                ${isMobile ? "text-sm min-h-[80px]" : "text-sm min-h-[60px]"}
-              `}
-              placeholder="Add note..."
+              id="time-log-note"
+              disabled={isSaving}
               value={manualForm.note}
-              onChange={(e) =>
-                setManualForm((p) => ({ ...p, note: e.target.value }))
+              onChange={(event) =>
+                setManualForm((previous) => ({
+                  ...previous,
+                  note: event.target.value,
+                }))
               }
+              placeholder="Add an optional note..."
+              className="
+                min-h-[80px] w-full resize-none
+                rounded-xl border border-slate-200
+                bg-white p-3
+                text-sm text-slate-700
+                outline-none transition
+                placeholder:text-slate-300
+                focus:border-blue-300
+                focus:ring-2 focus:ring-blue-100
+                disabled:cursor-not-allowed
+                disabled:bg-slate-50
+              "
             />
           </div>
 
           <button
+            type="button"
+            disabled={isSaving || !manualForm.from || !manualForm.to}
             onClick={handleManualSave}
-            disabled={!manualForm.from || !manualForm.to}
-            className={`
-              w-full bg-blue-600 text-white rounded-xl font-medium
-              hover:bg-blue-700 transition active:scale-[0.98]
-              disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600
-              ${isMobile ? "py-3 text-sm" : "py-2.5 text-sm"}
-            `}
+            className="
+              flex h-10 w-full
+              items-center justify-center gap-2
+              rounded-xl bg-blue-600
+              text-sm font-medium text-white
+              transition
+              hover:bg-blue-700
+              active:scale-[0.98]
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
           >
-            {isLoading ? "Saving..." : "Save Manual Entry"}
+            {isSavingManual ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Manual Entry
+              </>
+            )}
           </button>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useUpdateTaskMutation } from "@/rtk/Tasks/tasksApi";
 import { useUpdateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
@@ -9,41 +9,82 @@ import {
   useDeleteCommentMutation,
 } from "@/rtk/Tasks/commentsApi";
 
-import {
-  useGetAttachmentsQuery,
-  useAddAttachmentMutation,
-} from "@/rtk/Tasks/attachmentsApi";
+import { useGetAttachmentsQuery } from "@/rtk/Tasks/attachmentsApi";
 
 export const useTaskDetailsModal = ({
   entity,
+  entityType,
   onClose,
-  workspaceId,
   listId,
+  canEdit,
 }) => {
-  const data = entity?.data;
-  const type = entity?.type;
+  /* =========================
+     ENTITY
+  ========================= */
 
-  const isSubTask = type === "subtask";
-  const id = data?._id;
+  const data = entity;
 
-  const parentTaskId = data?.parentTaskId;
+  const isSubTask = entityType === "subtask";
+
+  const id = data?._id || null;
+
+  const parentTaskId = useMemo(() => {
+    if (!isSubTask) return null;
+
+    if (typeof data?.task === "object") {
+      return data.task?._id || null;
+    }
+
+    return data?.task || data?.parentTaskId || null;
+  }, [isSubTask, data?.task, data?.parentTaskId]);
+
+  /* =========================
+     UI STATE
+  ========================= */
 
   const [openPanel, setOpenPanel] = useState(null);
   const [position, setPosition] = useState("bottom");
   const [anchorRect, setAnchorRect] = useState(null);
 
+  /* =========================
+     SAVE STATE
+  ========================= */
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  /* =========================
+     MUTATIONS
+  ========================= */
+
   const [updateTask] = useUpdateTaskMutation();
   const [updateSubTask] = useUpdateSubTaskMutation();
 
+  const [createComment] = useCreateCommentMutation();
+
+  const [deleteComment] = useDeleteCommentMutation();
+
   /* =========================
-     COMMENTS / ATTACHMENTS
-  ========================== */
+     QUERY PARAMETERS
+  ========================= */
 
   const queryParams = useMemo(() => {
     if (!id) return {};
 
-    return isSubTask ? { subTaskId: id } : { taskId: id };
+    if (isSubTask) {
+      return {
+        subTaskId: id,
+      };
+    }
+
+    return {
+      taskId: id,
+    };
   }, [id, isSubTask]);
+
+  /* =========================
+     COMMENTS
+  ========================= */
 
   const {
     data: commentsData,
@@ -55,6 +96,10 @@ export const useTaskDetailsModal = ({
     refetchOnMountOrArgChange: true,
   });
 
+  /* =========================
+     ATTACHMENTS
+  ========================= */
+
   const {
     data: attachmentsData,
     isFetching: attachmentsFetching,
@@ -65,19 +110,41 @@ export const useTaskDetailsModal = ({
     refetchOnMountOrArgChange: true,
   });
 
-  const [createComment] = useCreateCommentMutation();
-  const [deleteComment] = useDeleteCommentMutation();
-  const [createAttachment] = useAddAttachmentMutation();
+  /* =========================
+     NORMALIZED RESPONSE DATA
+  ========================= */
+
+  const commentsList = useMemo(() => {
+    if (Array.isArray(commentsData)) {
+      return commentsData;
+    }
+
+    if (Array.isArray(commentsData?.data)) {
+      return commentsData.data;
+    }
+
+    return [];
+  }, [commentsData]);
+
+  const attachmentsList = useMemo(() => {
+    if (Array.isArray(attachmentsData)) {
+      return attachmentsData;
+    }
+
+    if (Array.isArray(attachmentsData?.data)) {
+      return attachmentsData.data;
+    }
+
+    return [];
+  }, [attachmentsData]);
 
   /* =========================
      FORM
-  ========================== */
+  ========================= */
 
   const [form, setForm] = useState({
     title: "",
     description: "",
-    status: "todo",
-    priority: "medium",
   });
 
   useEffect(() => {
@@ -86,152 +153,290 @@ export const useTaskDetailsModal = ({
     setForm({
       title: data.title || "",
       description: data.description || "",
-      status: data.status || "todo",
-      priority: data.priority || "medium",
     });
 
+    setSaveError(null);
     setOpenPanel(null);
     setAnchorRect(null);
     setPosition("bottom");
-  }, [id]);
-
-  const updateField = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
+  }, [id, data?.title, data?.description]);
 
   /* =========================
-     SAVE (TASK / SUBTASK)
-  ========================== */
+     UPDATE FIELD
+  ========================= */
 
-  const saveTask = async () => {
-    if (isSubTask) {
-      const res = await updateSubTask({
-        taskId: entity?.parentTaskId,
-        subTaskId: id,
-        data: form,
-      });
-      console.log(res);
-    } else {
-      const res = await updateTask({
-        listId,
-        id,
-        data: form,
-      });
-      console.log(res);
+  const updateField = useCallback(
+    (key, value) => {
+      if (!canEdit) return;
+
+      setForm((previous) => ({
+        ...previous,
+        [key]: value,
+      }));
+
+      setSaveError(null);
+    },
+    [canEdit],
+  );
+
+  /* =========================
+     SAVE TASK / SUBTASK
+  ========================= */
+
+  const saveTask = useCallback(async () => {
+    if (!canEdit) {
+      setSaveError("You don't have permission to update this item.");
+
+      return false;
     }
 
-    onClose();
-  };
+    if (!id) {
+      setSaveError("Task ID is missing.");
+      return false;
+    }
+
+    const trimmedTitle = form.title?.trim();
+
+    if (!trimmedTitle) {
+      setSaveError("Task title is required.");
+      return false;
+    }
+
+    if (isSubTask && !parentTaskId) {
+      setSaveError("Parent task ID is missing.");
+      return false;
+    }
+
+    if (!isSubTask && !listId) {
+      setSaveError("List ID is missing.");
+      return false;
+    }
+
+    const payload = {
+      title: trimmedTitle,
+      description: form.description || "",
+    };
+
+    try {
+      setIsSaving(true);
+      setSaveError(null);
+
+      if (isSubTask) {
+        await updateSubTask({
+          taskId: parentTaskId,
+          subTaskId: id,
+          data: payload,
+        }).unwrap();
+      } else {
+        await updateTask({
+          listId,
+          id,
+          data: payload,
+        }).unwrap();
+      }
+
+      onClose?.();
+
+      return true;
+    } catch (error) {
+      const message =
+        error?.data?.message ||
+        error?.error ||
+        error?.message ||
+        "Failed to save changes.";
+
+      setSaveError(message);
+
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    canEdit,
+    id,
+    form.title,
+    form.description,
+    isSubTask,
+    parentTaskId,
+    listId,
+    updateTask,
+    updateSubTask,
+    onClose,
+  ]);
 
   /* =========================
-     COMMENTS
-  ========================== */
+     ADD COMMENT
+  ========================= */
 
-  const addComment = async (text) => {
-    if (!text.trim() || !id) return;
+  const addComment = useCallback(
+    async (text) => {
+      const content = text?.trim();
 
-    await createComment({
-      content: text,
-      task: isSubTask ? data?.task : id,
-      subTask: isSubTask ? id : undefined,
-    }).unwrap();
-  };
+      if (!content || !id) return null;
 
-  const removeComment = async (commentId) => {
-    await deleteComment(commentId).unwrap();
-  };
+      if (isSubTask && !parentTaskId) {
+        throw new Error("Parent task ID is missing.");
+      }
+
+      const result = await createComment({
+        content,
+
+        task: isSubTask ? parentTaskId : id,
+
+        subTask: isSubTask ? id : undefined,
+      }).unwrap();
+
+      return result;
+    },
+    [id, isSubTask, parentTaskId, createComment],
+  );
 
   /* =========================
-     ACTIVITY (TASK + SUBTASK SAFE)
-  ========================== */
+     REMOVE COMMENT
+  ========================= */
+
+  const removeComment = useCallback(
+    async (commentId) => {
+      if (!commentId) return false;
+
+      await deleteComment(commentId).unwrap();
+
+      return true;
+    },
+    [deleteComment],
+  );
+
+  /* =========================
+     ACTIVITY
+  ========================= */
 
   const activity = useMemo(() => {
     if (!id) return [];
 
-    const comments = (commentsData || []).map((c) => ({
+    const comments = commentsList.map((comment) => ({
       type: "comment",
-      data: c,
-      date: new Date(c.createdAt),
+      data: comment,
+      date: new Date(comment.createdAt || 0),
     }));
 
-    const attachments = (attachmentsData?.data || []).map((a) => ({
+    const attachments = attachmentsList.map((attachment) => ({
       type: "attachment",
-      data: a,
-      date: new Date(a.createdAt),
+      data: attachment,
+      date: new Date(attachment.createdAt || 0),
     }));
 
-    return [...comments, ...attachments].sort((a, b) => a.date - b.date);
-  }, [commentsData, attachmentsData, id]);
+    return [...comments, ...attachments].sort(
+      (firstItem, secondItem) =>
+        firstItem.date.getTime() - secondItem.date.getTime(),
+    );
+  }, [commentsList, attachmentsList, id]);
 
   /* =========================
-     LOADING / ERROR
-  ========================== */
+     ACTIVITY LOADING / ERROR
+  ========================= */
 
-  const activityLoading = !id || commentsFetching || attachmentsFetching;
+  const activityLoading =
+    Boolean(id) && (commentsFetching || attachmentsFetching);
 
-  const activityError =
-    (!!commentsError && !commentsData) ||
-    (!!attachmentsError && !attachmentsData);
+  const activityError = Boolean(
+    (commentsError && !commentsData) || (attachmentsError && !attachmentsData),
+  );
 
-  const refetchActivity = () => {
+  /* =========================
+     REFETCH ACTIVITY
+  ========================= */
+
+  const refetchActivity = useCallback(async () => {
     if (!id) return;
-    refetchComments?.();
-    refetchAttachments?.();
-  };
+
+    const requests = [];
+
+    if (refetchComments) {
+      requests.push(refetchComments());
+    }
+
+    if (refetchAttachments) {
+      requests.push(refetchAttachments());
+    }
+
+    await Promise.allSettled(requests);
+  }, [id, refetchComments, refetchAttachments]);
 
   /* =========================
-     UI STATE (POPOVER)
-  ========================== */
+     OPEN POPOVER
+  ========================= */
 
-  const handleOpen = (e, panel) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+  const handleOpen = useCallback((event, panel) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+
     setAnchorRect(rect);
 
     const spaceBelow = window.innerHeight - rect.bottom;
+
     setPosition(spaceBelow < 280 ? "top" : "bottom");
 
-    setOpenPanel((prev) => (prev === panel ? null : panel));
-  };
+    setOpenPanel((previous) => (previous === panel ? null : panel));
+  }, []);
 
-  const closeSubModal = () => {
+  /* =========================
+     CLOSE POPOVER
+  ========================= */
+
+  const closeSubModal = useCallback(() => {
     setOpenPanel(null);
-    // onClose();
-  };
+  }, []);
 
-  const popoverStyle = () => {
+  /* =========================
+     POPOVER POSITION
+  ========================= */
+
+  const popoverStyle = useCallback(() => {
     if (!anchorRect) return {};
 
     return {
       position: "fixed",
+
       left: anchorRect.left + anchorRect.width * 1.8,
+
       top: position === "bottom" ? anchorRect.bottom + 10 : anchorRect.top - 10,
+
       transform: "translateX(-50%)",
+
       zIndex: 9999,
+
       width: "min(320px, 90vw)",
       maxHeight: "70vh",
       overflowY: "auto",
     };
-  };
+  }, [anchorRect, position]);
 
   return {
+    /* FORM */
     form,
     updateField,
     saveTask,
 
+    /* SAVE */
+    isSaving,
+    saveError,
+
+    /* ACTIVITY */
     activity,
     addComment,
     removeComment,
+    activityLoading,
+    activityError,
+    refetchActivity,
 
+    /* POPOVER */
     openPanel,
     handleOpen,
     closeSubModal,
     popoverStyle,
 
-    activityLoading,
-    activityError,
-    refetchActivity,
-
+    /* ENTITY */
     isSubTask,
     id,
+    parentTaskId,
   };
 };

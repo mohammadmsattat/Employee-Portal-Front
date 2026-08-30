@@ -1,29 +1,26 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import baseURL from "@/Api/GlobalData";
+
+import baseURL, { buildFolderUrl } from "@/Api/GlobalData";
+import { workspaceApi } from "@/rtk/Tasks/workspaceApi";
 
 const getJWT = () => localStorage.getItem("token");
-const getCompanyId = () => localStorage.getItem("company");
-
-// ===============================
-// HELPERS
-// ===============================
-const buildFolderBaseUrl = (workspaceId: string) =>
-  `/api/workspaces/${workspaceId}/folders`;
 
 const buildFolderMemberUrl = (workspaceId: string, folderId: string) =>
-  `${buildFolderBaseUrl(workspaceId)}/${folderId}/members`;
+  `${buildFolderUrl(workspaceId)}/${folderId}/members`;
 
-// ===============================
-// API
-// ===============================
 export const folderApi = createApi({
   reducerPath: "folderApi",
 
   baseQuery: fetchBaseQuery({
     baseUrl: baseURL,
+
     prepareHeaders: (headers) => {
       const jwt = getJWT();
-      if (jwt) headers.set("Authorization", `Bearer ${jwt}`);
+
+      if (jwt) {
+        headers.set("Authorization", `Bearer ${jwt}`);
+      }
+
       return headers;
     },
   }),
@@ -31,66 +28,126 @@ export const folderApi = createApi({
   tagTypes: ["Folder"],
 
   endpoints: (builder) => ({
-
-    // =========================
+    // =====================================
     // GET FOLDERS
-    // =========================
+    // GET /api/workspaces/:workspaceId/folders
+    // =====================================
     getFolders: builder.query<any, string>({
-      query: (workspaceId) =>
-        `${buildFolderBaseUrl(workspaceId)}?companyId=${getCompanyId()}`,
+      query: (workspaceId) => buildFolderUrl(workspaceId),
+
       providesTags: ["Folder"],
     }),
 
-    // =========================
-    // GET SINGLE FOLDER
-    // =========================
-    getFolderById: builder.query<any, { workspaceId: string; id: string }>({
-      query: ({ workspaceId, id }) =>
-        `${buildFolderBaseUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
+    // =====================================
+    // GET FOLDER BY ID
+    // GET /api/workspaces/:workspaceId/folders/:folderId
+    // =====================================
+    getFolderById: builder.query<
+      any,
+      {
+        workspaceId: string;
+        id: string;
+      }
+    >({
+      query: ({ workspaceId, id }) => `${buildFolderUrl(workspaceId)}/${id}`,
+
       providesTags: ["Folder"],
     }),
 
-    // =========================
+    // =====================================
     // CREATE FOLDER
-    // =========================
-    createFolder: builder.mutation<any, { workspaceId: string; data: any }>({
+    // POST /api/workspaces/:workspaceId/folders
+    // =====================================
+    createFolder: builder.mutation<
+      any,
+      {
+        workspaceId: string;
+        data: any;
+      }
+    >({
       query: ({ workspaceId, data }) => ({
-        url: `${buildFolderBaseUrl(workspaceId)}?companyId=${getCompanyId()}`,
+        url: buildFolderUrl(workspaceId),
         method: "POST",
         body: data,
       }),
+
       invalidatesTags: ["Folder"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(workspaceApi.util.invalidateTags(["Workspace"]));
+        } catch {
+          // لا نحدث الـcache إذا فشل الطلب
+        }
+      },
     }),
 
-    // =========================
+    // =====================================
     // UPDATE FOLDER
-    // =========================
+    // PATCH /api/workspaces/:workspaceId/folders/:folderId
+    // =====================================
     updateFolder: builder.mutation<
       any,
-      { workspaceId: string; folderId: string; data: any }
+      {
+        workspaceId: string;
+        folderId: string;
+        data: any;
+      }
     >({
       query: ({ workspaceId, folderId, data }) => ({
-        url: `${buildFolderBaseUrl(workspaceId)}/${folderId}?companyId=${getCompanyId()}`,
+        url: `${buildFolderUrl(workspaceId)}/${folderId}`,
         method: "PATCH",
         body: data,
       }),
+
       invalidatesTags: ["Folder"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(workspaceApi.util.invalidateTags(["Workspace"]));
+        } catch {
+          // لا نحدث الـcache إذا فشل الطلب
+        }
+      },
     }),
 
-    // =========================
+    // =====================================
     // DELETE FOLDER
-    // =========================
-    deleteFolder: builder.mutation<any, { workspaceId: string; id: string }>({
+    // DELETE /api/workspaces/:workspaceId/folders/:folderId
+    // =====================================
+    deleteFolder: builder.mutation<
+      any,
+      {
+        workspaceId: string;
+        id: string;
+      }
+    >({
       query: ({ workspaceId, id }) => ({
-        url: `${buildFolderBaseUrl(workspaceId)}/${id}?companyId=${getCompanyId()}`,
+        url: `${buildFolderUrl(workspaceId)}/${id}`,
         method: "DELETE",
       }),
+
       invalidatesTags: ["Folder"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(workspaceApi.util.invalidateTags(["Workspace"]));
+        } catch {
+          // لا نحدث الـcache إذا فشل الطلب
+        }
+      },
     }),
 
-    // =========================
-    // ADD MEMBER
-    // =========================
+    // =====================================
+    // ADD FOLDER MEMBER
+    // POST /api/workspaces/:workspaceId/folders/:folderId/members
+    // =====================================
     addFolderMember: builder.mutation<
       any,
       {
@@ -98,20 +155,34 @@ export const folderApi = createApi({
         folderId: string;
         userId: string;
         role: string;
-        notificationsEnabled:boolean
       }
     >({
-      query: ({ workspaceId, folderId, userId, role ,notificationsEnabled }) => ({
-        url: `${buildFolderMemberUrl(workspaceId, folderId)}?companyId=${getCompanyId()}`,
+      query: ({ workspaceId, folderId, userId, role }) => ({
+        url: buildFolderMemberUrl(workspaceId, folderId),
         method: "POST",
-        body: { userId, role ,notificationsEnabled },
+        body: {
+          userId,
+          role,
+        },
       }),
+
       invalidatesTags: ["Folder"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(workspaceApi.util.invalidateTags(["Workspace"]));
+        } catch {
+          // لا نحدث الـcache إذا فشل الطلب
+        }
+      },
     }),
 
-    // =========================
-    // REMOVE MEMBER
-    // =========================
+    // =====================================
+    // REMOVE FOLDER MEMBER
+    // DELETE /api/workspaces/:workspaceId/folders/:folderId/members/:userId
+    // =====================================
     removeFolderMember: builder.mutation<
       any,
       {
@@ -121,10 +192,20 @@ export const folderApi = createApi({
       }
     >({
       query: ({ workspaceId, folderId, userId }) => ({
-        url: `${buildFolderMemberUrl(workspaceId, folderId)}/${userId}?companyId=${getCompanyId()}`,
+        url: `${buildFolderMemberUrl(workspaceId, folderId)}/${userId}`,
         method: "DELETE",
       }),
+
       invalidatesTags: ["Folder"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(workspaceApi.util.invalidateTags(["Workspace"]));
+        } catch {
+        }
+      },
     }),
   }),
 });

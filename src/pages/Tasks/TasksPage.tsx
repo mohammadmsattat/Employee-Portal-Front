@@ -33,12 +33,11 @@ import {
   useDeleteSubTaskMutation,
   useGetSubTaskByIdQuery,
 } from "@/rtk/Tasks/subTasksApi";
-
+import { hasPermission, resolveEffectiveListRole } from "@/lib/permissions";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 // ===== استيراد مودلات السايدبار =====
 import { AddWorkspaceModal } from "@/components/Tasks/CreateModels/AddWorkspaceModal";
-import { AddFolderModal } from "@/components/Tasks/CreateModels/AddFolderModal ";
 import { AddListModal } from "@/components/Tasks/CreateModels/AddListModal";
 import { ManageMembersModal } from "@/components/Tasks/UpdatesModels/ManageMembersModal";
 import { FolderMembersModal } from "@/components/Tasks/UpdatesModels/FolderMembersModal";
@@ -47,7 +46,7 @@ import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 
 // ===== استيراد الـ Hook الخاص بالحذف =====
 import { useFolderSidebarController } from "@/hooks/Tasks/useFolderSidebarController";
-
+import AddFolderModal from "@/components/Tasks/CreateModels/AddFolderModal ";
 /* =========================
    SKELETONS
 ========================= */
@@ -273,8 +272,7 @@ const TasksPage = () => {
     refetch: refetchTasks,
   } = useGetAllTasksQuery(
     {
-      listId: selectedList?._id,
-      workspaceId: selectedContext?.workspace?._id,
+      listId: selectedList?._id || "",
       ...filters,
     },
     {
@@ -286,10 +284,61 @@ const TasksPage = () => {
 
   const tasks = tasksData?.data || [];
 
+  useEffect(() => {
+    if (!editTask) return;
+
+    const currentEntity = editTask?.data || editTask;
+
+    if (!currentEntity?._id) return;
+
+    const currentType =
+      editTask?.type === "subtask" || Boolean(currentEntity?.task)
+        ? "subtask"
+        : "task";
+
+    let freshEntity = null;
+
+    if (currentType === "task") {
+      freshEntity = tasks.find((task) => task._id === currentEntity._id);
+    }
+
+    if (currentType === "subtask") {
+      for (const task of tasks) {
+        const foundSubTask = task.subTasks?.find(
+          (subTask) => subTask._id === currentEntity._id,
+        );
+
+        if (foundSubTask) {
+          freshEntity = foundSubTask;
+          break;
+        }
+      }
+    }
+
+    if (!freshEntity) return;
+
+    if (freshEntity.updatedAt === currentEntity.updatedAt) {
+      return;
+    }
+
+    setEditTask((previous) => {
+      if (!previous) return previous;
+
+      if (previous?.data) {
+        return {
+          ...previous,
+          data: freshEntity,
+        };
+      }
+
+      return freshEntity;
+    });
+  }, [tasks, editTask]);
+
   const { data: singleTaskData } = useGetTaskByIdQuery(
     {
-      listId,
-      id: taskId,
+      listId: listId || "",
+      id: taskId || "",
     },
     {
       skip: !taskId || !listId,
@@ -300,9 +349,8 @@ const TasksPage = () => {
 
   const { data: singleSubTaskData } = useGetSubTaskByIdQuery(
     {
-      workspaceId,
-      taskId,
-      subTaskId,
+      taskId: taskId || "",
+      subTaskId: subTaskId || "",
     },
     {
       skip: !subTaskId || !taskId,
@@ -335,8 +383,7 @@ const TasksPage = () => {
       ? workspaceTree
       : workspaceTree?.data || [];
 
-    const lists: any[] = [];
-
+    const lists = [];
     tree.forEach((workspace) => {
       (workspace.folders || []).forEach((folder) => {
         (folder.lists || []).forEach((list) => {
@@ -361,25 +408,31 @@ const TasksPage = () => {
 
     if (!tree.length) return;
 
-    const workspace = tree.find((w) => w._id === workspaceId);
+    const workspace = tree.find(
+      (workspaceItem) => workspaceItem._id === workspaceId,
+    );
+
     if (!workspace) return;
 
     if (type === "workspace") {
       setSelectedList(null);
-      setSelectedContext({ workspace });
+
+      setSelectedContext({
+        workspace,
+        workspaceRole: workspace.role || workspace.workspaceRole || null,
+      });
+
       return;
     }
 
     let foundFolder = null;
 
     for (const folder of workspace.folders || []) {
-      if (folder._id === folderId) {
-        foundFolder = folder;
-        break;
-      }
+      const folderMatches = folder._id === folderId;
 
-      const hasList = folder.lists?.some((list) => list._id === listId);
-      if (hasList) {
+      const containsList = folder.lists?.some((list) => list._id === listId);
+
+      if (folderMatches || containsList) {
         foundFolder = folder;
         break;
       }
@@ -387,83 +440,165 @@ const TasksPage = () => {
 
     if (type === "folder" && foundFolder) {
       setSelectedList(null);
-      setSelectedContext({ workspace, folder: foundFolder });
+
+      setSelectedContext({
+        workspace,
+        folder: foundFolder,
+        workspaceRole: workspace.role || workspace.workspaceRole || null,
+        folderRole: foundFolder.role || foundFolder.folderRole || null,
+      });
+
       return;
     }
 
     const foundList = foundFolder?.lists?.find((list) => list._id === listId);
 
     if (foundList && ["list", "task", "subtask"].includes(type || "")) {
-      setSelectedList(foundList);
+      const workspaceRole = workspace.role || workspace.workspaceRole || null;
+
+      const folderRole = foundFolder.role || foundFolder.folderRole || null;
+
+      const effectiveListRole = resolveEffectiveListRole({
+        workspaceRole,
+        folderRole,
+        listRole: foundList.role || foundList.listRole || null,
+      });
+
+      const normalizedList = {
+        ...foundList,
+        listRole: effectiveListRole,
+        effectiveRole: effectiveListRole,
+      };
+
+      setSelectedList(normalizedList);
+
       setSelectedContext({
         workspace,
         folder: foundFolder,
-        list: foundList.name,
-        listRole: foundList.role,
+        list: normalizedList,
+        workspaceRole,
+        folderRole,
+        listRole: effectiveListRole,
       });
     }
   }, [workspaceTree, workspaceId, folderId, listId, type]);
 
   useEffect(() => {
-    if (taskId && singleTask) {
-      if (mode === "edit") setEditTask(singleTask);
-      if (mode === "details") setDetailsTask(singleTask);
-      if (mode === "checklist") setChecklistTask(singleTask);
+    if (!taskId || !singleTask || subTaskId) {
+      return;
     }
-  }, [singleTask, taskId, mode]);
 
-  useEffect(() => {
-    if (!singleSubTask) return;
+    if (mode === "edit") {
+      setEditTask(singleTask);
+    }
 
-    if (singleSubTask.parentTask) {
-      setDetailsTask(singleSubTask.parentTask);
+    if (mode === "details") {
+      setDetailsTask(singleTask);
     }
 
     if (mode === "checklist") {
-      setChecklistTask(singleSubTask);
+      setChecklistTask(singleTask);
     }
-  }, [singleSubTask, mode]);
+  }, [singleTask, taskId, subTaskId, mode]);
 
-  const listRole = selectedContext?.listRole || "viewer";
+  useEffect(() => {
+    if (!singleSubTask || !subTaskId) {
+      return;
+    }
 
-  // ✅ تعديل منطق الصلاحيات - إظهار الزر دائماً
+    const subTaskEntity = {
+      type: "subtask",
+      data: singleSubTask,
+    };
+
+    if (mode === "edit") {
+      setEditTask(subTaskEntity);
+    }
+
+    if (mode === "details") {
+      setDetailsTask(subTaskEntity);
+    }
+
+    if (mode === "checklist") {
+      setChecklistTask(subTaskEntity);
+    }
+  }, [singleSubTask, subTaskId, mode]);
+
+  const listRole =
+    selectedContext?.listRole || selectedList?.listRole || "viewer";
+
   const permissions = useMemo(() => {
-    // إذا لم يتم تحديد List، نمنح صلاحية مؤقتة للضغط على الزر
-    if (!selectedList) {
+    const hasSelectedList = Boolean(selectedList?._id);
+
+    return {
+      canCreateTask: hasSelectedList && hasPermission(listRole, "create:task"),
+
+      canUpdateTask: hasSelectedList && hasPermission(listRole, "update:task"),
+
+      canDeleteTask: hasSelectedList && hasPermission(listRole, "delete:task"),
+
+      canManageMembers:
+        hasSelectedList && hasPermission(listRole, "manage:members"),
+
+      canUpdateDates:
+        hasSelectedList && ["manager", "owner"].includes(listRole),
+    };
+  }, [selectedList?._id, listRole]);
+
+  const checklistContext = useMemo(() => {
+    const entity = checklistTask?.data || checklistTask;
+
+    if (!entity?._id) {
       return {
-        canCreateTask: true, // ✅ يظهر الزر دائماً
-        canUpdateTask: false,
-        canDeleteTask: false,
-        canManageMembers: false,
+        entity: null,
+        entityType: "task",
+        parentTaskId: null,
       };
     }
-    
-    const isViewer = listRole === "viewer";
-    return {
-      canCreateTask: !isViewer,
-      canUpdateTask: !isViewer,
-      canDeleteTask: !isViewer,
-      canManageMembers: !isViewer,
-    };
-  }, [selectedList, listRole]);
 
-  // ✅ دالة لفتح مودال إضافة Task مع التحقق
+    const parentIdFromEntity =
+      typeof entity.task === "object" ? entity.task?._id : entity.task || null;
+
+    const parentTaskFromTasks = tasks.find((task) =>
+      task.subTasks?.some((subTask) => subTask._id === entity._id),
+    );
+
+    const openedSubTaskFromUrl = Boolean(subTaskId) && entity._id === subTaskId;
+
+    const isSubTask =
+      checklistTask?.type === "subtask" ||
+      Boolean(parentIdFromEntity) ||
+      Boolean(parentTaskFromTasks) ||
+      openedSubTaskFromUrl;
+
+    return {
+      entity,
+      entityType: isSubTask ? "subtask" : "task",
+
+      parentTaskId: isSubTask
+        ? parentIdFromEntity || parentTaskFromTasks?._id || taskId || null
+        : null,
+    };
+  }, [checklistTask, tasks, taskId, subTaskId]);
+
   const handleOpenAddTask = () => {
-    // if (!selectedList) {
-    //   toast({
-    //     title: "No List Selected",
-    //     description: "Please select a list first to create a task.",
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
-    
+    if (!selectedList?._id) {
+      toast({
+        title: "No List Selected",
+        description: "Please select a list first to create a task.",
+        variant: "destructive",
+      });
+
+      return;
+    }
+
     if (!permissions.canCreateTask) {
       toast({
         title: "Permission Denied",
         description: "You don't have permission to create tasks in this list.",
         variant: "destructive",
       });
+
       return;
     }
 
@@ -472,27 +607,19 @@ const TasksPage = () => {
   };
 
   const handleDeleteTask = async (taskId) => {
+    if (!selectedList?._id) return;
+
     try {
-      const task = tasks.find((t) => t._id === taskId);
-
-      if (task?.subTasks?.length > 0) {
-        toast({
-          title: "Cannot delete task",
-          description: "Delete all subtasks first.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       await deleteTask({
-        listId: selectedList?._id,
+        listId: selectedList._id,
         taskId,
       }).unwrap();
 
       refetchTasks();
-    } catch {
+    } catch (error) {
       toast({
         title: "Delete failed",
+        description: error?.data?.message || "Could not delete task.",
         variant: "destructive",
       });
     }
@@ -501,15 +628,15 @@ const TasksPage = () => {
   const handleDeleteSubTask = async ({ taskId, subTaskId }) => {
     try {
       await deleteSubTask({
-        workspaceId: selectedContext?.workspace?._id,
         taskId,
         subTaskId,
       }).unwrap();
 
       refetchTasks();
-    } catch {
+    } catch (error) {
       toast({
         title: "Delete failed",
+        description: error?.data?.message || "Could not delete subtask.",
         variant: "destructive",
       });
     }
@@ -555,9 +682,6 @@ const TasksPage = () => {
   };
 
   const openListModal = (workspace, folder) => {
-    console.log(workspace);
-    console.log(folder);
-    
     setModalData((prev) => ({ ...prev, workspace, folder }));
     setSidebarModals((prev) => ({ ...prev, listModal: true }));
   };
@@ -567,19 +691,34 @@ const TasksPage = () => {
     setSidebarModals((prev) => ({ ...prev, manageMembers: true }));
   };
 
-  const openFolderMembers = (folder) => {
-    setModalData((prev) => ({ ...prev, folder }));
-    setSidebarModals((prev) => ({ ...prev, folderMembers: true }));
+  const openFolderMembers = (workspace, folder) => {
+    setModalData((previous) => ({
+      ...previous,
+      workspace,
+      folder,
+    }));
+
+    setSidebarModals((previous) => ({
+      ...previous,
+      folderMembers: true,
+    }));
   };
 
-  const openListMembers = (listId) => {
-    setModalData((prev) => ({ ...prev, list: listId }));
-    setSidebarModals((prev) => ({ ...prev, listMembers: true }));
+  const openListMembers = (workspace, folder, list) => {
+    setModalData((previous) => ({
+      ...previous,
+      workspace,
+      folder,
+      list,
+    }));
+
+    setSidebarModals((previous) => ({
+      ...previous,
+      listMembers: true,
+    }));
   };
 
   const openDeleteConfirm = (type, item, workspaceId, folderId) => {
-    console.log("folderId",folderId);
-    
     requestDelete({ type, item, workspaceId, folderId });
   };
 
@@ -601,13 +740,33 @@ const TasksPage = () => {
   };
 
   const handleSelectList = (list, workspace, folder) => {
-    setSelectedList(list);
+    const workspaceRole = workspace?.role || workspace?.workspaceRole || null;
+
+    const folderRole = folder?.role || folder?.folderRole || null;
+
+    const effectiveListRole = resolveEffectiveListRole({
+      workspaceRole,
+      folderRole,
+      listRole: list?.role || list?.listRole || null,
+    });
+
+    const normalizedList = {
+      ...list,
+      listRole: effectiveListRole,
+      effectiveRole: effectiveListRole,
+    };
+
+    setSelectedList(normalizedList);
+
     setSelectedContext({
       workspace,
       folder,
-      list: list.name,
-      listRole: list.role,
+      list: normalizedList,
+      workspaceRole,
+      folderRole,
+      listRole: effectiveListRole,
     });
+
     if (isMobile || isTablet) {
       setSidebarOpen(false);
     }
@@ -632,7 +791,6 @@ const TasksPage = () => {
               {!isFirstWorkspaceLoad && workspaceTree && (
                 <FolderSidebar
                   onSelectList={handleSelectList}
-                  onSelectContext={setSelectedContext}
                   workspaceTree={workspaceTree}
                   refetchTree={refetchTree}
                   onOpenWorkspaceModal={openWorkspaceModal}
@@ -677,7 +835,6 @@ const TasksPage = () => {
                   ) : workspaceTree ? (
                     <FolderSidebarMobile
                       onSelectList={handleSelectList}
-                      onSelectContext={setSelectedContext}
                       workspaceTree={workspaceTree}
                       refetchTree={refetchTree}
                       onClose={() => setSidebarOpen(false)}
@@ -716,15 +873,15 @@ const TasksPage = () => {
                     className={`p-2 rounded-lg transition-colors ${
                       selectedList && permissions.canCreateTask
                         ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-blue-600 text-white hover:bg-blue-700" 
+                        : "bg-blue-600 text-white hover:bg-blue-700"
                     }`}
                     aria-label="Add task"
                     title={
-                      !selectedList 
-                        ? "Select a list first" 
-                        : !permissions.canCreateTask 
-                        ? "You don't have permission" 
-                        : "Add task"
+                      !selectedList
+                        ? "Select a list first"
+                        : !permissions.canCreateTask
+                          ? "You don't have permission"
+                          : "Add task"
                     }
                   >
                     <Plus className="h-5 w-5" />
@@ -846,25 +1003,44 @@ const TasksPage = () => {
           refetchTasks={refetchTasks}
         />
       )}
-
       <TaskDetailsModal
-        entity={editTask}
-        isOpen={!!editTask}
+        entity={detailsTask?.data || detailsTask}
+        entityType={
+          editTask?.type === "subtask" ||
+          Boolean((editTask?.data || editTask)?.task)
+            ? "subtask"
+            : "task"
+        }
+        mode="view"
+        isOpen={Boolean(detailsTask)}
+        onClose={() => setDetailsTask(null)}
+        workspace={selectedContext?.workspace || null}
+        folderName={selectedContext?.folder?.name || null}
+        listName={selectedContext?.list || selectedList || null}
+        permissions={permissions}
+        refetchTasks={refetchTasks}
+      />
+      <TaskDetailsModal
+        entity={editTask?.data || editTask}
+        entityType={editTask?.type === "subtask" ? "subtask" : "task"}
+        mode="edit"
+        isOpen={Boolean(editTask)}
         onClose={() => setEditTask(null)}
-        workspace={selectedContext?.workspace}
-        folderName={selectedContext?.folder?.name}
-        listName={selectedContext?.list}
+        workspace={selectedContext?.workspace || null}
+        folderName={selectedContext?.folder?.name || null}
+        listName={selectedContext?.list || selectedList || null}
         permissions={permissions}
         refetchTasks={refetchTasks}
       />
 
       <TaskChecklistModal
-        isOpen={!!checklistTask}
-        taskId={checklistTask?._id}
-        workspaceId={selectedContext?.workspace?._id}
-        listId={selectedList?._id}
-        folderId={selectedContext?.folder?._id}
+        isOpen={Boolean(checklistContext.entity)}
         onClose={() => setChecklistTask(null)}
+        entityType={checklistContext.entityType}
+        entityId={checklistContext.entity?._id ?? null}
+        parentTaskId={checklistContext.parentTaskId}
+        listId={selectedList?._id ?? listId ?? null}
+        canEdit={Boolean(permissions.canUpdateTask)}
       />
 
       <AddWorkspaceModal
@@ -898,16 +1074,16 @@ const TasksPage = () => {
       <FolderMembersModal
         isOpen={sidebarModals.folderMembers}
         folder={modalData.folder}
-        workspace={selectedContext?.workspace || modalData.workspace}
+        workspace={modalData.workspace}
         onClose={closeAllSidebarModals}
       />
 
       <ListMembersModal
         isOpen={sidebarModals.listMembers}
         onClose={closeAllSidebarModals}
-        list={modalData.list ? { _id: modalData.list } : null}
-        workspace={selectedContext?.workspace || modalData.workspace}
-        folderId={selectedContext?.folder?._id || modalData.folder?._id}
+        list={modalData.list}
+        workspace={modalData.workspace}
+        folderId={modalData.folder?._id}
       />
 
       <DeleteConfirmModal

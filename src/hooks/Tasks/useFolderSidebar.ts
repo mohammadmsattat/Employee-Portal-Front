@@ -1,18 +1,17 @@
+import { resolveEffectiveListRole } from "@/lib/permissions";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-export const useFolderSidebar = ({
-  onSelectList,
-  onSelectContext,
-  refetchTree,
-}) => {
+// عدّل المسار حسب مكان الملف عندك
 
-    const user = useMemo(() => {
-      try {
-        return JSON.parse(localStorage.getItem("user") || "null");
-      } catch {
-        return null;
-      }
-    }, []);
+export const useFolderSidebar = ({ onSelectList, onSelectContext }) => {
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  }, []);
+
   const [openWorkspaces, setOpenWorkspaces] = useState({});
   const [openFolders, setOpenFolders] = useState({});
 
@@ -30,30 +29,21 @@ export const useFolderSidebar = ({
   const [menuList, setMenuList] = useState(null);
 
   const [membersWorkspace, setMembersWorkspace] = useState(null);
+  const [membersFolder, setMembersFolder] = useState(null);
   const [membersList, setMembersList] = useState(null);
 
-  const [membersFolder, setMembersFolder] = useState(null);
-
-  /**
-   * EDITING STATE
-   */
   const [editingItem, setEditingItem] = useState(null);
-
-  /**
-   * {
-   *   id,
-   *   type: workspace | folder | list
-   * }
-   */
-
   const [editName, setEditName] = useState("");
 
   const menuRef = useRef(null);
 
-  /* OUTSIDE CLICK */
+  /* =========================
+     OUTSIDE CLICK
+  ========================= */
+
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuWorkspace(null);
         setMenuFolder(null);
         setMenuList(null);
@@ -62,27 +52,33 @@ export const useFolderSidebar = ({
 
     document.addEventListener("mousedown", handleClickOutside);
 
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   /* =========================
-     TOGGLES
+     TOGGLE WORKSPACE
   ========================= */
 
   const toggleWorkspace = (workspace) => {
-    setOpenWorkspaces((p) => ({
-      ...p,
-      [workspace._id]: !p[workspace._id],
+    setOpenWorkspaces((previous) => ({
+      ...previous,
+      [workspace._id]: !previous[workspace._id],
     }));
 
     setActiveWorkspace(workspace);
     setActiveFolder(null);
   };
 
+  /* =========================
+     TOGGLE FOLDER
+  ========================= */
+
   const toggleFolder = (folder, workspace) => {
-    setOpenFolders((p) => ({
-      ...p,
-      [folder._id]: !p[folder._id],
+    setOpenFolders((previous) => ({
+      ...previous,
+      [folder._id]: !previous[folder._id],
     }));
 
     setActiveWorkspace(workspace);
@@ -90,23 +86,51 @@ export const useFolderSidebar = ({
   };
 
   /* =========================
-     LIST SELECT
+     SELECT LIST
   ========================= */
 
   const handleSelectList = (list, workspace, folder) => {
-    setActiveList(list._id);
+    const workspaceRole = workspace?.role || workspace?.workspaceRole || null;
 
+    const folderRole = folder?.role || folder?.folderRole || null;
+
+    const directListRole = list?.role || list?.listRole || null;
+
+    const effectiveListRole = resolveEffectiveListRole({
+      workspaceRole,
+      folderRole,
+      listRole: directListRole,
+    });
+
+    const selectedList = {
+      ...list,
+      listRole: effectiveListRole,
+      effectiveRole: effectiveListRole,
+    };
+
+    setActiveList(list._id);
     setActiveWorkspace(workspace);
     setActiveFolder(folder);
 
-    onSelectList?.(list);
-    
+    /*
+     * مهم:
+     * أصبحنا نرسل workspace وfolder أيضاً.
+     */
+    onSelectList?.(selectedList, workspace, folder);
+
     onSelectContext?.({
-      list,
       workspace,
       folder,
-      listRole: list.listRole || workspace.role,
+      list: selectedList,
+
+      workspaceRole,
+      folderRole,
+      listRole: effectiveListRole,
     });
+
+    setMenuWorkspace(null);
+    setMenuFolder(null);
+    setMenuList(null);
   };
 
   /* =========================
@@ -127,7 +151,7 @@ export const useFolderSidebar = ({
   };
 
   /* =========================
-     STOP RENAME
+     CANCEL RENAME
   ========================= */
 
   const cancelRename = () => {
@@ -136,16 +160,20 @@ export const useFolderSidebar = ({
   };
 
   /* =========================
-     CONFIRM
+     CONFIRM RENAME
   ========================= */
 
   const confirmRename = async (callback) => {
-    if (!editingItem || !editName.trim()) return;
+    if (!editingItem) return;
+
+    const trimmedName = editName.trim();
+
+    if (!trimmedName) return;
 
     await callback?.({
       id: editingItem.id,
       type: editingItem.type,
-      name: editName.trim(),
+      name: trimmedName,
     });
 
     setEditingItem(null);
@@ -155,6 +183,7 @@ export const useFolderSidebar = ({
   return {
     state: {
       user,
+
       openWorkspaces,
       openFolders,
 
@@ -171,8 +200,8 @@ export const useFolderSidebar = ({
       menuList,
 
       membersWorkspace,
-      membersList,
       membersFolder,
+      membersList,
 
       editingItem,
       editName,
@@ -190,8 +219,8 @@ export const useFolderSidebar = ({
       setMenuList,
 
       setMembersWorkspace,
-      setMembersList,
       setMembersFolder,
+      setMembersList,
 
       setEditName,
 

@@ -10,11 +10,17 @@ const statusColors: Record<TaskStatus, string> = {
   done: "bg-green-100 text-green-700",
 };
 
-const UpdateTaskStatusModal = ({ entity, isOpen, onClose, workspaceId, refetchTasks, listId }) => {
-  const { status, setStatus, handleSave } = useStatusModal({
+const UpdateTaskStatusModal = ({
+  entity,
+  isOpen,
+  onClose,
+  workspaceId,
+  refetchTasks,
+  listId,
+}) => {
+  const { status, setStatus, handleSave, isSaving } = useStatusModal({
     entity,
     onClose,
-    workspaceId,
     listId,
     refetchTasks,
   });
@@ -33,20 +39,19 @@ const UpdateTaskStatusModal = ({ entity, isOpen, onClose, workspaceId, refetchTa
   if (!isOpen) return null;
 
   return (
-    <div className={`
+    <div
+      className={`
       bg-white border rounded-2xl shadow-xl p-4
       ${isMobile ? "w-[280px]" : "w-[320px]"}
-    `}>
+    `}
+    >
       {/* HEADER */}
       <div className="flex items-center justify-between mb-3">
         <h2 className={`font-semibold ${isMobile ? "text-sm" : "text-sm"}`}>
           Update Status
         </h2>
 
-        <button 
-          onClick={onClose}
-          className={isMobile ? "p-1" : ""}
-        >
+        <button onClick={onClose} className={isMobile ? "p-1" : ""}>
           <X className={`${isMobile ? "w-5 h-5" : "w-4 h-4"}`} />
         </button>
       </div>
@@ -63,6 +68,7 @@ const UpdateTaskStatusModal = ({ entity, isOpen, onClose, workspaceId, refetchTa
       {/* SELECT */}
       <select
         value={status}
+        disabled={isSaving}
         onChange={(e) => setStatus(e.target.value as TaskStatus)}
         className={`
           w-full border rounded-md text-xs outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300
@@ -78,14 +84,17 @@ const UpdateTaskStatusModal = ({ entity, isOpen, onClose, workspaceId, refetchTa
       {/* ACTIONS */}
       <div className={`mt-4 flex gap-2 ${isMobile ? "flex-col" : "flex-row"}`}>
         <button
+          type="button"
+          disabled={isSaving}
           onClick={handleSave}
           className={`
-            bg-blue-600 text-white rounded-md font-medium
-            hover:bg-blue-700 transition active:scale-[0.98]
-            ${isMobile ? "py-3 text-sm" : "flex-1 py-2 text-xs"}
-          `}
+    bg-blue-600 text-white rounded-md font-medium
+    hover:bg-blue-700 transition active:scale-[0.98]
+    disabled:cursor-not-allowed disabled:opacity-60
+    ${isMobile ? "py-3 text-sm" : "flex-1 py-2 text-xs"}
+  `}
         >
-          Save
+          {isSaving ? "Saving..." : "Save"}
         </button>
 
         <button

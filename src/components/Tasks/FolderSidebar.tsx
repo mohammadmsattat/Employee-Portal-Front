@@ -1,5 +1,3 @@
-// FolderSidebar.jsx - نسخة معدلة مع إزالة المودلات وإضافة props
-
 import {
   ChevronRight,
   Folder,
@@ -17,9 +15,17 @@ import {
 } from "lucide-react";
 
 import {
-  canManageWorkspace,
-  canManageFolder,
-  canManageList,
+  canUpdateWorkspace,
+  canDeleteWorkspace,
+  canManageWorkspaceMembers,
+  canCreateFolder,
+  canUpdateFolder,
+  canDeleteFolder,
+  canManageFolderMembers,
+  canCreateList,
+  canUpdateList,
+  canDeleteList,
+  canManageListMembers,
 } from "@/lib/permissions";
 
 import { useFolderSidebar } from "@/hooks/Tasks/useFolderSidebar";
@@ -42,16 +48,16 @@ const WORKSPACE_ICONS = [
 
 const getWorkspaceIcon = (workspaceId = "") => {
   let hash = 0;
-  const str = String(workspaceId);
+  const value = String(workspaceId);
 
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) % 100000;
+  for (let index = 0; index < value.length; index++) {
+    hash = (hash * 31 + value.charCodeAt(index)) % 100000;
   }
 
   return WORKSPACE_ICONS[hash % WORKSPACE_ICONS.length];
 };
 
-const getWorkspaceColor = (id = "") => {
+const getWorkspaceColor = (workspaceId = "") => {
   const colors = [
     "text-blue-700",
     "text-green-700",
@@ -61,10 +67,10 @@ const getWorkspaceColor = (id = "") => {
   ];
 
   let hash = 0;
-  const str = String(id);
+  const value = String(workspaceId);
 
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) % 100000;
+  for (let index = 0; index < value.length; index++) {
+    hash = (hash * 31 + value.charCodeAt(index)) % 100000;
   }
 
   return colors[hash % colors.length];
@@ -79,70 +85,66 @@ const FolderSidebar = ({
   onSelectContext,
   workspaceTree,
   refetchTree,
-  // ===== Props للمودلات من الأب =====
+
   onOpenWorkspaceModal,
   onOpenFolderModal,
   onOpenListModal,
+
   onOpenManageMembers,
   onOpenFolderMembers,
   onOpenListMembers,
+
   onOpenDeleteConfirm,
 }) => {
   const { state, actions } = useFolderSidebar({
     onSelectList,
     onSelectContext,
+  });
+
+  /*
+   * الحذف يتم التحكم به من TasksPage.
+   * لذلك نحتاج هنا handleRename فقط.
+   */
+  const { handleRename } = useFolderSidebarController({
     refetchTree,
   });
 
-  const {
-    deleteState,
-    setDeleteState,
-    deleteLoading,
-    handleRename,
-    handleDelete,
-    requestDelete,
-  } = useFolderSidebarController({
-    refetchTree,
-  });
+  /* =========================
+     MODAL HANDLERS
+  ========================= */
 
-  // ===== دوال استدعاء المودلات من الأب =====
   const handleOpenWorkspaceModal = () => {
-    if (onOpenWorkspaceModal) onOpenWorkspaceModal();
+    onOpenWorkspaceModal?.();
   };
 
   const handleOpenFolderModal = (workspace) => {
-    if (onOpenFolderModal) onOpenFolderModal(workspace);
+    onOpenFolderModal?.(workspace);
   };
 
   const handleOpenListModal = (workspace, folder) => {
-    if (onOpenListModal) onOpenListModal(workspace, folder);
+    onOpenListModal?.(workspace, folder);
   };
 
   const handleOpenManageMembers = (workspace) => {
-    if (onOpenManageMembers) onOpenManageMembers(workspace);
+    onOpenManageMembers?.(workspace);
   };
 
-  const handleOpenFolderMembers = (folder) => {
-    if (onOpenFolderMembers) onOpenFolderMembers(folder);
+  const handleOpenFolderMembers = (workspace, folder) => {
+    onOpenFolderMembers?.(workspace, folder);
   };
 
-  const handleOpenListMembers = (listId) => {
-    if (onOpenListMembers) onOpenListMembers(listId);
+  const handleOpenListMembers = (workspace, folder, list) => {
+    onOpenListMembers?.(workspace, folder, list);
   };
 
-  const handleOpenDeleteConfirm = (type, item, workspaceId ,folder) => {
-    console.log(type);
-    console.log(item);
-    console.log(workspaceId);
-    console.log(folder);
-    
-    if (onOpenDeleteConfirm) onOpenDeleteConfirm(type, item, workspaceId, folder);
+  const handleOpenDeleteConfirm = (type, item, workspaceId, folderId) => {
+    onOpenDeleteConfirm?.(type, item, workspaceId, folderId);
   };
 
   return (
-    <div className="w-fit h-full p-2 bg-white border rounded-xl min-w-[220px]">
+    <div className="h-full w-fit min-w-[220px] rounded-xl border bg-white p-2">
       {/* TOP */}
-      <div className="px-3 py-3 bg-slate-50 rounded-lg border space-y-2">
+      <div className="space-y-2 rounded-lg border bg-slate-50 px-3 py-3">
         <div className="text-sm font-semibold text-slate-700">
           {state.activeFolder
             ? state.activeFolder.name
@@ -153,6 +155,7 @@ const FolderSidebar = ({
 
         {state.user?.canCreateWorkspace && (
           <button
+            type="button"
             onClick={handleOpenWorkspaceModal}
             className="flex items-center gap-1 text-xs hover:text-blue-600"
           >
@@ -164,120 +167,196 @@ const FolderSidebar = ({
 
       {/* TREE */}
       {workspaceTree?.data?.map((workspace) => {
-        
-        const isWsOpen = state.openWorkspaces[workspace._id];
+        const workspaceRole =
+          workspace?.role || workspace?.workspaceRole || null;
 
-        const Icon = getWorkspaceIcon(workspace._id);
+        const canRenameWorkspace = canUpdateWorkspace(workspaceRole);
 
-        const colorClass = getWorkspaceColor(workspace._id);
+        const canRemoveWorkspace = canDeleteWorkspace(workspaceRole);
 
-        const isMenuOpen = state.menuWorkspace?._id === workspace._id;
+        const canManageWorkspaceUsers =
+          canManageWorkspaceMembers(workspaceRole);
+
+        const canAddFolder = canCreateFolder(workspaceRole);
+
+        const hasWorkspaceActions =
+          canRenameWorkspace ||
+          canRemoveWorkspace ||
+          canManageWorkspaceUsers ||
+          canAddFolder;
+
+        const isWorkspaceOpen = state.openWorkspaces[workspace._id];
+
+        const WorkspaceIcon = getWorkspaceIcon(workspace._id);
+
+        const workspaceColor = getWorkspaceColor(workspace._id);
+
+        const isWorkspaceMenuOpen = state.menuWorkspace?._id === workspace._id;
 
         const isWorkspaceEditing =
           state.editingItem?.id === workspace._id &&
           state.editingItem?.type === "workspace";
 
-        const workspacePermissions = canManageWorkspace(workspace.role);
-
         return (
           <div key={workspace._id} className="relative">
             {/* WORKSPACE */}
-            <div className="flex items-center justify-between px-2 py-1 rounded-lg hover:bg-slate-100 group/workspace">
+            <div className="group/workspace flex items-center justify-between rounded-lg px-2 py-1 hover:bg-slate-100">
               <button
+                type="button"
                 onClick={() => actions.toggleWorkspace(workspace)}
-                className="flex items-center gap-1 flex-1 text-left"
+                className="flex min-w-0 flex-1 items-center gap-1 text-left"
               >
                 <ChevronRight
-                  className={`h-4 w-4 ${isWsOpen ? "rotate-90" : ""}`}
+                  className={`h-4 w-4 transition-transform ${
+                    isWorkspaceOpen ? "rotate-90" : ""
+                  }`}
                 />
 
-                <div className={`p-1.5 rounded-md ${colorClass}`}>
-                  <Icon className="h-5 w-5" />
+                <div className={`rounded-md p-1.5 ${workspaceColor}`}>
+                  <WorkspaceIcon className="h-5 w-5" />
                 </div>
 
                 {isWorkspaceEditing ? (
-                  <div className="flex items-center gap-1 w-full">
+                  <div
+                    className="flex w-full items-center gap-1"
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     <input
                       value={state.editName}
-                      onChange={(e) => actions.setEditName(e.target.value)}
-                      className="text-sm border rounded px-1 w-full"
+                      onChange={(event) =>
+                        actions.setEditName(event.target.value)
+                      }
+                      onClick={(event) => event.stopPropagation()}
+                      className="w-full rounded border px-1 text-sm"
                     />
 
                     <Check
-                      className="h-4 w-4 text-green-600 cursor-pointer"
-                      onClick={() =>
+                      className="h-4 w-4 cursor-pointer text-green-600"
+                      onClick={(event) => {
+                        event.stopPropagation();
+
                         handleRename({
-                          workspaceId: workspace._id,
                           id: workspace._id,
-                          folderId: workspace._id,
                           type: "workspace",
                           name: state.editName,
                           cancelRename: actions.cancelRename,
-                        })
-                      }
+                        });
+                      }}
                     />
 
                     <X
-                      className="h-4 w-4 text-red-500 cursor-pointer"
-                      onClick={actions.cancelRename}
+                      className="h-4 w-4 cursor-pointer text-red-500"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        actions.cancelRename();
+                      }}
                     />
                   </div>
                 ) : (
-                  <span className="text-sm truncate">{workspace.name}</span>
+                  <span className="truncate text-[15px] font-semibold leading-5 text-slate-800">
+                    {workspace.name}
+                  </span>
                 )}
               </button>
 
-              {workspacePermissions && (
+              {hasWorkspaceActions && (
                 <div className="relative">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
 
-                      actions.setMenuWorkspace(isMenuOpen ? null : workspace);
+                      actions.setMenuWorkspace(
+                        isWorkspaceMenuOpen ? null : workspace,
+                      );
                     }}
-                    className="opacity-0 group-hover/workspace:opacity-100 p-1 rounded-md hover:bg-slate-200"
+                    className="rounded-md p-1 opacity-0 hover:bg-slate-200 group-hover/workspace:opacity-100"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
 
                   <HierarchyActionsMenu
-                    isOpen={isMenuOpen}
+                    isOpen={isWorkspaceMenuOpen}
                     type="workspace"
                     menuRef={state.menuRef}
-                    onRename={() =>
-                      actions.startRename({
-                        id: workspace._id,
-                        name: workspace.name,
-                        type: "workspace",
-                      })
+                    onRename={
+                      canRenameWorkspace
+                        ? () =>
+                            actions.startRename({
+                              id: workspace._id,
+                              name: workspace.name,
+                              type: "workspace",
+                            })
+                        : undefined
                     }
-                    onManageMembers={() => {
-                      handleOpenManageMembers(workspace);
-                      actions.setMenuWorkspace(null);
-                    }}
-                    onAddFolder={() => {
-                      handleOpenFolderModal(workspace);
-                      actions.setMenuWorkspace(null);
-                    }}
-                    onDelete={() => {
-                      handleOpenDeleteConfirm(
-                        "workspace",
-                        workspace,
-                        workspace._id,
-                      );
-                      actions.setMenuWorkspace(null);
-                    }}
+                    onManageMembers={
+                      canManageWorkspaceUsers
+                        ? () => {
+                            handleOpenManageMembers(workspace);
+
+                            actions.setMenuWorkspace(null);
+                          }
+                        : undefined
+                    }
+                    onAddFolder={
+                      canAddFolder
+                        ? () => {
+                            handleOpenFolderModal(workspace);
+
+                            actions.setMenuWorkspace(null);
+                          }
+                        : undefined
+                    }
+                    onDelete={
+                      canRemoveWorkspace
+                        ? () => {
+                            handleOpenDeleteConfirm(
+                              "workspace",
+                              workspace,
+                              workspace._id,
+                            );
+
+                            actions.setMenuWorkspace(null);
+                          }
+                        : undefined
+                    }
                   />
                 </div>
               )}
             </div>
 
             {/* FOLDERS */}
-            {isWsOpen && (
+            {isWorkspaceOpen && (
               <div className="ml-3 space-y-1">
                 {workspace.folders?.map((folder) => {
-                  
-                  const isOpen = state.openFolders[folder._id];
+                  const folderRole = folder?.role || folder?.folderRole || null;
+
+                  const folderPermissionInput = {
+                    workspaceRole,
+                    folderRole,
+                  };
+
+                  const canRenameFolder = canUpdateFolder(
+                    folderPermissionInput,
+                  );
+
+                  const canRemoveFolder = canDeleteFolder(
+                    folderPermissionInput,
+                  );
+
+                  const canManageFolderUsers = canManageFolderMembers(
+                    folderPermissionInput,
+                  );
+
+                  const canAddList = canCreateList(folderPermissionInput);
+
+                  const hasFolderActions =
+                    canRenameFolder ||
+                    canRemoveFolder ||
+                    canManageFolderUsers ||
+                    canAddList;
+
+                  const isFolderOpen = state.openFolders[folder._id];
 
                   const isFolderMenuOpen = state.menuFolder?._id === folder._id;
 
@@ -285,65 +364,73 @@ const FolderSidebar = ({
                     state.editingItem?.id === folder._id &&
                     state.editingItem?.type === "folder";
 
-                  const folderPermissions = canManageFolder({
-                    workspaceRole: workspace.role,
-                    folderRole: folder.role,
-                  });
-
                   return (
-                    <div key={folder._id} className="relative group/folder">
-                      <div className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-slate-50">
+                    <div key={folder._id} className="group/folder relative">
+                      <div className="flex items-center justify-between rounded-md px-2 py-1 hover:bg-slate-50">
                         <button
+                          type="button"
                           onClick={() =>
                             actions.toggleFolder(folder, workspace)
                           }
-                          className="flex items-center gap-2"
+                          className="flex min-w-0 flex-1 items-center gap-2 text-left"
                         >
-                          {isOpen ? (
+                          {isFolderOpen ? (
                             <FolderOpen className="h-4 w-4 text-blue-600" />
                           ) : (
                             <Folder className="h-4 w-4 text-slate-500" />
                           )}
 
                           {isFolderEditing ? (
-                            <div className="flex items-center gap-1">
+                            <div
+                              className="flex items-center gap-1"
+                              onClick={(event) => event.stopPropagation()}
+                            >
                               <input
                                 value={state.editName}
-                                onChange={(e) =>
-                                  actions.setEditName(e.target.value)
+                                onChange={(event) =>
+                                  actions.setEditName(event.target.value)
                                 }
-                                className="text-sm border rounded px-1"
+                                onClick={(event) => event.stopPropagation()}
+                                className="rounded border px-1 text-sm"
                               />
 
                               <Check
-                                className="h-4 w-4 text-green-600 cursor-pointer"
-                                onClick={() =>
+                                className="h-4 w-4 cursor-pointer text-green-600"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+
                                   handleRename({
-                                    id: null,
+                                    id: folder._id,
                                     folderId: folder._id,
                                     type: "folder",
                                     name: state.editName,
                                     workspaceId: workspace._id,
                                     cancelRename: actions.cancelRename,
-                                  })
-                                }
+                                  });
+                                }}
                               />
 
                               <X
-                                className="h-4 w-4 text-red-500 cursor-pointer"
-                                onClick={actions.cancelRename}
+                                className="h-4 w-4 cursor-pointer text-red-500"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  actions.cancelRename();
+                                }}
                               />
                             </div>
                           ) : (
-                            folder.name
+                            <span className="truncate text-sm font-medium leading-5 text-slate-700">
+                              {folder.name}
+                            </span>
                           )}
                         </button>
 
-                        {folderPermissions && (
+                        {hasFolderActions && (
                           <div className="relative">
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
 
                                 actions.setMenuFolder(
                                   isFolderMenuOpen ? null : folder,
@@ -358,27 +445,49 @@ const FolderSidebar = ({
                               isOpen={isFolderMenuOpen}
                               type="folder"
                               menuRef={state.menuRef}
-                              onRename={() =>
-                                actions.startRename({
-                                  id: folder._id,
-                                  name: folder.name,
-                                  type: "folder",
-                                })
+                              onRename={
+                                canRenameFolder
+                                  ? () =>
+                                      actions.startRename({
+                                        id: folder._id,
+                                        name: folder.name,
+                                        type: "folder",
+                                      })
+                                  : undefined
                               }
-                              onAddList={() => {
-                                handleOpenListModal(workspace,folder);
-                                actions.setMenuFolder(null);
-                              }}
-                              onManageFolderMembers={() => {
-                                handleOpenFolderMembers(folder);
-                                actions.setMenuFolder(null);
-                              }}
-                              onDelete={() =>
-                                handleOpenDeleteConfirm(
-                                  "folder",
-                                  folder,
-                                  workspace._id,
-                                )
+                              onAddList={
+                                canAddList
+                                  ? () => {
+                                      handleOpenListModal(workspace, folder);
+
+                                      actions.setMenuFolder(null);
+                                    }
+                                  : undefined
+                              }
+                              onManageFolderMembers={
+                                canManageFolderUsers
+                                  ? () => {
+                                      handleOpenFolderMembers(
+                                        workspace,
+                                        folder,
+                                      );
+
+                                      actions.setMenuFolder(null);
+                                    }
+                                  : undefined
+                              }
+                              onDelete={
+                                canRemoveFolder
+                                  ? () => {
+                                      handleOpenDeleteConfirm(
+                                        "folder",
+                                        folder,
+                                        workspace._id,
+                                      );
+
+                                      actions.setMenuFolder(null);
+                                    }
+                                  : undefined
                               }
                             />
                           </div>
@@ -386,10 +495,32 @@ const FolderSidebar = ({
                       </div>
 
                       {/* LISTS */}
-                      {isOpen && (
+                      {isFolderOpen && (
                         <div className="ml-6 border-l pl-3">
                           {folder.lists?.map((list) => {
-                            
+                            const directListRole =
+                              list?.role || list?.listRole || null;
+
+                            const listPermissionInput = {
+                              workspaceRole,
+                              folderRole,
+                              listRole: directListRole,
+                            };
+
+                            const canRenameList =
+                              canUpdateList(listPermissionInput);
+
+                            const canRemoveList =
+                              canDeleteList(listPermissionInput);
+
+                            const canManageListUsers =
+                              canManageListMembers(listPermissionInput);
+
+                            const hasListActions =
+                              canRenameList ||
+                              canRemoveList ||
+                              canManageListUsers;
+
                             const isActive = state.activeList === list._id;
 
                             const isListMenuOpen =
@@ -399,46 +530,53 @@ const FolderSidebar = ({
                               state.editingItem?.id === list._id &&
                               state.editingItem?.type === "list";
 
-                            const listPermissions = canManageList({
-                              workspaceRole: workspace.role,
-                              folderRole: folder.role,
-                              listRole: list.listRole,
-                            });
-
                             return (
                               <div
                                 key={list._id}
-                                className="relative group/list"
+                                className="group/list relative"
                               >
                                 <div className="flex items-center justify-between px-2 py-1 text-sm">
                                   <button
+                                    type="button"
                                     onClick={() =>
                                       actions.handleSelectList(
-                                        {
-                                          ...list,
-                                          listRole: list.role,
-                                        },
+                                        list,
                                         workspace,
                                         folder,
                                       )
                                     }
-                                    className={`${
-                                      isActive ? "text-blue-700 bg-blue-50" : ""
-                                    }`}
+                                    className={`
+                                      flex min-w-0 flex-1 items-center gap-1.5
+                                      rounded-md px-1.5 py-1 text-left
+                                      text-[13px] text-slate-600 transition
+                                      hover:bg-slate-50 hover:text-slate-800${isActive ? "bg-blue-50 font-medium text-blue-700" : ""}
+                                            `}
                                   >
                                     {isListEditing ? (
-                                      <div className="flex items-center gap-1">
+                                      <div
+                                        className="flex items-center gap-1"
+                                        onClick={(event) =>
+                                          event.stopPropagation()
+                                        }
+                                      >
                                         <input
                                           value={state.editName}
-                                          onChange={(e) =>
-                                            actions.setEditName(e.target.value)
+                                          onChange={(event) =>
+                                            actions.setEditName(
+                                              event.target.value,
+                                            )
                                           }
-                                          className="text-sm border rounded px-1"
+                                          onClick={(event) =>
+                                            event.stopPropagation()
+                                          }
+                                          className="rounded border px-1 text-sm"
                                         />
 
                                         <Check
-                                          className="h-4 w-4 text-green-600 cursor-pointer"
-                                          onClick={() =>
+                                          className="h-4 w-4 cursor-pointer text-green-600"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+
                                             handleRename({
                                               id: list._id,
                                               type: "list",
@@ -447,28 +585,35 @@ const FolderSidebar = ({
                                               folderId: folder._id,
                                               cancelRename:
                                                 actions.cancelRename,
-                                            })
-                                          }
+                                            });
+                                          }}
                                         />
 
                                         <X
-                                          className="h-4 w-4 text-red-500 cursor-pointer"
-                                          onClick={actions.cancelRename}
+                                          className="h-4 w-4 cursor-pointer text-red-500"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            actions.cancelRename();
+                                          }}
                                         />
                                       </div>
                                     ) : (
                                       <>
-                                        <List className="h-4 w-4 inline mr-1" />
-                                        {list.name}
+                                        <List className="h-3.5 w-3.5 shrink-0" />
+
+                                        <span className="truncate text-[13px] font-normal leading-5">
+                                          {list.name}
+                                        </span>
                                       </>
                                     )}
                                   </button>
 
-                                  {listPermissions && (
+                                  {hasListActions && (
                                     <div className="relative">
                                       <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
 
                                           actions.setMenuList(
                                             isListMenuOpen ? null : list,
@@ -483,24 +628,42 @@ const FolderSidebar = ({
                                         isOpen={isListMenuOpen}
                                         type="list"
                                         menuRef={state.menuRef}
-                                        onRename={() =>
-                                          actions.startRename({
-                                            id: list._id,
-                                            name: list.name,
-                                            type: "list",
-                                          })
+                                        onRename={
+                                          canRenameList
+                                            ? () =>
+                                                actions.startRename({
+                                                  id: list._id,
+                                                  name: list.name,
+                                                  type: "list",
+                                                })
+                                            : undefined
                                         }
-                                        onManageListMembers={() => {
-                                          handleOpenListMembers(list._id);
-                                          actions.setMenuList(null);
-                                        }}
-                                        onDelete={() =>
-                                          handleOpenDeleteConfirm(
-                                            "list",
-                                            list,
-                                            workspace._id,
-                                            folder._id,
-                                          )
+                                        onManageListMembers={
+                                          canManageListUsers
+                                            ? () => {
+                                                handleOpenListMembers(
+                                                  workspace,
+                                                  folder,
+                                                  list,
+                                                );
+
+                                                actions.setMenuList(null);
+                                              }
+                                            : undefined
+                                        }
+                                        onDelete={
+                                          canRemoveList
+                                            ? () => {
+                                                handleOpenDeleteConfirm(
+                                                  "list",
+                                                  list,
+                                                  workspace._id,
+                                                  folder._id,
+                                                );
+
+                                                actions.setMenuList(null);
+                                              }
+                                            : undefined
                                         }
                                       />
                                     </div>

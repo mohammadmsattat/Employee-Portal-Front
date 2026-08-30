@@ -19,7 +19,7 @@ interface FormState {
   description: string;
   priority: string;
   status: string;
-  assignedTo: string;
+  assignedTo: string[];
   dueDate: string | null;
 }
 
@@ -37,7 +37,7 @@ const INITIAL_FORM_STATE: FormState = {
   description: "",
   priority: "medium",
   status: "todo",
-  assignedTo: "",
+  assignedTo: [],
   dueDate: null,
 };
 
@@ -124,8 +124,8 @@ export const useCreateSubTask = ({
         break;
 
       case "assignedTo":
-        if (!value) {
-          newErrors.assignedTo = "Please assign a team member";
+        if (!Array.isArray(value) || value.length === 0) {
+          newErrors.assignedTo = "Please assign at least one team member";
         } else {
           delete newErrors.assignedTo;
         }
@@ -192,8 +192,8 @@ export const useCreateSubTask = ({
           break;
 
         case "assignedTo":
-          if (!value) {
-            newErrors.assignedTo = "Please assign a team member";
+          if (!Array.isArray(value) || value.length === 0) {
+            newErrors.assignedTo = "Please assign at least one team member";
             isValid = false;
           }
           break;
@@ -218,6 +218,37 @@ export const useCreateSubTask = ({
   const handleFieldChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     validateField(field, value);
+  };
+  const addAssignee = (userId: string) => {
+    if (!userId) return;
+
+    const normalizedUserId = userId === "me" ? String(user?._id || "") : userId;
+
+    if (!normalizedUserId) return;
+
+    const nextAssignedTo = Array.from(
+      new Set([...formData.assignedTo, normalizedUserId]),
+    );
+
+    handleFieldChange("assignedTo", nextAssignedTo);
+  };
+
+  const removeAssignee = (userId: string) => {
+    const nextAssignedTo = formData.assignedTo.filter((id) => id !== userId);
+
+    handleFieldChange("assignedTo", nextAssignedTo);
+  };
+
+  const toggleAssignee = (userId: string) => {
+    const normalizedUserId = userId === "me" ? String(user?._id || "") : userId;
+
+    if (!normalizedUserId) return;
+
+    if (formData.assignedTo.includes(normalizedUserId)) {
+      removeAssignee(normalizedUserId);
+    } else {
+      addAssignee(normalizedUserId);
+    }
   };
 
   // ===== Reset form and errors =====
@@ -248,20 +279,14 @@ export const useCreateSubTask = ({
     }
 
     try {
-      let assignedToFinal = null;
-
-      if (formData.assignedTo === "me") {
-        assignedToFinal = user._id;
-      } else if (formData.assignedTo) {
-        assignedToFinal = formData.assignedTo;
-      }
-
       const payload = {
         title: formData.title.trim(),
         description: formData.description?.trim() || "",
         status: formData.status,
         priority: formData.priority,
-        assignedTo: assignedToFinal ? [assignedToFinal] : [],
+
+        assignedTo: formData.assignedTo,
+
         dueDate: formData.dueDate,
       };
 
@@ -281,9 +306,9 @@ export const useCreateSubTask = ({
       onClose();
     } catch (error: any) {
       console.error("Error creating subtask:", error);
-      
+
       const errorMessage = error?.data?.message || "Failed to create subtask";
-      
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -297,6 +322,11 @@ export const useCreateSubTask = ({
     formData,
     setFormData,
     handleFieldChange,
+
+    addAssignee,
+    removeAssignee,
+    toggleAssignee,
+
     handleSubmit,
     isLoading,
     errors,

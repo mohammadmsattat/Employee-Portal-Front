@@ -1,28 +1,15 @@
-// TaskDetailsModal.tsx - مع إعادة جلب البيانات وأنواع TypeScript
-
-import {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  memo,
-  ReactNode,
-} from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import {
   X,
   ChevronRight,
   ArrowLeft,
-  Clock,
-  Calendar,
-  User,
   MessageSquare,
   FileText,
-  MoreVertical,
   CheckCircle,
   Circle,
   AlertCircle,
   Zap,
-  LucideIcon,
+  type LucideIcon,
 } from "lucide-react";
 import { useTaskDetailsModal } from "@/hooks/Tasks/DetailsModels/useTaskDetailsModal";
 import TaskEditor from "./TaskEditor";
@@ -63,6 +50,9 @@ interface TaskEntity {
   [key: string]: any;
 }
 
+type EntityType = "task" | "subtask";
+type ModalMode = "view" | "edit";
+
 interface Workspace {
   _id: string;
   name: string;
@@ -76,11 +66,11 @@ interface List {
 }
 
 interface Permissions {
-  canEdit?: boolean;
-  canDelete?: boolean;
-  canComment?: boolean;
-  canAssign?: boolean;
-  [key: string]: any;
+  canCreateTask?: boolean;
+  canUpdateTask?: boolean;
+  canDeleteTask?: boolean;
+  canManageMembers?: boolean;
+  canUpdateDates?: boolean;
 }
 
 interface StatusConfig {
@@ -110,12 +100,10 @@ interface MobileHeaderProps {
   onClose: () => void;
   statusConfig: StatusConfig;
   listName: List | null;
-  showOptions: boolean;
-  setShowOptions: (value: boolean) => void;
-  optionsRef: React.RefObject<HTMLDivElement | null>;
 }
 
 interface DesktopHeaderProps {
+  modalTitle: string;
   entity: TaskEntity | null;
   onClose: () => void;
   statusConfig: StatusConfig;
@@ -132,13 +120,18 @@ interface MobileTabsProps {
 
 interface TaskDetailsModalProps {
   entity: TaskEntity | null;
+  entityType: EntityType;
+  mode: ModalMode;
+
   isOpen: boolean;
   onClose: () => void;
+
   workspace: Workspace | null;
   folderName: string | null;
   listName: List | null;
+
   permissions?: Permissions | null;
-  refetchTasks?: () => void;
+  refetchTasks?: () => unknown;
 }
 
 // ==================== STATUS CONFIG ====================
@@ -196,31 +189,14 @@ const getStatusConfig = (status: string | undefined): StatusConfig => {
   return STATUS_CONFIGS[status] || STATUS_CONFIGS.todo;
 };
 
-// ==================== HELPERS ====================
-
-const formatDate = (date: string | Date | null | undefined): string => {
-  if (!date) return "No due";
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-};
-
 // ==================== MOBILE HEADER ====================
 
 const MobileHeader = memo(
-  ({
-    entity,
-    onClose,
-    statusConfig,
-    listName,
-    showOptions,
-    setShowOptions,
-    optionsRef,
-  }: MobileHeaderProps) => (
+  ({ entity, onClose, statusConfig, listName }: MobileHeaderProps) => (
     <div className="relative px-4 py-3 bg-white border-b border-slate-200/50 safe-area-top">
       <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={onClose}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 active:bg-slate-200 transition touch-feedback hover:bg-slate-200"
           aria-label="Go back"
@@ -272,6 +248,7 @@ const DesktopHeader = memo(
     workspace,
     folderName,
     listName,
+    modalTitle,
   }: DesktopHeaderProps) => (
     <div
       className="relative shrink-0 overflow-hidden px-6 py-4 md:px-7 md:py-5"
@@ -292,7 +269,7 @@ const DesktopHeader = memo(
           </div>
 
           <div className="min-w-0">
-            <p className="text-xs font-medium text-blue-600/80">Task Details</p>
+            <p className="text-xs font-medium text-blue-600/80">{modalTitle}</p>{" "}
             <h3 className="text-lg font-bold text-blue-900 truncate max-w-[400px]">
               {entity?.title}
             </h3>
@@ -301,6 +278,7 @@ const DesktopHeader = memo(
 
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/60 text-slate-400 transition hover:bg-white/80 hover:text-slate-600 backdrop-blur-sm hover:shadow-sm"
             aria-label="Close"
@@ -367,6 +345,7 @@ const MobileTabs = memo(
         <div className="flex gap-0.5">
           {tabs.map((tab) => (
             <button
+              type="button"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`
@@ -399,6 +378,8 @@ MobileTabs.displayName = "MobileTabs";
 
 function TaskDetailsModal({
   entity,
+  entityType,
+  mode,
   isOpen,
   onClose,
   workspace,
@@ -410,10 +391,15 @@ function TaskDetailsModal({
   // ===== STATE =====
   const [commentText, setCommentText] = useState<string>("");
   const [activeTab, setActiveTab] = useState<string>("details");
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [showOptions, setShowOptions] = useState<boolean>(false);
-  const optionsRef = useRef<HTMLDivElement>(null);
+  const canEdit = mode === "edit" && Boolean(permissions?.canUpdateTask);
+  const canUpdateDates =
+    mode === "edit" && Boolean(permissions?.canUpdateDates);
+
+  const entityLabel = entityType === "subtask" ? "Subtask" : "Task";
+
+  const modalTitle =
+    mode === "edit" ? `Edit ${entityLabel}` : `${entityLabel} Details`;
 
   // ===== EFFECTS =====
   useEffect(() => {
@@ -426,14 +412,14 @@ function TaskDetailsModal({
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        optionsRef.current &&
-        !optionsRef.current.contains(e.target as Node)
-      ) {
-        setShowOptions(false);
-      }
-    };
+    if (!isOpen) return;
+
+    setActiveTab("details");
+    setCommentText("");
+  }, [isOpen, entity?._id]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {};
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -443,20 +429,27 @@ function TaskDetailsModal({
     form,
     updateField,
     saveTask,
+
+    isSaving,
+    saveError,
+
     activity,
     addComment,
+
     openPanel,
     handleOpen,
     closeSubModal,
     popoverStyle,
+
     activityLoading,
     activityError,
     refetchActivity,
   } = useTaskDetailsModal({
     entity,
+    entityType,
     onClose,
-    workspaceId: workspace?._id || "",
     listId: listName?._id || "",
+    canEdit,
   });
 
   // ===== Re-fetch data when modal opens or task changes =====
@@ -482,8 +475,7 @@ function TaskDetailsModal({
             isMobile
               ? "h-[100dvh] rounded-none animate-slideUp"
               : `rounded-t-[28px] sm:rounded-2xl shadow-[0_-20px_80px_rgba(15,23,42,0.28)] 
-               ${isFullscreen ? "h-[100vh] sm:h-[92vh]" : "h-[96vh] sm:h-[92vh]"} 
-               sm:max-w-6xl`
+              h-[96vh] sm:h-[92vh] sm:max-w-6xl`
           }
         `}
       >
@@ -494,9 +486,6 @@ function TaskDetailsModal({
             onClose={onClose}
             statusConfig={statusConfig}
             listName={listName}
-            showOptions={showOptions}
-            setShowOptions={setShowOptions}
-            optionsRef={optionsRef}
           />
         ) : (
           <DesktopHeader
@@ -506,6 +495,7 @@ function TaskDetailsModal({
             workspace={workspace}
             folderName={folderName}
             listName={listName}
+            modalTitle={modalTitle}
           />
         )}
 
@@ -531,7 +521,9 @@ function TaskDetailsModal({
               form={form}
               updateField={updateField}
               saveTask={saveTask}
+              canUpdateDates={canUpdateDates}
               entity={entity}
+              entityType={entityType}
               openPanel={openPanel}
               handleOpen={handleOpen}
               popoverStyle={popoverStyle}
@@ -539,6 +531,9 @@ function TaskDetailsModal({
               workspaceId={workspace?._id || ""}
               refetchTasks={refetchTasks}
               listId={listName?._id || ""}
+              canEdit={canEdit}
+              isSaving={isSaving}
+              saveError={saveError}
               isMobile={isMobile}
             />
           </div>

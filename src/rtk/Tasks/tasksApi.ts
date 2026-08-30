@@ -3,7 +3,22 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import baseURL, { buildTaskUrl } from "@/Api/GlobalData";
 
 const getJWT = () => localStorage.getItem("token");
-const getCompanyId = () => localStorage.getItem("company");
+
+type GetAllTasksArgs = {
+  listId: string;
+  page?: number;
+  limit?: number;
+  status?: string;
+  priority?: string;
+  assignedTo?: string;
+  due?: string;
+};
+
+type TaskChecklistArgs = {
+  listId: string;
+  taskId: string;
+  itemId: string;
+};
 
 export const taskApi = createApi({
   reducerPath: "taskApi",
@@ -25,69 +40,76 @@ export const taskApi = createApi({
   tagTypes: ["Tasks"],
 
   endpoints: (builder) => ({
-    // =========================
+    // =====================================
     // GET ALL TASKS
-    // /api/workspaces/:workspaceId/tasks
-    // =========================
-    getAllTasks: builder.query<
-      any,
-      {
-        workspaceId: string;
-        listId?: string;
-        status?: string;
-        priority?: string;
-        assignedTo?: string;
-        due?: string;
-      }
-    >({
-      query: ({ workspaceId, listId, status, priority, assignedTo, due }) => {
+    // GET /api/lists/:listId/tasks
+    // =====================================
+    getAllTasks: builder.query<any, GetAllTasksArgs>({
+      query: ({ listId, page, limit, status, priority, assignedTo, due }) => {
         const params = new URLSearchParams();
 
-        // if (listId) {
-        //   params.append("listId", listId);
-        // }
+        if (page !== undefined) {
+          params.set("page", String(page));
+        }
+
+        if (limit !== undefined) {
+          params.set("limit", String(limit));
+        }
 
         if (status) {
-          params.append("status", status);
+          params.set("status", status);
         }
 
         if (priority) {
-          params.append("priority", priority);
+          params.set("priority", priority);
         }
 
         if (assignedTo) {
-          params.append("assignedTo", assignedTo);
+          params.set("assignedTo", assignedTo);
         }
 
         if (due) {
-          params.append("due", due);
+          params.set("due", due);
         }
 
-        params.append("companyId", getCompanyId() || "");
+        const queryString = params.toString();
+        const url = buildTaskUrl(listId);
 
-        return `${buildTaskUrl(listId)}?${params.toString()}`;
+        return queryString ? `${url}?${queryString}` : url;
       },
 
       providesTags: ["Tasks"],
     }),
-    // =========================
+
+    // =====================================
     // GET TASK BY ID
-    // /api/workspaces/:workspaceId/tasks/:id
-    // =========================
-    getTaskById: builder.query<any, { listId: string; id: string }>({
-      query: ({ listId, id }) =>
-        `${buildTaskUrl(listId)}/${id}?companyId=${getCompanyId()}`,
+    // GET /api/lists/:listId/tasks/:taskId
+    // =====================================
+    getTaskById: builder.query<
+      any,
+      {
+        listId: string;
+        id: string;
+      }
+    >({
+      query: ({ listId, id }) => `${buildTaskUrl(listId)}/${id}`,
 
       providesTags: ["Tasks"],
     }),
 
-    // =========================
+    // =====================================
     // CREATE TASK
-    // /api/workspaces/:workspaceId/tasks
-    // =========================
-    createTask: builder.mutation<any, { listId: string; data: any }>({
+    // POST /api/lists/:listId/tasks
+    // =====================================
+    createTask: builder.mutation<
+      any,
+      {
+        listId: string;
+        data: any;
+      }
+    >({
       query: ({ listId, data }) => ({
-        url: `${buildTaskUrl(listId)}?companyId=${getCompanyId()}`,
+        url: buildTaskUrl(listId),
         method: "POST",
         body: data,
       }),
@@ -95,16 +117,20 @@ export const taskApi = createApi({
       invalidatesTags: ["Tasks"],
     }),
 
-    // =========================
+    // =====================================
     // UPDATE TASK
-    // /api/workspaces/:workspaceId/tasks/:id
-    // =========================
+    // PATCH /api/lists/:listId/tasks/:taskId
+    // =====================================
     updateTask: builder.mutation<
       any,
-      { listId: string; id: string; data: any }
+      {
+        listId: string;
+        id: string;
+        data: any;
+      }
     >({
       query: ({ listId, id, data }) => ({
-        url: `${buildTaskUrl(listId)}/${id}?companyId=${getCompanyId()}`,
+        url: `${buildTaskUrl(listId)}/${id}`,
         method: "PATCH",
         body: data,
       }),
@@ -112,48 +138,89 @@ export const taskApi = createApi({
       invalidatesTags: ["Tasks"],
     }),
 
-    // =========================
+    // =====================================
     // DELETE TASK
-    // /api/workspaces/:workspaceId/tasks/:id
-    // =========================
-    deleteTask: builder.mutation<any, { listId: string; taskId: string }>({
+    // DELETE /api/lists/:listId/tasks/:taskId
+    // =====================================
+    deleteTask: builder.mutation<
+      any,
+      {
+        listId: string;
+        taskId: string;
+      }
+    >({
       query: ({ listId, taskId }) => ({
-        url: `${buildTaskUrl(listId)}/${taskId}?companyId=${getCompanyId()}`,
+        url: `${buildTaskUrl(listId)}/${taskId}`,
         method: "DELETE",
       }),
 
       invalidatesTags: ["Tasks"],
     }),
 
-    addChecklistItem: builder.mutation({
-      query: ({ taskId, listId, data }) => ({
-        url: `${buildTaskUrl(listId)}/${taskId}/checklist?companyId=${getCompanyId()}`,
+    // =====================================
+    // ADD TASK CHECKLIST ITEM
+    // =====================================
+    addChecklistItem: builder.mutation<
+      any,
+      {
+        listId: string;
+        taskId: string;
+        data: {
+          title: string;
+        };
+      }
+    >({
+      query: ({ listId, taskId, data }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}/checklist`,
         method: "POST",
         body: data,
       }),
 
       invalidatesTags: ["Tasks"],
     }),
-    updateChecklistItem: builder.mutation({
-      query: ({ taskId, listId, itemId, data }) => ({
-        url: `${buildTaskUrl(listId)}/${taskId}/checklist/${itemId}?companyId=${getCompanyId()}`,
+
+    // =====================================
+    // UPDATE TASK CHECKLIST ITEM
+    // =====================================
+    updateChecklistItem: builder.mutation<
+      any,
+      TaskChecklistArgs & {
+        data: {
+          title?: string;
+          isDone?: boolean;
+        };
+      }
+    >({
+      query: ({ listId, taskId, itemId, data }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}/checklist/${itemId}`,
+
         method: "PATCH",
         body: data,
       }),
 
       invalidatesTags: ["Tasks"],
     }),
-    deleteChecklistItem: builder.mutation({
-      query: ({ taskId, listId, itemId }) => ({
-        url: `${buildTaskUrl(listId)}/${taskId}/checklist/${itemId}?companyId=${getCompanyId()}`,
+
+    // =====================================
+    // DELETE TASK CHECKLIST ITEM
+    // =====================================
+    deleteChecklistItem: builder.mutation<any, TaskChecklistArgs>({
+      query: ({ listId, taskId, itemId }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}/checklist/${itemId}`,
+
         method: "DELETE",
       }),
 
       invalidatesTags: ["Tasks"],
     }),
-    toggleChecklistItem: builder.mutation({
-      query: ({ taskId, listId, itemId }) => ({
-        url: `${buildTaskUrl(listId)}/${taskId}/checklist/${itemId}/toggle?companyId=${getCompanyId()}`,
+
+    // =====================================
+    // TOGGLE TASK CHECKLIST ITEM
+    // =====================================
+    toggleChecklistItem: builder.mutation<any, TaskChecklistArgs>({
+      query: ({ listId, taskId, itemId }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}/checklist/${itemId}/toggle`,
+
         method: "PATCH",
       }),
 

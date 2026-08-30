@@ -1,137 +1,254 @@
-export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  viewer: ["read"],
+  export type HierarchyRole = "viewer" | "member" | "manager" | "owner";
 
-  member: [
-    "read",
-    "create:task",
-    "update:task",
-  ],
-
-  manager: [
-    "read",
-
-    "update:workspace",
-    "delete:workspace",
-    "manage:workspace-members",
-
-    "create:folder",
-    "update:folder",
-    "delete:folder",
-    "manage:folder-members",
-
-    "create:list",
-    "update:list",
-    "delete:list",
-    "manage:list-members",
-
-    "create:task",
-    "update:task",
-    "delete:task",
-  ],
-
-  owner: ["*"],
-};
-
-export const hasPermission = (
-  role: string = "viewer",
-  permission: string,
-) => {
-  const permissions = ROLE_PERMISSIONS[role] || [];
-
-  if (permissions.includes("*")) {
-    return true;
-  }
-
-  return permissions.includes(permission);
-};
-
-/* =========================
-   HIERARCHY ACCESS
-========================= */
-
-export const resolveRoles = ({
-  workspaceRole,
-  folderRole,
-  listRole,
-}: {
-  workspaceRole?: string;
-  folderRole?: string;
-  listRole?: string;
-}) => {
-  return {
-    workspaceRole: workspaceRole || null,
-    folderRole: folderRole || null,
-    listRole: listRole || null,
+  export const ROLE_HIERARCHY: Record<HierarchyRole, number> = {
+    viewer: 1,
+    member: 2,
+    manager: 3,
+    owner: 4,
   };
-};
 
-/* =========================
-   WORKSPACE
-========================= */
+  const isHierarchyRole = (role?: string | null): role is HierarchyRole =>
+    Boolean(role && role in ROLE_HIERARCHY);
 
-export const canManageWorkspace = (workspaceRole?: string) => {
-  return (
-    hasPermission(workspaceRole, "update:workspace") ||
-    hasPermission(workspaceRole, "manage:workspace-members") ||
-    hasPermission(workspaceRole, "delete:workspace")
-  );
-};
+  export const getHighestRole = (
+    ...roles: Array<string | null | undefined>
+  ): HierarchyRole => {
+    let highestRole: HierarchyRole = "viewer";
 
-/* =========================
-   FOLDER
-========================= */
+    for (const role of roles) {
+      if (
+        isHierarchyRole(role) &&
+        ROLE_HIERARCHY[role] > ROLE_HIERARCHY[highestRole]
+      ) {
+        highestRole = role;
+      }
+    }
 
-export const canManageFolder = ({
-  workspaceRole,
-  folderRole,
-}: {
-  workspaceRole?: string;
-  folderRole?: string;
-}) => {
-  if (
-    hasPermission(workspaceRole, "update:workspace") ||
-    hasPermission(workspaceRole, "manage:workspace-members")
-  ) {
-    return true;
-  }
+    return highestRole;
+  };
+  export const ROLE_PERMISSIONS: Record<HierarchyRole, string[]> = {
+    viewer: ["read:workspace", "read:folder", "read:list", "read:task"],
 
-  return (
-    hasPermission(folderRole, "update:folder") ||
-    hasPermission(folderRole, "manage:folder-members") ||
-    hasPermission(folderRole, "delete:folder")
-  );
-};
+    member: [
+      "read:workspace",
+      "read:folder",
+      "read:list",
+      "read:task",
+      "create:task",
+      "update:task",
+    ],
 
-/* =========================
-   LIST
-========================= */
+    manager: [
+      "read:workspace",
+      "read:folder",
+      "read:list",
+      "read:task",
 
-export const canManageList = ({
-  workspaceRole,
-  folderRole,
-  listRole,
-}: {
-  workspaceRole?: string;
-  folderRole?: string;
-  listRole?: string;
-}) => {
-  if (
-    hasPermission(workspaceRole, "update:workspace") ||
-    hasPermission(workspaceRole, "manage:workspace-members")
-  ) {
-    return true;
-  }
+      "update:workspace",
 
-  if (
-    hasPermission(folderRole, "update:folder") ||
-    hasPermission(folderRole, "manage:folder-members")
-  ) {
-    return true;
-  }
+      "create:folder",
+      "update:folder",
+      "delete:folder",
 
-  return (
-    hasPermission(listRole, "update:list") ||
-    hasPermission(listRole, "manage:list-members") ||
-    hasPermission(listRole, "delete:list")
-  );
-};
+      "create:list",
+      "update:list",
+      "delete:list",
+
+      "create:task",
+      "update:task",
+      "delete:task",
+
+      "manage:members",
+    ],
+
+    owner: ["*"],
+  };
+
+  export const hasPermission = (
+    role: string | null | undefined,
+    permission: string,
+  ) => {
+    const safeRole: HierarchyRole = isHierarchyRole(role) ? role : "viewer";
+
+    const permissions = ROLE_PERMISSIONS[safeRole];
+
+    return permissions.includes("*") || permissions.includes(permission);
+  };
+
+  export const isAdminRole = (role?: string | null) =>
+    role === "owner" || role === "manager";
+
+  /* =====================================
+    EFFECTIVE ROLES
+  ===================================== */
+
+  export const resolveEffectiveFolderRole = ({
+    workspaceRole,
+    folderRole,
+  }: {
+    workspaceRole?: string | null;
+    folderRole?: string | null;
+  }) => getHighestRole(workspaceRole, folderRole);
+
+  export const resolveEffectiveListRole = ({
+    workspaceRole,
+    folderRole,
+    listRole,
+  }: {
+    workspaceRole?: string | null;
+    folderRole?: string | null;
+    listRole?: string | null;
+  }) => getHighestRole(workspaceRole, folderRole, listRole);
+
+  /* =====================================
+    WORKSPACE ACTIONS
+  ===================================== */
+
+  export const canUpdateWorkspace = (workspaceRole?: string | null) =>
+    hasPermission(workspaceRole, "update:workspace");
+
+  export const canDeleteWorkspace = (workspaceRole?: string | null) =>
+    hasPermission(workspaceRole, "delete:workspace");
+
+  export const canManageWorkspaceMembers = (workspaceRole?: string | null) =>
+    hasPermission(workspaceRole, "manage:members");
+
+  export const canCreateFolder = (workspaceRole?: string | null) =>
+    hasPermission(workspaceRole, "create:folder");
+
+  export const canManageWorkspace = (workspaceRole?: string | null) =>
+    canUpdateWorkspace(workspaceRole) ||
+    canDeleteWorkspace(workspaceRole) ||
+    canManageWorkspaceMembers(workspaceRole) ||
+    canCreateFolder(workspaceRole);
+
+  /* =====================================
+    FOLDER ACTIONS
+  ===================================== */
+
+  export const canUpdateFolder = ({
+    workspaceRole,
+    folderRole,
+  }: {
+    workspaceRole?: string | null;
+    folderRole?: string | null;
+  }) => {
+    const role = resolveEffectiveFolderRole({
+      workspaceRole,
+      folderRole,
+    });
+
+    return hasPermission(role, "update:folder");
+  };
+
+  export const canDeleteFolder = ({
+    workspaceRole,
+    folderRole,
+  }: {
+    workspaceRole?: string | null;
+    folderRole?: string | null;
+  }) => {
+    const role = resolveEffectiveFolderRole({
+      workspaceRole,
+      folderRole,
+    });
+
+    return hasPermission(role, "delete:folder");
+  };
+
+  export const canManageFolderMembers = ({
+    workspaceRole,
+    folderRole,
+  }: {
+    workspaceRole?: string | null;
+    folderRole?: string | null;
+  }) => {
+    const role = resolveEffectiveFolderRole({
+      workspaceRole,
+      folderRole,
+    });
+
+    return hasPermission(role, "manage:members");
+  };
+
+  export const canCreateList = ({
+    workspaceRole,
+    folderRole,
+  }: {
+    workspaceRole?: string | null;
+    folderRole?: string | null;
+  }) => {
+    const role = resolveEffectiveFolderRole({
+      workspaceRole,
+      folderRole,
+    });
+
+    return hasPermission(role, "create:list");
+  };
+
+  export const canManageFolder = ({
+    workspaceRole,
+    folderRole,
+  }: {
+    workspaceRole?: string | null;
+    folderRole?: string | null;
+  }) =>
+    canUpdateFolder({ workspaceRole, folderRole }) ||
+    canDeleteFolder({ workspaceRole, folderRole }) ||
+    canManageFolderMembers({ workspaceRole, folderRole }) ||
+    canCreateList({ workspaceRole, folderRole });
+
+  /* =====================================
+    LIST ACTIONS
+  ===================================== */
+
+  type ListRoles = {
+    workspaceRole?: string | null;
+    folderRole?: string | null;
+    listRole?: string | null;
+  };
+
+  export const canUpdateList = (roles: ListRoles) => {
+    const role = resolveEffectiveListRole(roles);
+
+    return hasPermission(role, "update:list");
+  };
+
+  export const canDeleteList = (roles: ListRoles) => {
+    const role = resolveEffectiveListRole(roles);
+
+    return hasPermission(role, "delete:list");
+  };
+
+  export const canManageListMembers = (roles: ListRoles) => {
+    const role = resolveEffectiveListRole(roles);
+
+    return hasPermission(role, "manage:members");
+  };
+
+  export const canManageList = (roles: ListRoles) =>
+    canUpdateList(roles) || canDeleteList(roles) || canManageListMembers(roles);
+
+  /* =====================================
+    TASK ACTIONS
+  ===================================== */
+
+  export const canCreateTask = (roles: ListRoles) => {
+    const role = resolveEffectiveListRole(roles);
+
+    return hasPermission(role, "create:task");
+  };
+
+
+
+  export const canUpdateTask = (roles: ListRoles) => {
+    const role = resolveEffectiveListRole(roles);
+
+    return hasPermission(role, "update:task");
+  };
+
+  export const canDeleteTask = (roles: ListRoles) => {
+    const role = resolveEffectiveListRole(roles);
+
+    return hasPermission(role, "delete:task");
+  };

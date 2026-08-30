@@ -533,10 +533,6 @@ const TasksTableView = ({
                           </td>
 
                           <td className="px-4 py-2 text-slate-500">
-                            {formatDate(sub.startDate)}
-                          </td>
-
-                          <td className="px-4 py-2 text-slate-500">
                             {formatDate(sub.dueDate)}
                           </td>
 

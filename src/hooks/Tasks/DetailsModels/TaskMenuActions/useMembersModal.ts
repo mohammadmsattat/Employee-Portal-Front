@@ -1,67 +1,134 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+
 import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
-import { useToast } from "@/hooks/use-toast";
+
 import { useUpdateTaskMutation } from "@/rtk/Tasks/tasksApi";
 import { useUpdateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
 
-export const useMembersModal = ({ isOpen, onClose, entity, workspaceId, refetchTasks  ,listId}) => {
+import { useToast } from "@/hooks/use-toast";
+
+interface UseMembersModalArgs {
+  isOpen: boolean;
+  onClose: () => void;
+  entity: any;
+  workspaceId?: string;
+  listId: string;
+  refetchTasks?: () => unknown;
+}
+
+export const useMembersModal = ({
+  isOpen,
+  onClose,
+  entity,
+  listId,
+  refetchTasks,
+}: UseMembersModalArgs) => {
   const { toast } = useToast();
 
-  const [updateTask] = useUpdateTaskMutation();
-  const [updateSubTask] = useUpdateSubTaskMutation();
+  const [updateTask, { isLoading: updatingTask }] = useUpdateTaskMutation();
 
-  const { data } = useGetAllStaffQuery({
-    // directManager: JSON.parse(localStorage.getItem("user"))?._id,
-  });
+  const [updateSubTask, { isLoading: updatingSubTask }] =
+    useUpdateSubTaskMutation();
 
-  const task = entity?.data;
+  const {
+    data: staffResponse,
+    isLoading: staffLoading,
+    isError: staffError,
+  } = useGetAllStaffQuery({});
 
-  const [selectedMembers, setSelectedMembers] = useState([]);
-  const hasInitialized = useRef(false);
+  /*
+   * يدعم الشكلين القديم والجديد.
+   */
+  const task = entity?.data || entity;
 
-  // init selected members
+  const entityType =
+    entity?.type === "subtask" || Boolean(task?.task) ? "subtask" : "task";
+
+  const parentTaskId =
+    entity?.parentTaskId ||
+    (typeof task?.task === "object" ? task?.task?._id : task?.task);
+
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+
+  /*
+   * assignedTo يمكن أن تحتوي:
+   * ObjectIds
+   * أو staff objects بعد populate.
+   */
   useEffect(() => {
     if (!isOpen || !task?._id) return;
 
-    const ids = task?.assignedTo?.map((m) => m._id) || [];
-    setSelectedMembers(ids);
+    const memberIds = Array.isArray(task?.assignedTo)
+      ? task.assignedTo
+          .map((member: any) => {
+            if (typeof member === "string") {
+              return member;
+            }
 
-    hasInitialized.current = true;
-  }, [task?._id, isOpen]);
+            return member?._id;
+          })
+          .filter(Boolean)
+      : [];
 
-  // reset on close
+    setSelectedMembers(memberIds);
+  }, [isOpen, task?._id, task?.updatedAt]);
+
   useEffect(() => {
     if (!isOpen) {
-      hasInitialized.current = false;
       setSelectedMembers([]);
     }
   }, [isOpen]);
 
-  // lock scroll
+  /*
+   * نعيد overflow إلى قيمته السابقة بعد إغلاق Modal.
+   */
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
 
-  const toggleMember = (id) => {
-    setSelectedMembers((prev) =>
-      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
+  const toggleMember = (userId: string) => {
+    setSelectedMembers((previous) =>
+      previous.includes(userId)
+        ? previous.filter((id) => id !== userId)
+        : [...previous, userId],
     );
   };
 
-  const addMember = (id) => {
-    setSelectedMembers((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  const addMember = (userId: string) => {
+    setSelectedMembers((previous) =>
+      previous.includes(userId) ? previous : [...previous, userId],
+    );
   };
 
-  const removeMember = (id) => {
-    setSelectedMembers((prev) => prev.filter((m) => m !== id));
+  const removeMember = (userId: string) => {
+    setSelectedMembers((previous) => previous.filter((id) => id !== userId));
   };
 
   const handleSave = async () => {
+    if (!task?._id) {
+      toast({
+        title: "Update failed",
+        description: "Task information is missing.",
+        variant: "destructive",
+      });
+
+      return;
+    }
+
     try {
-      if (entity.type === "task") {
+      if (entityType === "task") {
+        if (!listId) {
+          throw new Error("List ID is missing");
+        }
+
         await updateTask({
           listId,
           id: task._id,
@@ -69,42 +136,61 @@ export const useMembersModal = ({ isOpen, onClose, entity, workspaceId, refetchT
             assignedTo: selectedMembers,
           },
         }).unwrap();
-        refetchTasks();
       }
 
-      if (entity.type === "subtask") {
+      if (entityType === "subtask") {
+        if (!parentTaskId) {
+          throw new Error("Parent task ID is missing");
+        }
+
         await updateSubTask({
-          listId,
-          taskId: entity.parentTaskId,
+          taskId: parentTaskId,
           subTaskId: task._id,
           data: {
             assignedTo: selectedMembers,
           },
         }).unwrap();
-        refetchTasks();
       }
 
+      await Promise.resolve(refetchTasks?.());
+
       toast({
-        title: "Updated",
-        description: "Task members updated successfully",
+        title: "Members updated",
+        description: `${
+          entityType === "subtask" ? "Subtask" : "Task"
+        } members updated successfully.`,
       });
 
       onClose();
-    } catch (err) {
+    } catch (error: any) {
+      console.error("Failed to update members", error);
+
       toast({
-        title: "Error",
-        description: "Failed to update members",
+        title: "Update failed",
+        description:
+          error?.data?.message || error?.message || "Failed to update members.",
         variant: "destructive",
       });
     }
   };
 
+  const staff = Array.isArray(staffResponse?.data)
+    ? staffResponse.data
+    : Array.isArray(staffResponse)
+      ? staffResponse
+      : [];
+
   return {
-    staff: data?.data || [],
+    staff,
+    staffLoading,
+    staffError,
+
     selectedMembers,
     toggleMember,
     addMember,
     removeMember,
     handleSave,
+
+    isSaving: updatingTask || updatingSubTask,
   };
 };

@@ -1,23 +1,20 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 import baseURL, { buildSubTaskUrl } from "@/Api/GlobalData";
+import { taskApi } from "./tasksApi";
 
 const getJWT = () => localStorage.getItem("token");
-const getCompanyId = () => localStorage.getItem("company");
 
 type GetSubTasksArgs = {
-  workspaceId: string;
   taskId: string;
 };
 
 type GetSubTaskArgs = {
-  workspaceId: string;
   taskId: string;
   subTaskId: string;
 };
 
 type CreateSubTaskArgs = {
-  workspaceId: string;
   taskId: string;
   data: any;
 };
@@ -29,9 +26,14 @@ type UpdateSubTaskArgs = {
 };
 
 type DeleteSubTaskArgs = {
-  workspaceId: string;
   taskId: string;
   subTaskId: string;
+};
+
+type SubTaskChecklistArgs = {
+  taskId: string;
+  subTaskId: string;
+  itemId: string;
 };
 
 export const subTaskApi = createApi({
@@ -54,61 +56,209 @@ export const subTaskApi = createApi({
   tagTypes: ["SubTasks"],
 
   endpoints: (builder) => ({
-    /* =========================
-       GET ALL
-    ========================= */
+    // =====================================
+    // GET ALL SUBTASKS
+    // GET /api/tasks/:taskId/subtasks
+    // =====================================
     getAllSubTasks: builder.query<any, GetSubTasksArgs>({
-      query: ({ workspaceId, taskId }) => buildSubTaskUrl( taskId),
+      query: ({ taskId }) => buildSubTaskUrl(taskId),
 
       providesTags: ["SubTasks"],
     }),
 
-    /* =========================
-       GET BY ID
-    ========================= */
+    // =====================================
+    // GET SUBTASK BY ID
+    // GET /api/tasks/:taskId/subtasks/:subTaskId
+    // =====================================
     getSubTaskById: builder.query<any, GetSubTaskArgs>({
-      query: ({ workspaceId, taskId, subTaskId }) =>
-        `${buildSubTaskUrl( taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
+      query: ({ taskId, subTaskId }) =>
+        `${buildSubTaskUrl(taskId)}/${subTaskId}`,
 
       providesTags: ["SubTasks"],
     }),
 
-    /* =========================
-       CREATE
-    ========================= */
+    // =====================================
+    // CREATE SUBTASK
+    // POST /api/tasks/:taskId/subtasks
+    // =====================================
     createSubTask: builder.mutation<any, CreateSubTaskArgs>({
-      query: ({  taskId, data }) => ({
-        url: `${buildSubTaskUrl(taskId)}?companyId=${getCompanyId()}`,
+      query: ({ taskId, data }) => ({
+        url: buildSubTaskUrl(taskId),
         method: "POST",
         body: data,
       }),
 
       invalidatesTags: ["SubTasks"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(taskApi.util.invalidateTags(["Tasks"]));
+        } catch {
+          // لا نحدّث Tasks cache إذا فشل الطلب
+        }
+      },
     }),
 
-    /* =========================
-       UPDATE
-    ========================= */
+    // =====================================
+    // UPDATE SUBTASK
+    // PATCH /api/tasks/:taskId/subtasks/:subTaskId
+    // =====================================
     updateSubTask: builder.mutation<any, UpdateSubTaskArgs>({
-      query: ({  taskId, subTaskId, data }) => ({
-        url: `${buildSubTaskUrl( taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
+      query: ({ taskId, subTaskId, data }) => ({
+        url: `${buildSubTaskUrl(taskId)}/${subTaskId}`,
         method: "PATCH",
         body: data,
       }),
 
       invalidatesTags: ["SubTasks"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(taskApi.util.invalidateTags(["Tasks"]));
+        } catch {
+          // لا نحدّث Tasks cache إذا فشل الطلب
+        }
+      },
     }),
 
-    /* =========================
-       DELETE
-    ========================= */
+    // =====================================
+    // DELETE SUBTASK
+    // DELETE /api/tasks/:taskId/subtasks/:subTaskId
+    // =====================================
     deleteSubTask: builder.mutation<any, DeleteSubTaskArgs>({
-      query: ({ workspaceId, taskId, subTaskId }) => ({
-        url: `${buildSubTaskUrl(taskId)}/${subTaskId}?companyId=${getCompanyId()}`,
+      query: ({ taskId, subTaskId }) => ({
+        url: `${buildSubTaskUrl(taskId)}/${subTaskId}`,
         method: "DELETE",
       }),
 
       invalidatesTags: ["SubTasks"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(taskApi.util.invalidateTags(["Tasks"]));
+        } catch {
+          // لا نحدّث Tasks cache إذا فشل الطلب
+        }
+      },
+    }),
+
+    // =====================================
+    // ADD SUBTASK CHECKLIST ITEM
+    // =====================================
+    addSubTaskChecklistItem: builder.mutation<
+      any,
+      {
+        taskId: string;
+        subTaskId: string;
+        data: {
+          title: string;
+        };
+      }
+    >({
+      query: ({ taskId, subTaskId, data }) => ({
+        url: `${buildSubTaskUrl(taskId)}/${subTaskId}/checklist`,
+
+        method: "POST",
+        body: data,
+      }),
+
+      invalidatesTags: ["SubTasks"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(taskApi.util.invalidateTags(["Tasks"]));
+        } catch {
+          // الطلب فشل
+        }
+      },
+    }),
+
+    // =====================================
+    // UPDATE SUBTASK CHECKLIST ITEM
+    // =====================================
+    updateSubTaskChecklistItem: builder.mutation<
+      any,
+      SubTaskChecklistArgs & {
+        data: {
+          title?: string;
+          isDone?: boolean;
+        };
+      }
+    >({
+      query: ({ taskId, subTaskId, itemId, data }) => ({
+        url: `${buildSubTaskUrl(taskId)}/${subTaskId}/checklist/${itemId}`,
+
+        method: "PATCH",
+        body: data,
+      }),
+
+      invalidatesTags: ["SubTasks"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(taskApi.util.invalidateTags(["Tasks"]));
+        } catch {
+          // الطلب فشل
+        }
+      },
+    }),
+
+    // =====================================
+    // DELETE SUBTASK CHECKLIST ITEM
+    // =====================================
+    deleteSubTaskChecklistItem: builder.mutation<any, SubTaskChecklistArgs>({
+      query: ({ taskId, subTaskId, itemId }) => ({
+        url: `${buildSubTaskUrl(taskId)}/${subTaskId}/checklist/${itemId}`,
+
+        method: "DELETE",
+      }),
+
+      invalidatesTags: ["SubTasks"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(taskApi.util.invalidateTags(["Tasks"]));
+        } catch {
+          // الطلب فشل
+        }
+      },
+    }),
+
+    // =====================================
+    // TOGGLE SUBTASK CHECKLIST ITEM
+    // =====================================
+    toggleSubTaskChecklistItem: builder.mutation<any, SubTaskChecklistArgs>({
+      query: ({ taskId, subTaskId, itemId }) => ({
+        url: `${buildSubTaskUrl(
+          taskId,
+        )}/${subTaskId}/checklist/${itemId}/toggle`,
+
+        method: "PATCH",
+      }),
+
+      invalidatesTags: ["SubTasks"],
+
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+
+          dispatch(taskApi.util.invalidateTags(["Tasks"]));
+        } catch {
+          // الطلب فشل
+        }
+      },
     }),
   }),
 });
@@ -119,4 +269,8 @@ export const {
   useCreateSubTaskMutation,
   useUpdateSubTaskMutation,
   useDeleteSubTaskMutation,
+  useAddSubTaskChecklistItemMutation,
+  useUpdateSubTaskChecklistItemMutation,
+  useDeleteSubTaskChecklistItemMutation,
+  useToggleSubTaskChecklistItemMutation,
 } = subTaskApi;
