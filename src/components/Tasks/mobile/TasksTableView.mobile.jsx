@@ -1,6 +1,6 @@
 // TasksTableViewMobile.jsx
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -17,6 +17,8 @@ import {
   AlertCircle,
   X,
   ArrowUp,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
@@ -62,36 +64,37 @@ const STATUS_CONFIG = {
     label: "Blocked",
     dot: "bg-red-500",
   },
+  pending: {
+    bg: "bg-yellow-100",
+    text: "text-yellow-600",
+    label: "Pending",
+    dot: "bg-yellow-500",
+  },
+  on_hold: {
+    bg: "bg-purple-100",
+    text: "text-purple-600",
+    label: "On Hold",
+    dot: "bg-purple-500",
+  },
+  cancelled: {
+    bg: "bg-red-100",
+    text: "text-red-600",
+    label: "Cancelled",
+    dot: "bg-red-500",
+  },
 };
 
 const PRIORITY_CONFIG = {
-  low: {
-    bg: "bg-emerald-50",
-    text: "text-emerald-600",
-    label: "Low",
-  },
-  medium: {
-    bg: "bg-amber-50",
-    text: "text-amber-600",
-    label: "Medium",
-  },
-  high: {
-    bg: "bg-orange-100",
-    text: "text-orange-600",
-    label: "High",
-  },
-  urgent: {
-    bg: "bg-red-100",
-    text: "text-red-600",
-    label: "Urgent",
-  },
+  low: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Low" },
+  medium: { bg: "bg-amber-50", text: "text-amber-600", label: "Medium" },
+  high: { bg: "bg-orange-100", text: "text-orange-600", label: "High" },
+  urgent: { bg: "bg-red-100", text: "text-red-600", label: "Urgent" },
 };
 
 // ==================== HELPERS ====================
 
 const formatDate = (date) => {
   if (!date) return "—";
-
   return new Date(date).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -102,13 +105,11 @@ const formatDate = (date) => {
 
 const StatusBadge = ({ status }) => {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.todo;
-
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${config.bg} ${config.text}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
-
       {config.label}
     </span>
   );
@@ -156,7 +157,6 @@ const PriorityBadge = ({ priority }) => {
       ) : (
         <Circle className="h-2 w-2 shrink-0 fill-current" />
       )}
-
       {config.label}
     </span>
   );
@@ -165,23 +165,19 @@ const PriorityBadge = ({ priority }) => {
 const StatusIcon = ({ status }) => {
   const icons = {
     todo: <Circle className="h-4 w-4 text-slate-400 shrink-0" />,
-
     in_progress: <Clock className="h-4 w-4 text-slate-400 shrink-0" />,
-
     review: <AlertCircle className="h-4 w-4 text-slate-400 shrink-0" />,
-
+    pending: <Clock className="h-4 w-4 text-yellow-500 shrink-0" />,
+    on_hold: <AlertCircle className="h-4 w-4 text-purple-500 shrink-0" />,
     done: <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />,
-
     completed: <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />,
-
     blocked: <X className="h-4 w-4 text-red-500 shrink-0" />,
+    cancelled: <X className="h-4 w-4 text-red-500 shrink-0" />,
   };
-
   return icons[status] || icons.todo;
 };
 
 // ==================== ACTION BUTTON ====================
-
 const ActionButton = ({ icon: Icon, label, onClick, size = "h-4 w-4" }) => {
   return (
     <button
@@ -200,11 +196,6 @@ const ActionButton = ({ icon: Icon, label, onClick, size = "h-4 w-4" }) => {
 };
 
 // ==================== TREE CONNECTOR LINES ====================
-
-/*
-  نرسم الخطوط باستخدام repeating-linear-gradient بدل border-dashed.
-  بهذه الطريقة تبقى الخطوط ظاهرة حتى لو كان هناك CSS عام يلغي border-style.
-*/
 const DashedVerticalLine = ({ style = {} }) => (
   <span
     aria-hidden="true"
@@ -232,7 +223,6 @@ const DashedHorizontalLine = ({ style = {} }) => (
 );
 
 // ==================== SUBTASK ITEM ====================
-
 const SubTaskItem = ({
   sub,
   taskId,
@@ -241,11 +231,8 @@ const SubTaskItem = ({
   onOpenSubTaskViewModal,
   setDeleteState,
   isLast,
-  index,
-  total,
 }) => {
   const isCompleted = sub.status === "done" || sub.status === "completed";
-
   const assignees = sub.assignedTo || [];
 
   return (
@@ -253,16 +240,9 @@ const SubTaskItem = ({
       className="relative py-2 group/subtask"
       style={{ paddingLeft: "48px" }}
     >
-      {/* الخط العمودي الذي يكمل شجرة الـSubtasks */}
       <DashedVerticalLine
-        style={{
-          left: "24px",
-          top: 0,
-          bottom: isLast ? "50%" : 0,
-        }}
+        style={{ left: "24px", top: 0, bottom: isLast ? "50%" : 0 }}
       />
-
-      {/* فرع أفقي متقطع يصل الخط العمودي ببطاقة الـSubtask */}
       <DashedHorizontalLine
         style={{
           left: "24px",
@@ -272,7 +252,6 @@ const SubTaskItem = ({
         }}
       />
 
-      {/* بطاقة الـSubtask */}
       <div
         className={`relative z-10 ml-3 rounded-xl p-3 transition-all duration-200 ${
           isCompleted
@@ -282,8 +261,6 @@ const SubTaskItem = ({
         style={{ marginLeft: "12px" }}
       >
         <div className="flex flex-col gap-2">
-          {/* Row 1: Title & Status */}
-
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -305,12 +282,10 @@ const SubTaskItem = ({
               {sub.title}
             </span>
 
-            <span >
+            <span>
               <StatusBadge status={sub.status} />
             </span>
           </div>
-
-          {/* Row 2: Badges & Info */}
 
           <div className="flex flex-wrap items-center gap-1.5 pl-7">
             {sub.dueDate && (
@@ -331,7 +306,6 @@ const SubTaskItem = ({
                     {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
                   </div>
                 ))}
-
                 {assignees.length > 2 && (
                   <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[7px] font-medium text-slate-600">
                     +{assignees.length - 2}
@@ -341,11 +315,8 @@ const SubTaskItem = ({
             )}
           </div>
 
-          {/* Row 3: Actions */}
-
           <div className="flex items-center justify-between border-t border-slate-100/60 pl-7 pt-2">
             <div className="flex items-center gap-0.5">
-              {/* View Button */}
               <button
                 type="button"
                 onClick={(event) => {
@@ -357,8 +328,6 @@ const SubTaskItem = ({
               >
                 <Eye className="h-3.5 w-3.5" />
               </button>
-
-              {/* Edit Button */}
               <button
                 type="button"
                 onClick={(event) => {
@@ -374,8 +343,6 @@ const SubTaskItem = ({
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
-
-              {/* Checklist Button */}
               <button
                 type="button"
                 onClick={(event) => {
@@ -389,7 +356,6 @@ const SubTaskItem = ({
               </button>
             </div>
 
-            {/* Delete Button  */}
             <button
               type="button"
               onClick={(event) => {
@@ -421,14 +387,18 @@ const TasksTableViewMobile = ({
   permissions,
   onAddSubTask,
   onOpenEditModal,
+  listId,
+  highlightedTaskId,
   onOpenDetailsModal,
   onOpenChecklistModal,
+  onChangeStatus,
+  onArchiveTask,
+  onUnarchiveTask,
   onDeleteTask,
   onDeleteSubTask,
   toast,
 }) => {
   const [expanded, setExpanded] = useState({});
-
   const [deleteState, setDeleteState] = useState({
     open: false,
     type: null,
@@ -436,24 +406,39 @@ const TasksTableViewMobile = ({
     subTaskId: null,
     title: "",
   });
-
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [updatingTaskId, setUpdatingTaskId] = useState(null);
+  const [archivingTaskId, setArchivingTaskId] = useState(null);
 
   // ==================== TASK VIEW STATE ====================
-
   const [viewTask, setViewTask] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   // ==================== SUBTASK VIEW STATE ====================
-
   const [viewSubTask, setViewSubTask] = useState(null);
-
   const [viewSubTaskParentId, setViewSubTaskParentId] = useState(null);
-
   const [isSubTaskViewModalOpen, setIsSubTaskViewModalOpen] = useState(false);
 
-  // ==================== HANDLERS ====================
+  // ✅ Highlight state
+  const cardRefs = useRef({});
+  const [highlightedCard, setHighlightedCard] = useState(null);
 
+  useEffect(() => {
+    if (!highlightedTaskId) return;
+
+    const timer = setTimeout(() => {
+      const card = cardRefs.current[highlightedTaskId];
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        setHighlightedCard(highlightedTaskId);
+        setTimeout(() => setHighlightedCard(null), 3000);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [highlightedTaskId, tasks]);
+
+  // ==================== HANDLERS ====================
   const resetDeleteState = () => {
     setDeleteState({
       open: false,
@@ -466,26 +451,17 @@ const TasksTableViewMobile = ({
 
   const toggle = (taskId, event) => {
     event?.stopPropagation();
-
-    setExpanded((previous) => ({
-      ...previous,
-      [taskId]: !previous[taskId],
-    }));
+    setExpanded((previous) => ({ ...previous, [taskId]: !previous[taskId] }));
   };
 
   const handleCardClick = (taskId, event) => {
     event?.stopPropagation();
-
-    setExpanded((previous) => ({
-      ...previous,
-      [taskId]: !previous[taskId],
-    }));
+    setExpanded((previous) => ({ ...previous, [taskId]: !previous[taskId] }));
   };
 
   const handleViewTask = (task) => {
     setViewTask(task);
     setIsViewModalOpen(true);
-
     onOpenDetailsModal?.(task);
   };
 
@@ -509,18 +485,15 @@ const TasksTableViewMobile = ({
   const handleDelete = async () => {
     try {
       setDeleteLoading(true);
-
       if (deleteState.type === "task") {
         await onDeleteTask?.(deleteState.taskId);
       }
-
       if (deleteState.type === "subtask") {
         await onDeleteSubTask?.({
           taskId: deleteState.taskId,
           subTaskId: deleteState.subTaskId,
         });
       }
-
       resetDeleteState();
     } catch (error) {
       console.error("Delete error:", error);
@@ -530,9 +503,18 @@ const TasksTableViewMobile = ({
   };
 
   // ==================== RENDER ====================
-
   return (
     <div>
+      <style>{`
+        @keyframes pulse-highlight-mobile {
+          0%, 100% { background-color: rgb(254 249 195); }
+          50% { background-color: rgb(253 224 71); }
+        }
+        .animate-highlight-mobile {
+          animation: pulse-highlight-mobile 1.5s ease-in-out 2;
+        }
+      `}</style>
+
       <div className="w-full max-w-full space-y-3 px-1 pb-20">
         {tasks.map((task) => {
           const subTasks = task.subTasks || [];
@@ -553,31 +535,41 @@ const TasksTableViewMobile = ({
 
           const isPinned =
             task.priority === "urgent" || task.priority === "high";
+          const isArchived = Boolean(task.isArchived);
+          const isDone = task.status === "done" || task.status === "completed";
 
           return (
-            <div key={task._id} className="relative w-full">
+            <div
+              key={task._id}
+              ref={(el) => {
+                if (el) cardRefs.current[task._id] = el;
+              }}
+              className={`relative w-full transition-all duration-500 rounded-2xl ${
+                highlightedCard === task._id
+                  ? "ring-2 ring-yellow-400 shadow-lg"
+                  : ""
+              }`}
+            >
               {/* ==================== MAIN TASK CARD ==================== */}
-
               <div
                 onClick={(event) => {
-                  if (hasChildren) {
-                    handleCardClick(task._id, event);
-                  }
+                  if (hasChildren) handleCardClick(task._id, event);
                 }}
-                className={`group/task relative overflow-hidden rounded-2xl border bg-gradient-to-br from-white via-slate-50/30 to-white p-4 transition-all duration-300 ${
+                className={`group/task relative overflow-hidden rounded-2xl border p-4 transition-all duration-300 ${
                   hasChildren ? "cursor-pointer" : "cursor-default"
                 } ${
-                  isPinned
-                    ? "border-blue-200 shadow-xl shadow-blue-100/40 ring-1 ring-blue-200/30"
-                    : "border-slate-200/80 shadow-sm hover:border-slate-300/60 hover:shadow-lg"
+                  highlightedCard === task._id
+                    ? "bg-yellow-50 border-yellow-400 ring-2 ring-yellow-300 shadow-lg animate-highlight-mobile"
+                    : isArchived
+                      ? "bg-slate-50/50 border-slate-200/60 opacity-80 hover:opacity-100"
+                      : isPinned
+                        ? "bg-gradient-to-br from-white via-slate-50/30 to-white border-blue-200 shadow-xl shadow-blue-100/40 ring-1 ring-blue-200/30"
+                        : "bg-gradient-to-br from-white via-slate-50/30 to-white border-slate-200/80 shadow-sm hover:border-slate-300/60 hover:shadow-lg"
                 }`}
               >
-                {/* Shimmer Effect */}
-
                 <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover/task:translate-x-full" />
 
                 {/* Header Row */}
-
                 <div className="relative z-10 flex items-center gap-1.5">
                   {hasChildren ? (
                     <button
@@ -600,45 +592,26 @@ const TasksTableViewMobile = ({
                     <StatusIcon status={task.status} />
                   </div>
 
-                  <h3 className="min-w-0 flex-1 truncate text-[13px] font-medium leading-tight text-slate-800">
+                  <h3
+                    className={`min-w-0 flex-1 truncate text-[13px] font-medium leading-tight ${isArchived ? "text-slate-500" : "text-slate-800"}`}
+                  >
                     {task.title}
                   </h3>
+
+                  {isArchived && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 text-[9px] font-semibold whitespace-nowrap shrink-0">
+                      <Archive className="h-2.5 w-2.5" />
+                      Archived
+                    </span>
+                  )}
 
                   <div className="shrink-0">
                     <StatusBadge status={task.status} />
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={(event) => event.stopPropagation()}
-                    className="shrink-0 rounded-lg p-0.5 opacity-0 transition-all duration-200 hover:bg-slate-100/80 group-hover/task:opacity-100"
-                  >
-                    <MoreHorizontal className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                  </button>
-                </div>
-
-                {/* Badges Row */}
-
-                <div
-                  className="relative z-10 mt-2.5 flex flex-wrap items-center gap-1.5"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  {task.department && (
-                    <span className="whitespace-nowrap rounded-full border border-indigo-100/50 bg-indigo-50/80 px-2 py-0.5 text-[10px] font-semibold text-indigo-600">
-                      {task.department}
-                    </span>
-                  )}
-
-                  {task.sprint && (
-                    <span className="whitespace-nowrap rounded-full border border-amber-100/50 bg-amber-50/80 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
-                      {task.sprint}
-                    </span>
-                  )}
                 </div>
 
                 {/* Progress Bar */}
-
-                {hasChildren ? (
+                {!isArchived && hasChildren ? (
                   <div
                     className="relative z-10 mt-3"
                     onClick={(event) => event.stopPropagation()}
@@ -648,16 +621,13 @@ const TasksTableViewMobile = ({
                         <ListChecks className="h-3 w-3 text-slate-400" />
                         Subtasks
                       </span>
-
                       <span className="text-slate-400">
                         {completedSubtasks}/{subTasks.length}
                       </span>
-
                       <span className="rounded-full border border-blue-100/50 bg-blue-50/80 px-2 py-0.5 font-bold text-blue-600">
                         {progress}%
                       </span>
                     </div>
-
                     <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200/50">
                       <div
                         className={`h-full rounded-full transition-all duration-700 ease-out ${
@@ -669,18 +639,15 @@ const TasksTableViewMobile = ({
                                 ? "bg-amber-500"
                                 : "bg-slate-400"
                         }`}
-                        style={{
-                          width: `${progress}%`,
-                        }}
+                        style={{ width: `${progress}%` }}
                       />
                     </div>
                   </div>
-                ) : (
+                ) : !isArchived ? (
                   <div className="relative z-10 mt-3 flex items-center gap-2 text-[10px] text-slate-500">
-                    {task.status === "done" || task.status === "completed" ? (
+                    {isDone ? (
                       <>
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-
                         <span className="font-medium text-emerald-600">
                           Completed
                         </span>
@@ -688,17 +655,16 @@ const TasksTableViewMobile = ({
                     ) : (
                       <>
                         <Circle className="h-3.5 w-3.5 text-slate-300" />
-
                         <span className="font-medium text-slate-400">
                           Not started
                         </span>
                       </>
                     )}
                   </div>
-                )}
+                ) : null}
 
                 {/* Action Row */}
-                {permissions?.canUpdateTask && (
+                {permissions?.canUpdateTask && !isArchived && (
                   <div
                     className="relative z-10 mt-3 flex items-center justify-between border-t border-slate-500 pt-3"
                     onClick={(event) => event.stopPropagation()}
@@ -709,29 +675,40 @@ const TasksTableViewMobile = ({
                         label="Add Subtask"
                         onClick={() => onAddSubTask?.(task)}
                       />
-
                       <ActionButton
                         icon={ListChecks}
                         label="Checklist"
                         onClick={() => onOpenChecklistModal?.(task)}
                       />
-
                       <ActionButton
                         icon={Pencil}
                         label="Edit Task"
                         onClick={() =>
-                          onOpenEditModal?.({
-                            type: "task",
-                            data: task,
-                          })
+                          onOpenEditModal?.({ type: "task", data: task })
                         }
                       />
-
                       <ActionButton
                         icon={Eye}
                         label="View Details"
                         onClick={() => handleViewTask(task)}
                       />
+
+                      {/* ✅ Archive Button */}
+                      {isDone && (
+                        <ActionButton
+                          icon={Archive}
+                          label="Archive Task"
+                          onClick={async () => {
+                            if (!onArchiveTask) return;
+                            try {
+                              setArchivingTaskId(task._id);
+                              await onArchiveTask(task);
+                            } finally {
+                              setArchivingTaskId(null);
+                            }
+                          }}
+                        />
+                      )}
                     </div>
 
                     <ActionButton
@@ -744,10 +721,8 @@ const TasksTableViewMobile = ({
                             description: "Delete all subtasks first.",
                             variant: "destructive",
                           });
-
                           return;
                         }
-
                         setDeleteState({
                           open: true,
                           type: "task",
@@ -759,30 +734,43 @@ const TasksTableViewMobile = ({
                     />
                   </div>
                 )}
+
+                {/* ✅ Unarchive Row (فقط لو مؤرشف) */}
+                {isArchived && permissions?.canUpdateTask && (
+                  <div
+                    className="relative z-10 mt-3 flex items-center justify-end border-t border-slate-500 pt-3"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <button
+                      onClick={async () => {
+                        if (!onUnarchiveTask) return;
+                        try {
+                          setArchivingTaskId(task._id);
+                          await onUnarchiveTask(task);
+                        } finally {
+                          setArchivingTaskId(null);
+                        }
+                      }}
+                      disabled={archivingTaskId === task._id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition disabled:opacity-50"
+                    >
+                      <ArchiveRestore className="h-3.5 w-3.5" />
+                      Restore
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* ==================== SUBTASKS SECTION ==================== */}
-
               {isOpen && hasChildren && (
                 <div
                   className="relative overflow-visible rounded-b-2xl border-x border-b border-slate-200/80 bg-gradient-to-b from-slate-50/80 to-slate-100/50 px-2 py-2.5"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  {/* Subtasks List */}
-
                   <div className="relative">
-                    {/*
-                      يبدأ من أسفل بطاقة الـTask، يمر خلف عنوان Subtasks،
-                      ثم يتصل بالخط العمودي لأول Subtask.
-                    */}
                     <DashedVerticalLine
-                      style={{
-                        left: "24px",
-                        top: "0px",
-                        height: "52px",
-                      }}
+                      style={{ left: "24px", top: "0px", height: "52px" }}
                     />
-
                     {subTasks.map((subTask, subIndex) => (
                       <SubTaskItem
                         key={subTask._id || subIndex}
@@ -793,30 +781,27 @@ const TasksTableViewMobile = ({
                         onOpenSubTaskViewModal={handleViewSubTask}
                         setDeleteState={setDeleteState}
                         isLast={subIndex === subTasks.length - 1}
-                        index={subIndex}
-                        total={subTasks.length}
                       />
                     ))}
                   </div>
-                  {/* Subtasks Header */}
-
                   <div
                     className="relative z-10 mb-2 flex items-center justify-between px-2"
                     style={{ marginLeft: "48px" }}
                   >
                     <div></div>
-
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onAddSubTask?.(task);
-                      }}
-                      className="flex items-center gap-0.5 rounded-lg border border-blue-200/50 bg-white/80 px-2.5 py-1 text-[10px] font-medium text-blue-600 transition-all duration-200 hover:bg-blue-50"
-                    >
-                      <Plus className="h-3 w-3" />
-                      Add
-                    </button>
+                    {!isArchived && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onAddSubTask?.(task);
+                        }}
+                        className="flex items-center gap-0.5 rounded-lg border border-blue-200/50 bg-white/80 px-2.5 py-1 text-[10px] font-medium text-blue-600 transition-all duration-200 hover:bg-blue-50"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Add
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -826,55 +811,44 @@ const TasksTableViewMobile = ({
       </div>
 
       {/* ==================== TASK VIEW MODAL ==================== */}
-
       <TaskViewModal
         isOpen={isViewModalOpen}
         onClose={handleCloseTaskView}
         task={viewTask}
+        listId={listId}
         onEdit={() => {
           if (!viewTask) return;
-
-          onOpenEditModal?.({
-            type: "task",
-            data: viewTask,
-          });
-
+          onOpenEditModal?.({ type: "task", data: viewTask });
           handleCloseTaskView();
         }}
         onChecklist={() => {
           if (!viewTask) return;
-
           onOpenChecklistModal?.(viewTask);
           handleCloseTaskView();
         }}
       />
 
       {/* ==================== SUBTASK VIEW MODAL ==================== */}
-
       <SubTaskViewModal
         isOpen={isSubTaskViewModalOpen}
         onClose={handleCloseSubTaskView}
         subTask={viewSubTask}
         onEdit={() => {
           if (!viewSubTask) return;
-
           onOpenEditModal?.({
             type: "subtask",
             data: viewSubTask,
             parentTaskId: viewSubTaskParentId,
           });
-
           handleCloseSubTaskView();
         }}
         onChecklist={() => {
           if (!viewSubTask) return;
-
           onOpenChecklistModal?.(viewSubTask);
           handleCloseSubTaskView();
         }}
         onDelete={() => {
           if (!viewSubTask) return;
-
           setDeleteState({
             open: true,
             type: "subtask",
@@ -882,13 +856,11 @@ const TasksTableViewMobile = ({
             subTaskId: viewSubTask._id,
             title: viewSubTask.title,
           });
-
           handleCloseSubTaskView();
         }}
       />
 
       {/* ==================== DELETE MODAL ==================== */}
-
       <DeleteConfirmModal
         isOpen={deleteState.open}
         loading={deleteLoading}

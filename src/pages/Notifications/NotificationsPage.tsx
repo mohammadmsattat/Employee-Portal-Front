@@ -25,7 +25,7 @@ const NotificationsPage = () => {
   const [markAsRead] = useMarkAsReadMutation();
 
   const notifications = data?.data || [];
-console.log(notifications);
+  console.log(notifications);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -92,10 +92,12 @@ console.log(notifications);
       if (entity.model === "Task") {
         params.set("type", "task");
 
-        params.set("taskId", entity.taskId);
-        params.set("listId", entity.listId);
+        const taskId = entity.taskId || entity.id;
+        params.set("taskId", taskId);
 
-        params.set("mode", "details");
+        if (entity.listId) params.set("listId", entity.listId);
+        if (entity.folderId) params.set("folderId", entity.folderId);
+        if (entity.workspaceId) params.set("workspaceId", entity.workspaceId);
       }
 
       // =========================
@@ -105,11 +107,15 @@ console.log(notifications);
       if (entity.model === "SubTask") {
         params.set("type", "subtask");
 
-        params.set("taskId", entity.taskId);
+        const taskId = entity.taskId || entity.id;
+        const subTaskId = entity.subTaskId || entity.id;
 
-        params.set("subTaskId", entity.subTaskId);
+        if (taskId) params.set("taskId", taskId);
+        if (subTaskId) params.set("subTaskId", subTaskId);
+        if (entity.listId) params.set("listId", entity.listId);
+        if (entity.folderId) params.set("folderId", entity.folderId);
+        if (entity.workspaceId) params.set("workspaceId", entity.workspaceId);
 
-        params.set("mode", "details");
       }
 
       navigate(`/tasks?${params.toString()}`);

@@ -7,7 +7,10 @@ const statusColors: Record<TaskStatus, string> = {
   todo: "bg-gray-100 text-gray-700",
   in_progress: "bg-blue-100 text-blue-700",
   review: "bg-yellow-100 text-yellow-700",
+  pending: "bg-amber-100 text-amber-700",
+  on_hold: "bg-purple-100 text-purple-700",
   done: "bg-green-100 text-green-700",
+  cancelled: "bg-red-100 text-red-700",
 };
 
 const UpdateTaskStatusModal = ({
@@ -78,7 +81,10 @@ const UpdateTaskStatusModal = ({
         <option value="todo">Todo</option>
         <option value="in_progress">In Progress</option>
         <option value="review">Review</option>
+        <option value="pending">Pending</option>
+        <option value="on_hold">On Hold</option>
         <option value="done">Done</option>
+        <option value="cancelled">Cancelled</option>
       </select>
 
       {/* ACTIONS */}

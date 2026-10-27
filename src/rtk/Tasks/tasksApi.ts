@@ -12,6 +12,7 @@ type GetAllTasksArgs = {
   priority?: string;
   assignedTo?: string;
   due?: string;
+  includeArchived?: boolean; // ✅ جديد
 };
 
 type TaskChecklistArgs = {
@@ -37,7 +38,7 @@ export const taskApi = createApi({
     },
   }),
 
-  tagTypes: ["Tasks"],
+  tagTypes: ["Tasks", "GlobalDashboard"],
 
   endpoints: (builder) => ({
     // =====================================
@@ -45,7 +46,16 @@ export const taskApi = createApi({
     // GET /api/lists/:listId/tasks
     // =====================================
     getAllTasks: builder.query<any, GetAllTasksArgs>({
-      query: ({ listId, page, limit, status, priority, assignedTo, due }) => {
+      query: ({
+        listId,
+        page,
+        limit,
+        status,
+        priority,
+        assignedTo,
+        due,
+        includeArchived,
+      }) => {
         const params = new URLSearchParams();
 
         if (page !== undefined) {
@@ -70,6 +80,11 @@ export const taskApi = createApi({
 
         if (due) {
           params.set("due", due);
+        }
+
+        // ✅ Archived filter
+        if (includeArchived) {
+          params.set("includeArchived", "true");
         }
 
         const queryString = params.toString();
@@ -114,7 +129,7 @@ export const taskApi = createApi({
         body: data,
       }),
 
-      invalidatesTags: ["Tasks"],
+      invalidatesTags: ["Tasks", "GlobalDashboard"],
     }),
 
     // =====================================
@@ -135,7 +150,7 @@ export const taskApi = createApi({
         body: data,
       }),
 
-      invalidatesTags: ["Tasks"],
+      invalidatesTags: ["Tasks", "GlobalDashboard"],
     }),
 
     // =====================================
@@ -154,7 +169,45 @@ export const taskApi = createApi({
         method: "DELETE",
       }),
 
-      invalidatesTags: ["Tasks"],
+      invalidatesTags: ["Tasks", "GlobalDashboard"],
+    }),
+
+    // =====================================
+    // ARCHIVE TASK
+    // PATCH /api/lists/:listId/tasks/:taskId/archive
+    // =====================================
+    archiveTask: builder.mutation<
+      any,
+      {
+        listId: string;
+        taskId: string;
+      }
+    >({
+      query: ({ listId, taskId }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}/archive`,
+        method: "PATCH",
+      }),
+
+      invalidatesTags: ["Tasks", "GlobalDashboard"],
+    }),
+
+    // =====================================
+    // UNARCHIVE TASK
+    // PATCH /api/lists/:listId/tasks/:taskId/unarchive
+    // =====================================
+    unarchiveTask: builder.mutation<
+      any,
+      {
+        listId: string;
+        taskId: string;
+      }
+    >({
+      query: ({ listId, taskId }) => ({
+        url: `${buildTaskUrl(listId)}/${taskId}/unarchive`,
+        method: "PATCH",
+      }),
+
+      invalidatesTags: ["Tasks", "GlobalDashboard"],
     }),
 
     // =====================================
@@ -176,7 +229,7 @@ export const taskApi = createApi({
         body: data,
       }),
 
-      invalidatesTags: ["Tasks"],
+      invalidatesTags: ["Tasks", "GlobalDashboard"],
     }),
 
     // =====================================
@@ -198,7 +251,7 @@ export const taskApi = createApi({
         body: data,
       }),
 
-      invalidatesTags: ["Tasks"],
+      invalidatesTags: ["Tasks", "GlobalDashboard"],
     }),
 
     // =====================================
@@ -211,7 +264,7 @@ export const taskApi = createApi({
         method: "DELETE",
       }),
 
-      invalidatesTags: ["Tasks"],
+      invalidatesTags: ["Tasks", "GlobalDashboard"],
     }),
 
     // =====================================
@@ -224,7 +277,7 @@ export const taskApi = createApi({
         method: "PATCH",
       }),
 
-      invalidatesTags: ["Tasks"],
+      invalidatesTags: ["Tasks", "GlobalDashboard"],
     }),
   }),
 });
@@ -235,6 +288,8 @@ export const {
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useDeleteTaskMutation,
+  useArchiveTaskMutation,
+  useUnarchiveTaskMutation,
   useAddChecklistItemMutation,
   useUpdateChecklistItemMutation,
   useDeleteChecklistItemMutation,

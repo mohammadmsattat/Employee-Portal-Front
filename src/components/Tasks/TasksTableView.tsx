@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import {
   ChevronDown,
@@ -11,11 +11,14 @@ import {
   ListChecks,
   Trash2,
   Eye,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 
 import DeleteConfirmModal from "../DeleteConfirmModal";
 import TaskViewModal from "./TaskViewModal";
-import SubTaskViewModal from "./SubTaskViewModal"; // ✅ استيراد مودل الـ SubTask
+import SubTaskViewModal from "./SubTaskViewModal";
+import StatusDropdown from "./StatusDropdown";
 
 const formatDate = (date) => {
   if (!date) return "—";
@@ -27,12 +30,10 @@ const formatDate = (date) => {
 const calculateProgress = (task) => {
   const subTasks = task.subTasks || [];
 
-  // If no subtasks, check if task is done
   if (subTasks.length === 0) {
     return task.status === "done" ? 100 : 0;
   }
 
-  // Calculate based on subtasks
   const completed = subTasks.filter((st) => st.status === "done").length;
   return Math.round((completed / subTasks.length) * 100);
 };
@@ -40,13 +41,16 @@ const calculateProgress = (task) => {
 const TasksTableView = ({
   tasks = [],
   permissions,
-
+  listId,
   // ACTIONS
   onAddSubTask,
   onOpenEditModal,
   onOpenDetailsModal,
+  highlightedTaskId,
   onOpenChecklistModal,
-
+  onChangeStatus,
+  onArchiveTask,
+  onUnarchiveTask,
   // DELETE
   onDeleteTask,
   onDeleteSubTask,
@@ -63,6 +67,8 @@ const TasksTableView = ({
   });
 
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [updatingTaskId, setUpdatingTaskId] = useState(null);
+  const [archivingTaskId, setArchivingTaskId] = useState(null);
 
   // ✅ State for Task View Modal
   const [viewTask, setViewTask] = useState(null);
@@ -72,6 +78,28 @@ const TasksTableView = ({
   const [viewSubTask, setViewSubTask] = useState(null);
   const [isSubTaskViewModalOpen, setIsSubTaskViewModalOpen] = useState(false);
 
+  // ✅ Highlight state
+  const rowRefs = useRef({});
+  const [highlightedRow, setHighlightedRow] = useState(null);
+
+  // ✅ Effect للـ highlight + scroll
+  useEffect(() => {
+    if (!highlightedTaskId) return;
+
+    const timer = setTimeout(() => {
+      const row = rowRefs.current[highlightedTaskId];
+
+      if (row) {
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+        setHighlightedRow(highlightedTaskId);
+
+        setTimeout(() => setHighlightedRow(null), 3000);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [highlightedTaskId, tasks]);
+
   const toggle = (taskId) => {
     setExpanded((prev) => ({
       ...prev,
@@ -79,29 +107,21 @@ const TasksTableView = ({
     }));
   };
 
-  // ✅ Handle View Task
   const handleViewTask = (task) => {
     setViewTask(task);
     setIsViewModalOpen(true);
   };
 
-  // ✅ Handle View SubTask
   const handleViewSubTask = (subTask) => {
     setViewSubTask(subTask);
     setIsSubTaskViewModalOpen(true);
   };
-
-  /* =========================
-     DELETE
-  ========================= */
 
   const handleDelete = async () => {
     try {
       setDeleteLoading(true);
 
       if (deleteState.type === "task") {
-        console.log("...");
-
         await onDeleteTask?.(deleteState.taskId);
       }
 
@@ -126,13 +146,13 @@ const TasksTableView = ({
     }
   };
 
-  // ===== GET PROGRESS COLOR =====
   const getProgressColor = (progress) => {
     if (progress === 100) return "bg-emerald-500";
     if (progress >= 70) return "bg-blue-500";
     if (progress >= 40) return "bg-amber-500";
     return "bg-slate-400";
   };
+
   const getStatusConfig = (status) => {
     const configs = {
       todo: {
@@ -159,6 +179,16 @@ const TasksTableView = ({
         label: "Cancelled",
         className: "bg-red-50 text-red-600 border-red-200",
         dot: "bg-red-500",
+      },
+      pending: {
+        label: "Pending",
+        className: "bg-yellow-50 text-yellow-600 border-yellow-200",
+        dot: "bg-yellow-500",
+      },
+      on_hold: {
+        label: "On Hold",
+        className: "bg-purple-50 text-purple-600 border-purple-200",
+        dot: "bg-purple-500",
       },
     };
 
@@ -229,9 +259,20 @@ const TasksTableView = ({
       </span>
     );
   };
+
   return (
     <div>
       <>
+        <style>{`
+          @keyframes pulse-highlight {
+            0%, 100% { background-color: rgb(254 249 195); }
+            50% { background-color: rgb(253 224 71); }
+          }
+          .animate-highlight {
+            animation: pulse-highlight 1.5s ease-in-out 2;
+          }
+        `}</style>
+
         <div className="bg-white rounded-2xl border border-slate-200/70 overflow-hidden shadow-md">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-slate-600 text-xs">
@@ -246,22 +287,32 @@ const TasksTableView = ({
             </thead>
 
             <tbody>
-              {tasks.map((task, index) => {
+              {tasks.map((task) => {
                 const isOpen = expanded[task._id];
                 const subTasks = task.subTasks || [];
                 const assigneesCount = task.assignedTo?.length || 0;
 
-                // Calculate progress
                 const progress = calculateProgress(task);
                 const progressColor = getProgressColor(progress);
-                const hasSubtasks = subTasks.length > 0;
+
+                const isArchived = Boolean(task.isArchived);
+                const isDone = task.status === "done";
 
                 return (
                   <>
                     {/* MAIN TASK */}
                     <tr
                       key={task._id}
-                      className="group border-t hover:bg-slate-50 transition"
+                      ref={(el) => {
+                        if (el) rowRefs.current[task._id] = el;
+                      }}
+                      className={`group border-t transition-all duration-500 ${
+                        highlightedRow === task._id
+                          ? "bg-yellow-100 ring-2 ring-yellow-400 shadow-lg animate-highlight"
+                          : isArchived
+                            ? "bg-slate-50/50 opacity-80 hover:bg-slate-100"
+                            : "hover:bg-slate-50"
+                      }`}
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-start gap-2">
@@ -285,92 +336,151 @@ const TasksTableView = ({
                           {/* TITLE + ACTIONS */}
                           <div className="flex flex-col">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-800">
+                              <span
+                                className={`font-medium ${
+                                  isArchived
+                                    ? "text-slate-500"
+                                    : "text-slate-800"
+                                }`}
+                              >
                                 {task.title}
                               </span>
 
+                              {isArchived && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap">
+                                  <Archive className="h-3 w-3" />
+                                  Archived
+                                </span>
+                              )}
+
                               {/* HOVER ACTIONS */}
                               <div className="opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
-                                {/* ADD SUBTASK */}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                {!isArchived && (
+                                  <>
+                                    {/* ADD SUBTASK */}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
 
-                                    if (!permissions?.canUpdateTask) return;
+                                        if (!permissions?.canUpdateTask) return;
 
-                                    onAddSubTask?.(task);
-                                  }}
-                                  className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-blue-600 transition"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </button>
+                                        onAddSubTask?.(task);
+                                      }}
+                                      className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-blue-600 transition"
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                    </button>
 
-                                {/* EDIT */}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                    {/* EDIT */}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
 
-                                    onOpenEditModal?.({
-                                      type: "task",
-                                      data: task,
-                                    });
-                                  }}
-                                  className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-amber-600 transition"
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </button>
+                                        onOpenEditModal?.({
+                                          type: "task",
+                                          data: task,
+                                        });
+                                      }}
+                                      className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-amber-600 transition"
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </button>
 
-                                {/* CHECKLIST */}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                    {/* CHECKLIST */}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onOpenChecklistModal?.(task);
+                                      }}
+                                      className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-indigo-600 transition"
+                                    >
+                                      <ListChecks className="h-4 w-4" />
+                                    </button>
 
-                                    onOpenChecklistModal?.(task);
-                                  }}
-                                  className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-indigo-600 transition"
-                                >
-                                  <ListChecks className="h-4 w-4" />
-                                </button>
+                                    {/* DETAILS */}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleViewTask(task);
+                                      }}
+                                      className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-emerald-600 transition"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </button>
 
-                                {/* DETAILS - Task View */}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleViewTask(task);
-                                  }}
-                                  className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-emerald-600 transition"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </button>
+                                    {/* ARCHIVE - يظهر بس لما status=done */}
+                                    {isDone && (
+                                      <button
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          if (!onArchiveTask) return;
 
-                                {/* DELETE */}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                          try {
+                                            setArchivingTaskId(task._id);
+                                            await onArchiveTask(task);
+                                          } finally {
+                                            setArchivingTaskId(null);
+                                          }
+                                        }}
+                                        disabled={archivingTaskId === task._id}
+                                        className="p-1 rounded-md hover:bg-amber-100 text-slate-500 hover:text-amber-600 transition disabled:opacity-50"
+                                        title="Archive task"
+                                      >
+                                        <Archive className="h-4 w-4" />
+                                      </button>
+                                    )}
 
-                                    if (task.subTasks?.length > 0) {
-                                      toast({
-                                        title: "Cannot delete task",
-                                        description:
-                                          "You must delete all subtasks first.",
-                                        variant: "destructive",
-                                      });
+                                    {/* DELETE */}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
 
-                                      return;
-                                    }
+                                        if (task.subTasks?.length > 0) {
+                                          toast({
+                                            title: "Cannot delete task",
+                                            description:
+                                              "You must delete all subtasks first.",
+                                            variant: "destructive",
+                                          });
+                                          return;
+                                        }
 
-                                    setDeleteState({
-                                      open: true,
-                                      type: "task",
-                                      taskId: task._id,
-                                      subTaskId: null,
-                                      title: task.title,
-                                    });
-                                  }}
-                                  className="p-1 rounded-md hover:bg-red-100 text-slate-500 hover:text-red-600 transition"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
+                                        setDeleteState({
+                                          open: true,
+                                          type: "task",
+                                          taskId: task._id,
+                                          subTaskId: null,
+                                          title: task.title,
+                                        });
+                                      }}
+                                      className="p-1 rounded-md hover:bg-red-100 text-slate-500 hover:text-red-600 transition"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* UNARCHIVE - يظهر بس لما archived */}
+                                {isArchived && (
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      if (!onUnarchiveTask) return;
+
+                                      try {
+                                        setArchivingTaskId(task._id);
+                                        await onUnarchiveTask(task);
+                                      } finally {
+                                        setArchivingTaskId(null);
+                                      }
+                                    }}
+                                    disabled={archivingTaskId === task._id}
+                                    className="p-1 rounded-md hover:bg-emerald-100 text-slate-500 hover:text-emerald-600 transition disabled:opacity-50"
+                                    title="Unarchive task"
+                                  >
+                                    <ArchiveRestore className="h-4 w-4" />
+                                  </button>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -379,7 +489,28 @@ const TasksTableView = ({
 
                       {/* STATUS */}
                       <td className="px-4 py-3">
-                        <StatusBadge status={task.status} />
+                        {isArchived ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap bg-emerald-50 text-emerald-600 border-emerald-200">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            Done
+                          </span>
+                        ) : (
+                          <StatusDropdown
+                            status={task.status}
+                            onChange={async (newStatus) => {
+                              if (!onChangeStatus) return;
+
+                              try {
+                                setUpdatingTaskId(task._id);
+                                await onChangeStatus(task, newStatus);
+                              } finally {
+                                setUpdatingTaskId(null);
+                              }
+                            }}
+                            disabled={!permissions?.canUpdateTask}
+                            loading={updatingTaskId === task._id}
+                          />
+                        )}
                       </td>
 
                       {/* PRIORITY */}
@@ -387,15 +518,13 @@ const TasksTableView = ({
                         <PriorityBadge priority={task.priority} />
                       </td>
 
-                      {/* PROGRESS - Updated */}
+                      {/* PROGRESS */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="h-1.5 w-24 bg-slate-200 rounded-full overflow-hidden">
                             <div
                               className={`h-full ${progressColor} rounded-full transition-all duration-500`}
-                              style={{
-                                width: `${progress}%`,
-                              }}
+                              style={{ width: `${progress}%` }}
                             />
                           </div>
 
@@ -414,7 +543,6 @@ const TasksTableView = ({
                       <td className="px-4 py-3 text-slate-600">
                         <div className="flex items-center gap-1">
                           <span>{assigneesCount}</span>
-
                           <Users className="ml-1 h-4 w-4 text-blue-600" />
                         </div>
                       </td>
@@ -435,7 +563,6 @@ const TasksTableView = ({
                                 <Circle className="h-4 w-4 text-slate-300" />
                               )}
 
-                              {/* TITLE + ACTIONS */}
                               <div className="flex items-center gap-2">
                                 <span
                                   className={
@@ -447,9 +574,7 @@ const TasksTableView = ({
                                   {sub.title}
                                 </span>
 
-                                {/* HOVER ACTIONS */}
                                 <div className="opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
-                                  {/* ✅ VIEW - SubTask View */}
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -460,7 +585,6 @@ const TasksTableView = ({
                                     <Eye className="h-4 w-4" />
                                   </button>
 
-                                  {/* EDIT */}
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -476,11 +600,9 @@ const TasksTableView = ({
                                     <Pencil className="h-4 w-4" />
                                   </button>
 
-                                  {/* CHECKLIST */}
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-
                                       onOpenChecklistModal?.(task);
                                     }}
                                     className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-indigo-600 transition"
@@ -488,7 +610,6 @@ const TasksTableView = ({
                                     <ListChecks className="h-4 w-4" />
                                   </button>
 
-                                  {/* DELETE */}
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -518,7 +639,6 @@ const TasksTableView = ({
                             {sub.priority || "—"}
                           </td>
 
-                          {/* Subtask progress - show status indicator */}
                           <td className="px-4 py-2">
                             {sub.status === "done" ? (
                               <span className="inline-flex items-center gap-1 text-emerald-600">
@@ -548,7 +668,7 @@ const TasksTableView = ({
           </table>
         </div>
 
-        {/* ===== TASK VIEW MODAL ===== */}
+        {/* TASK VIEW MODAL */}
         <TaskViewModal
           isOpen={isViewModalOpen}
           onClose={() => {
@@ -556,6 +676,7 @@ const TasksTableView = ({
             setViewTask(null);
           }}
           task={viewTask}
+          listId={listId}
           onEdit={() => {
             if (viewTask) {
               onOpenEditModal?.({ type: "task", data: viewTask });
@@ -570,7 +691,7 @@ const TasksTableView = ({
           }}
         />
 
-        {/* ===== SUBTASK VIEW MODAL ===== */}
+        {/* SUBTASK VIEW MODAL */}
         <SubTaskViewModal
           isOpen={isSubTaskViewModalOpen}
           onClose={() => {
@@ -632,3 +753,4 @@ const TasksTableView = ({
 };
 
 export default TasksTableView;
+  

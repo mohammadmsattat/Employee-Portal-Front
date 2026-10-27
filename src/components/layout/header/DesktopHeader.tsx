@@ -13,11 +13,13 @@ import {
   Home,
   User,
   LogOut,
+  LayoutDashboard,
 } from "lucide-react";
 
 const DesktopHeader = () => {
   const {
     t,
+    user, // ✅ تمت الإضافة
     userName,
     userEmail,
     userInitials,
@@ -25,6 +27,9 @@ const DesktopHeader = () => {
     isActive,
     handleLogout,
   } = useTopbar();
+
+  // ✅ التحقق من صلاحية الـ Owner
+  const isWorkspaceOwner = user?.isWorkspaceOwner || false;
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -68,6 +73,16 @@ const DesktopHeader = () => {
       to: "/tasks",
       icon: User,
     },
+    // ✅ إضافة زرار الـ Dashboard بشرط أن يكون المستخدم Owner
+    ...(isWorkspaceOwner
+      ? [
+          {
+            label: "Dashboard",
+            to: "/dashboard",
+            icon: LayoutDashboard,
+          },
+        ]
+      : []),
   ];
 
   return (

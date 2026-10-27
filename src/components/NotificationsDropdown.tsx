@@ -35,6 +35,7 @@ const NotificationsDropdown = ({
       document.removeEventListener("click", handleClickOutside);
     };
   }, [profileOpen]);
+
   const { data, isLoading } = useGetMyNotificationsQuery({
     page: 1,
     limit: 20,
@@ -65,6 +66,84 @@ const NotificationsDropdown = ({
       await markAllAsRead().unwrap();
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  // ✅ دالة الروتينج للـ Task
+  const handleNotificationClick = async (notification: any) => {
+    try {
+      if (!notification.isRead) {
+        await markAsRead(notification._id).unwrap();
+      }
+
+      const { entity } = notification;
+
+      if (!entity?.model) return;
+
+      const params = new URLSearchParams();
+
+      // =========================
+      // WORKSPACE
+      // =========================
+      if (entity.model === "Workspace") {
+        params.set("type", "workspace");
+        params.set("workspaceId", entity.id);
+      }
+
+      // =========================
+      // FOLDER
+      // =========================
+      if (entity.model === "Folder") {
+        params.set("type", "folder");
+        params.set("workspaceId", entity.workspaceId);
+        params.set("folderId", entity.folderId);
+      }
+
+      // =========================
+      // LIST
+      // =========================
+      if (entity.model === "List") {
+        params.set("type", "list");
+        params.set("workspaceId", entity.workspaceId);
+        params.set("folderId", entity.folderId);
+        params.set("listId", entity.listId);
+      }
+
+      // =========================
+      // TASK
+      // =========================
+      if (entity.model === "Task") {
+        params.set("type", "task");
+
+        const taskId = entity.taskId || entity.id;
+        params.set("taskId", taskId);
+
+        if (entity.listId) params.set("listId", entity.listId);
+        if (entity.folderId) params.set("folderId", entity.folderId);
+        if (entity.workspaceId) params.set("workspaceId", entity.workspaceId);
+      }
+
+      // =========================
+      // SUBTASK
+      // =========================
+      if (entity.model === "SubTask") {
+        params.set("type", "subtask");
+
+        const taskId = entity.taskId || entity.id;
+        const subTaskId = entity.subTaskId || entity.id;
+
+        if (taskId) params.set("taskId", taskId);
+        if (subTaskId) params.set("subTaskId", subTaskId);
+        if (entity.listId) params.set("listId", entity.listId);
+        if (entity.folderId) params.set("folderId", entity.folderId);
+        if (entity.workspaceId) params.set("workspaceId", entity.workspaceId);
+      }
+
+      // ✅ اقفل الـ Dropdown وروح للـ Task
+      onOpenChange(false);
+      navigate(`/tasks?${params.toString()}`);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -138,7 +217,8 @@ const NotificationsDropdown = ({
             {unread.map((n) => (
               <div
                 key={n._id}
-                onClick={() => handleMarkAsRead(n._id)}
+                // ✅ غيرنا الـ onClick عشان ينادي دالة الروتينج
+                onClick={() => handleNotificationClick(n)}
                 className="
                   group relative mb-2 cursor-pointer
                   rounded-sm border border-slate-200

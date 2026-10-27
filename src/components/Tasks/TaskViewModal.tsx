@@ -1,4 +1,6 @@
 // TaskViewModal.jsx - Unified design with other modals
+import AttachmentSection from "./Attachments/AttachmentSection";
+import { useGetTaskAttachmentsQuery } from "@/rtk/Tasks/attachmentsApi";
 
 import { useState, useEffect, useRef } from "react";
 import {
@@ -25,6 +27,8 @@ import {
   Flag,
   UserCircle,
   Briefcase,
+  Ban,
+  Pause,
 } from "lucide-react";
 
 // ==================== CONSTANTS ====================
@@ -63,6 +67,27 @@ const STATUS_CONFIG = {
     label: "Blocked",
     dot: "bg-red-500",
     icon: AlertCircle,
+  },
+  pending: {
+    bg: "bg-yellow-100",
+    text: "text-yellow-700",
+    label: "Pending",
+    dot: "bg-yellow-500",
+    icon: Clock,
+  },
+  on_hold: {
+    bg: "bg-purple-100",
+    text: "text-purple-700",
+    label: "On Hold",
+    dot: "bg-purple-500",
+    icon: Pause,
+  },
+  cancelled: {
+    bg: "bg-red-100",
+    text: "text-red-700",
+    label: "Cancelled",
+    dot: "bg-red-500",
+    icon: Ban,
   },
 };
 
@@ -106,7 +131,7 @@ const formatDate = (date) => {
 const formatRelativeTime = (date) => {
   if (!date) return "—";
   const now = new Date();
-  const diff = Number(now) - Number(new Date(date)); 
+  const diff = Number(now) - Number(new Date(date));
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
   if (days === 0) return "Today";
@@ -120,7 +145,7 @@ const getDaysUntilDue = (dueDate) => {
   if (!dueDate) return null;
   const now = new Date();
   const due = new Date(dueDate);
-  const diff = Number(due) - Number(now); 
+  const diff = Number(due) - Number(now);
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
   return days;
 };
@@ -155,16 +180,16 @@ const PriorityBadge = ({ priority }) => {
 };
 
 // ===== Info Row =====
-const InfoRow = ({ 
-  icon: Icon, 
-  label, 
-  value, 
-  children, 
-  highlight = false 
+const InfoRow = ({
+  icon: Icon,
+  label,
+  value,
+  children,
+  highlight = false,
 }: {
   icon: any;
   label: string;
-  value?: any; 
+  value?: any;
   children?: React.ReactNode;
   highlight?: boolean;
 }) => (
@@ -291,10 +316,20 @@ const TaskViewModal = ({
   onEdit,
   onChecklist,
   onDelete,
+  listId,
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const modalRef = useRef(null);
   const bodyRef = useRef(null);
+
+  // ✅ بنجيب المرفقات لايف من الـ API
+  const { data: attachmentsData, refetch: refetchAttachments } =
+    useGetTaskAttachmentsQuery(
+      { listId, taskId: task?._id },
+      { skip: !task?._id || !listId },
+    );
+
+  const liveAttachments = attachmentsData?.data || attachmentsData || [];
 
   // ===== Check Mobile =====
   useEffect(() => {
@@ -363,7 +398,7 @@ const TaskViewModal = ({
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-950/55 backdrop-blur-sm sm:items-center sm:p-4 md:p-6">
       <div className="flex max-h-[96vh] w-full flex-col rounded-t-[28px] bg-white shadow-[0_-20px_80px_rgba(15,23,42,0.28)] sm:max-h-[92vh] sm:max-w-3xl sm:rounded-2xl">
-        {/* ===== HEADER - Same as AddWorkspaceModal ===== */}
+        {/* ===== HEADER ===== */}
         <div
           className="relative shrink-0 overflow-hidden px-4 py-3.5 sm:px-6 sm:py-4 md:px-7 md:py-5"
           style={{
@@ -371,11 +406,8 @@ const TaskViewModal = ({
               "linear-gradient(180deg, rgba(37, 99, 235, 0.12), rgba(244, 247, 251, 0))",
           }}
         >
-          {/* Decorative blur elements */}
           <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-blue-200/20 blur-2xl sm:-right-10 sm:-top-12 sm:h-32 sm:w-32" />
           <div className="absolute -left-8 top-6 h-20 w-20 rounded-full bg-indigo-200/20 blur-2xl sm:-left-10 sm:top-8 sm:h-24 sm:w-24" />
-
-          {/* Mobile handle */}
           <div className="mx-auto mb-2.5 h-1 w-12 rounded-full bg-slate-300/60 sm:hidden" />
 
           <div className="relative flex items-start justify-between gap-3 sm:gap-4">
@@ -393,7 +425,6 @@ const TaskViewModal = ({
                   <StatusBadge status={task.status} />
                   <PriorityBadge priority={task.priority} />
 
-                  {/* Due Date Indicator */}
                   {task.dueDate && (
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
@@ -417,7 +448,6 @@ const TaskViewModal = ({
             </div>
 
             <div className="flex items-center gap-0.5">
-              {/* Edit Button */}
               {onEdit && (
                 <button
                   onClick={onEdit}
@@ -428,7 +458,6 @@ const TaskViewModal = ({
                 </button>
               )}
 
-              {/* Checklist Button */}
               {onChecklist && subTasks.length > 0 && (
                 <button
                   onClick={onChecklist}
@@ -439,7 +468,6 @@ const TaskViewModal = ({
                 </button>
               )}
 
-              {/* Delete Button */}
               {onDelete && (
                 <button
                   onClick={onDelete}
@@ -450,7 +478,6 @@ const TaskViewModal = ({
                 </button>
               )}
 
-              {/* Close Button */}
               <button
                 onClick={onClose}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-white/60 text-slate-400 transition hover:bg-white/80 hover:text-slate-600 backdrop-blur-sm sm:h-9 sm:w-9 sm:rounded-lg"
@@ -467,7 +494,6 @@ const TaskViewModal = ({
           className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 md:px-7 md:py-6"
         >
           <div className="grid gap-3.5 sm:gap-4">
-            {/* Description */}
             {task.description ? (
               <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-4 sm:p-5 border border-slate-200/60">
                 <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-2">
@@ -485,12 +511,10 @@ const TaskViewModal = ({
               </div>
             )}
 
-            {/* Progress */}
             {subTasks.length > 0 && (
               <ProgressBar progress={progress} subtasks={subTasks} />
             )}
 
-            {/* Subtasks List */}
             {subTasks.length > 0 && (
               <div className="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/60">
                 <div className="flex items-center justify-between mb-3">
@@ -515,7 +539,6 @@ const TaskViewModal = ({
               </div>
             )}
 
-            {/* Details Grid - Same style as AddWorkspaceModal members */}
             <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-4 sm:p-5 border border-slate-200/60">
               <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                 <CalendarDays className="h-3.5 w-3.5" />
@@ -523,16 +546,12 @@ const TaskViewModal = ({
               </h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
-                {/* Left Column */}
                 <div>
-                  {/* Start Date */}
                   <InfoRow
                     icon={Calendar}
                     label="Start Date"
                     value={task.startDate ? formatDate(task.startDate) : "—"}
                   />
-
-                  {/* Due Date */}
                   <InfoRow
                     icon={Calendar}
                     label="Due Date"
@@ -558,9 +577,7 @@ const TaskViewModal = ({
                   </InfoRow>
                 </div>
 
-                {/* Right Column */}
                 <div>
-                  {/* Assignees */}
                   <InfoRow icon={Users} label="Assignees">
                     {hasAssignees ? (
                       <div className="flex flex-wrap items-center gap-2 mt-1.5">
@@ -586,7 +603,6 @@ const TaskViewModal = ({
                     )}
                   </InfoRow>
 
-                  {/* Created By */}
                   <InfoRow icon={UserCircle} label="Created By">
                     <div className="flex items-center gap-2 mt-0.5">
                       <AssigneeAvatar user={task.createdBy} size="sm" />
@@ -598,7 +614,6 @@ const TaskViewModal = ({
                 </div>
               </div>
 
-              {/* Tags - Full Width */}
               {task.tags && task.tags.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-slate-200/60">
                   <InfoRow icon={Tag} label="Tags">
@@ -611,26 +626,18 @@ const TaskViewModal = ({
                 </div>
               )}
 
-              {/* Attachments - Full Width */}
-              {task.attachments && task.attachments.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-slate-200/60">
-                  <InfoRow icon={Paperclip} label="Attachments">
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {task.attachments.map((att, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white border border-slate-200 shadow-sm"
-                        >
-                          <Paperclip className="h-3 w-3 text-slate-400" />
-                          {att.name || `File ${idx + 1}`}
-                        </span>
-                      ))}
-                    </div>
-                  </InfoRow>
-                </div>
-              )}
+              {/* ✅ التعديل هنا: المرفقات بقت لايف */}
+              <div className="mt-3 pt-3 border-t border-slate-200/60">
+                <AttachmentSection
+                  listId={listId}
+                  taskId={task._id}
+                  attachments={liveAttachments}
+                  canUpload={true}
+                  canDelete={true}
+                  refetch={refetchAttachments}
+                />
+              </div>
 
-              {/* Comments - Full Width */}
               {task.comments && task.comments.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-slate-200/60">
                   <InfoRow icon={MessageCircle} label="Comments">
@@ -650,10 +657,9 @@ const TaskViewModal = ({
           </div>
         </div>
 
-        {/* ===== FOOTER - Same as AddWorkspaceModal ===== */}
+        {/* ===== FOOTER ===== */}
         <div className="shrink-0 border-t border-slate-100 bg-white px-4 py-3.5 sm:px-6 sm:py-4 md:px-7 rounded-b-2xl">
           <div className="flex items-center justify-between gap-2">
-            {/* Left Section - Created info */}
             <div className="flex items-center gap-3 text-xs text-slate-400">
               <div className="flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
@@ -661,9 +667,7 @@ const TaskViewModal = ({
               </div>
             </div>
 
-            {/* Right Section - Action Buttons */}
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Done Button */}
               <button
                 onClick={onClose}
                 className="h-10 rounded-2xl bg-blue-600 px-4 font-medium text-white hover:bg-blue-700 transition-all shadow-md hover:shadow-lg active:scale-[0.98] sm:h-11 sm:rounded-lg sm:px-6"

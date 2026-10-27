@@ -75,7 +75,10 @@ const TaskFiltersMobile = ({ onChange, onClose }) => {
             <option value="todo">Todo</option>
             <option value="in_progress">In Progress</option>
             <option value="review">Review</option>
+            <option value="pending">Pending</option>
+            <option value="on_hold">On Hold</option>
             <option value="done">Done</option>
+            <option value="cancelled">Cancelled</option>
           </select>
         </div>
 

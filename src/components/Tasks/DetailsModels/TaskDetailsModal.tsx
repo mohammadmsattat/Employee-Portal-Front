@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import {
   X,
   ChevronRight,
@@ -9,6 +9,8 @@ import {
   Circle,
   AlertCircle,
   Zap,
+  Pause,
+  Clock,
   type LucideIcon,
 } from "lucide-react";
 import { useTaskDetailsModal } from "@/hooks/Tasks/DetailsModels/useTaskDetailsModal";
@@ -180,6 +182,24 @@ const STATUS_CONFIGS: StatusConfigs = {
     icon: X,
     label: "Cancelled",
     dotColor: "bg-red-500",
+    pulse: false,
+  },
+  pending: {
+    bg: "bg-yellow-50",
+    text: "text-yellow-700",
+    iconColor: "text-yellow-500",
+    icon: Clock,
+    label: "Pending",
+    dotColor: "bg-yellow-500",
+    pulse: false,
+  },
+  on_hold: {
+    bg: "bg-purple-50",
+    text: "text-purple-700",
+    iconColor: "text-purple-500",
+    icon: Pause,
+    label: "On Hold",
+    dotColor: "bg-purple-500",
     pulse: false,
   },
 };
@@ -388,24 +408,23 @@ function TaskDetailsModal({
   permissions,
   refetchTasks,
 }: TaskDetailsModalProps) {
-  // ===== STATE =====
   const [commentText, setCommentText] = useState<string>("");
   const [activeTab, setActiveTab] = useState<string>("details");
   const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  // ✅ State عشان نجبر الـ TaskEditor إنه يعيد الرسم لما نرفع ملف
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const canEdit = mode === "edit" && Boolean(permissions?.canUpdateTask);
   const canUpdateDates =
     mode === "edit" && Boolean(permissions?.canUpdateDates);
 
   const entityLabel = entityType === "subtask" ? "Subtask" : "Task";
-
   const modalTitle =
     mode === "edit" ? `Edit ${entityLabel}` : `${entityLabel} Details`;
 
-  // ===== EFFECTS =====
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -413,37 +432,27 @@ function TaskDetailsModal({
 
   useEffect(() => {
     if (!isOpen) return;
-
     setActiveTab("details");
     setCommentText("");
   }, [isOpen, entity?._id]);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {};
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // ===== HOOKS =====
   const {
     form,
     updateField,
     saveTask,
-
     isSaving,
     saveError,
-
     activity,
     addComment,
-
     openPanel,
     handleOpen,
     closeSubModal,
     popoverStyle,
-
     activityLoading,
     activityError,
     refetchActivity,
+    attachmentsList,
+    refetchAttachments,
   } = useTaskDetailsModal({
     entity,
     entityType,
@@ -452,14 +461,14 @@ function TaskDetailsModal({
     canEdit,
   });
 
-  // ===== Re-fetch data when modal opens or task changes =====
+  const safeAttachments = attachmentsList || [];
+
   useEffect(() => {
     if (isOpen && entity?._id) {
       refetchActivity?.();
     }
   }, [isOpen, entity?._id, refetchActivity]);
 
-  // ===== RENDER =====
   if (!isOpen || !entity) return null;
 
   const statusConfig = getStatusConfig(entity?.status);
@@ -468,18 +477,8 @@ function TaskDetailsModal({
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-slate-950/60 backdrop-blur-sm sm:items-center sm:p-4 md:p-6">
       <div
-        className={`
-          flex w-full flex-col overflow-hidden bg-white
-          transition-all duration-300 ease-out
-          ${
-            isMobile
-              ? "h-[100dvh] rounded-none animate-slideUp"
-              : `rounded-t-[28px] sm:rounded-2xl shadow-[0_-20px_80px_rgba(15,23,42,0.28)] 
-              h-[96vh] sm:h-[92vh] sm:max-w-6xl`
-          }
-        `}
+        className={`flex w-full flex-col overflow-hidden bg-white transition-all duration-300 ease-out ${isMobile ? "h-[100dvh] rounded-none animate-slideUp" : `rounded-t-[28px] sm:rounded-2xl shadow-[0_-20px_80px_rgba(15,23,42,0.28)] h-[96vh] sm:h-[92vh] sm:max-w-6xl`}`}
       >
-        {/* HEADER */}
         {isMobile ? (
           <MobileHeader
             entity={entity}
@@ -499,7 +498,6 @@ function TaskDetailsModal({
           />
         )}
 
-        {/* MOBILE: Tabs */}
         {isMobile && (
           <MobileTabs
             activeTab={activeTab}
@@ -508,16 +506,12 @@ function TaskDetailsModal({
           />
         )}
 
-        {/* BODY */}
         <div className="flex-1 overflow-hidden flex flex-col sm:flex-row">
-          {/* Task Editor */}
           <div
-            className={`
-              flex-1 flex flex-col overflow-hidden
-              ${isMobile && activeTab !== "details" ? "hidden" : "flex"}
-            `}
+            className={`flex-1 flex flex-col overflow-hidden ${isMobile && activeTab !== "details" ? "hidden" : "flex"}`}
           >
             <TaskEditor
+              key={`editor-${refreshKey}`} // ✅ بنغير الـ key عشان نجبر الـ Component يعيد الرسم
               form={form}
               updateField={updateField}
               saveTask={saveTask}
@@ -529,26 +523,23 @@ function TaskDetailsModal({
               popoverStyle={popoverStyle}
               closeSubModal={closeSubModal}
               workspaceId={workspace?._id || ""}
-              refetchTasks={refetchTasks}
+              refetchTasks={() => {
+                // ✅ لما نرفع/نحذف ملف، بنحدث الـ Activity وبنغير الـ Key
+                refetchActivity?.();
+                setRefreshKey((prev) => prev + 1);
+              }}
               listId={listName?._id || ""}
               canEdit={canEdit}
               isSaving={isSaving}
               saveError={saveError}
               isMobile={isMobile}
+              attachments={safeAttachments}
+              canDeleteAttachment={permissions?.canDeleteTask}
             />
           </div>
 
-          {/* Activity */}
           <div
-            className={`
-              flex-1 flex flex-col
-              ${
-                isMobile
-                  ? "border-t border-slate-200/50"
-                  : "border-l border-slate-200/50"
-              }
-              ${isMobile && activeTab !== "activity" ? "hidden" : "flex"}
-            `}
+            className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isMobile ? "border-t border-slate-200/50" : "border-l border-slate-200/50"} ${isMobile && activeTab !== "activity" ? "hidden" : "flex"}`}
           >
             <TaskActivity
               activity={activity}
@@ -559,6 +550,7 @@ function TaskDetailsModal({
               error={activityError}
               refetch={refetchActivity}
               isMobile={isMobile}
+              assignedTo={entity?.assignedTo || []}
             />
           </div>
         </div>

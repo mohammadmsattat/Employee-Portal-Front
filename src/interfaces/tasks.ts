@@ -1,7 +1,13 @@
 // types/task.ts
 
-export type TaskStatus = "todo" | "in_progress" | "review" | "done";
-
+export type TaskStatus =
+  | "todo"
+  | "in_progress"
+  | "review"
+  | "pending"
+  | "on_hold"
+  | "done"
+  | "cancelled";
 export interface TaskMember {
   _id: string;
   email: string;

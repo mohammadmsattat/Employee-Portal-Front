@@ -28,6 +28,7 @@ import UpdateTaskMembersModal from "./TaskMenuActoions/MembersModal";
 import UpdateTaskTimeLogModal from "./TaskMenuActoions/TimeLogModal";
 import UpdateTaskStatusModal from "./TaskMenuActoions/StatusModal ";
 import UpdateTaskDatesModal from "./TaskMenuActoions/DatesModal ";
+import AttachmentSection from "../Attachments/AttachmentSection";
 
 type EntityType = "task" | "subtask";
 
@@ -40,15 +41,12 @@ interface TaskEditorProps {
   form: EditorForm;
   updateField: (key: string, value: unknown) => void;
   saveTask: () => void | Promise<void>;
-
   entity: any;
   entityType?: EntityType;
-
   openPanel: string | null;
   handleOpen: (event: MouseEvent<HTMLButtonElement>, panel: string) => void;
   popoverStyle: () => CSSProperties;
   closeSubModal: () => void;
-
   workspaceId: string;
   listId: string;
   refetchTasks?: () => unknown;
@@ -57,6 +55,8 @@ interface TaskEditorProps {
   isSaving?: boolean;
   saveError?: any;
   isMobile?: boolean;
+  attachments?: any[];
+  canDeleteAttachment?: boolean;
 }
 
 interface ActionButtonProps {
@@ -90,13 +90,8 @@ interface DetailItemProps {
 
 const formatDate = (value?: string | Date | null) => {
   if (!value) return "Not set";
-
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Not set";
-  }
-
+  if (Number.isNaN(date.getTime())) return "Not set";
   return date.toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -111,14 +106,14 @@ const formatStatus = (status?: string) => {
     review: "Review",
     done: "Done",
     cancelled: "Cancelled",
+    pending: "Pending",
+    on_hold: "On Hold",
   };
-
   return statuses[status || ""] || status?.replaceAll("_", " ") || "To Do";
 };
 
 const formatPriority = (priority?: string) => {
   if (!priority) return "Medium";
-
   return `${priority.charAt(0).toUpperCase()}${priority.slice(1)}`;
 };
 
@@ -129,8 +124,9 @@ const getStatusClasses = (status?: string) => {
     review: "border-amber-200 bg-amber-50 text-amber-700",
     done: "border-emerald-200 bg-emerald-50 text-emerald-700",
     cancelled: "border-red-200 bg-red-50 text-red-700",
+    pending: "border-yellow-200 bg-yellow-50 text-yellow-700",
+    on_hold: "border-purple-200 bg-purple-50 text-purple-700",
   };
-
   return (
     classes[status || ""] || "border-slate-200 bg-slate-100 text-slate-700"
   );
@@ -143,7 +139,6 @@ const getPriorityClasses = (priority?: string) => {
     high: "border-amber-200 bg-amber-50 text-amber-700",
     urgent: "border-red-200 bg-red-50 text-red-700",
   };
-
   return (
     classes[priority || ""] || "border-slate-200 bg-slate-50 text-slate-600"
   );
@@ -151,22 +146,9 @@ const getPriorityClasses = (priority?: string) => {
 
 const getActionButtonStyles = (isMobile: boolean) => {
   if (isMobile) {
-    return `
-      flex min-h-[40px] flex-1 items-center justify-center gap-2
-      rounded-xl border border-slate-200/70 bg-white
-      px-3 py-2 text-xs font-medium text-slate-700
-      transition hover:border-slate-300 hover:bg-slate-50
-      active:scale-95
-    `;
+    return `flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 active:scale-95`;
   }
-
-  return `
-    flex items-center gap-2 rounded-2xl
-    border border-slate-200/70 bg-white
-    px-4 py-2.5 text-sm font-medium text-slate-700
-    transition hover:border-slate-300 hover:bg-slate-50
-    hover:shadow-sm
-  `;
+  return `flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm`;
 };
 
 /* =========================
@@ -191,13 +173,11 @@ const ActionButton = memo(
         <Icon
           className={`${isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} ${iconColor}`}
         />
-
         <span>{isMobile ? mobileLabel : label}</span>
       </button>
     );
   },
 );
-
 ActionButton.displayName = "ActionButton";
 
 const DetailItem = memo(
@@ -213,7 +193,6 @@ const DetailItem = memo(
           <Icon className={`h-3.5 w-3.5 ${iconClassName}`} />
           {label}
         </div>
-
         <div className="truncate text-sm font-semibold text-slate-700">
           {value}
         </div>
@@ -221,7 +200,6 @@ const DetailItem = memo(
     );
   },
 );
-
 DetailItem.displayName = "DetailItem";
 
 const TitleEditor = memo(
@@ -242,47 +220,24 @@ const TitleEditor = memo(
           placeholder="Enter task title..."
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              onSave();
-            }
-
-            if (event.key === "Escape") {
-              onCancel();
-            }
+            if (event.key === "Enter") onSave();
+            if (event.key === "Escape") onCancel();
           }}
-          className={`
-            flex-1 rounded-xl border-2 border-blue-300 bg-white
-            font-semibold outline-none transition
-            focus:ring-4 focus:ring-blue-100
-            disabled:cursor-not-allowed disabled:opacity-60
-            ${isMobile ? "px-3.5 py-2.5 text-base" : "px-4 py-2.5 text-lg"}
-          `}
+          className={`flex-1 rounded-xl border-2 border-blue-300 bg-white font-semibold outline-none transition focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60 ${isMobile ? "px-3.5 py-2.5 text-base" : "px-4 py-2.5 text-lg"}`}
         />
-
         <button
           type="button"
           disabled={isSaving}
           onClick={onSave}
-          className={`
-            flex items-center justify-center rounded-xl
-            bg-blue-600 text-white transition hover:bg-blue-700
-            disabled:cursor-not-allowed disabled:opacity-60
-            ${isMobile ? "h-10 w-10" : "h-11 w-11"}
-          `}
+          className={`flex items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 ${isMobile ? "h-10 w-10" : "h-11 w-11"}`}
         >
           <Check className="h-5 w-5" />
         </button>
-
         <button
           type="button"
           disabled={isSaving}
           onClick={onCancel}
-          className={`
-            flex items-center justify-center rounded-xl
-            bg-slate-100 text-slate-600 transition hover:bg-slate-200
-            disabled:cursor-not-allowed disabled:opacity-60
-            ${isMobile ? "h-10 w-10" : "h-11 w-11"}
-          `}
+          className={`flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 ${isMobile ? "h-10 w-10" : "h-11 w-11"}`}
         >
           <XIcon className="h-5 w-5" />
         </button>
@@ -290,7 +245,6 @@ const TitleEditor = memo(
     );
   },
 );
-
 TitleEditor.displayName = "TitleEditor";
 
 /* =========================
@@ -301,24 +255,22 @@ function TaskEditor({
   form,
   updateField,
   saveTask,
-
   entity,
   entityType = "task",
-
   openPanel,
   handleOpen,
   popoverStyle,
   closeSubModal,
-
   workspaceId,
   listId,
   refetchTasks,
   canUpdateDates = false,
-
   canEdit = false,
   isSaving = false,
   saveError = null,
   isMobile = false,
+  attachments = [],
+  canDeleteAttachment = false,
 }: TaskEditorProps) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [temporaryTitle, setTemporaryTitle] = useState(form?.title || "");
@@ -328,35 +280,24 @@ function TaskEditor({
     setEditingTitle(false);
   }, [entity?._id, form?.title]);
 
-  const assignedMembers = useMemo(() => {
-    if (!Array.isArray(entity?.assignedTo)) {
-      return [];
-    }
-
-    return entity.assignedTo;
-  }, [entity?.assignedTo]);
-
+  const assignedMembers = useMemo(
+    () => (Array.isArray(entity?.assignedTo) ? entity.assignedTo : []),
+    [entity?.assignedTo],
+  );
   const checklist = Array.isArray(entity?.checklist) ? entity.checklist : [];
-
   const subTasks = Array.isArray(entity?.subTasks) ? entity.subTasks : [];
-
   const completedChecklistCount = checklist.filter(
     (item) => item?.isDone,
   ).length;
-
   const completedSubTasksCount = subTasks.filter(
     (subTask) => subTask?.status === "done",
   ).length;
 
   const progress = useMemo(() => {
-    if (typeof entity?.progress === "number") {
+    if (typeof entity?.progress === "number")
       return Math.max(0, Math.min(100, entity.progress));
-    }
-
-    if (subTasks.length > 0) {
+    if (subTasks.length > 0)
       return Math.round((completedSubTasksCount / subTasks.length) * 100);
-    }
-
     return entity?.status === "done" ? 100 : 0;
   }, [
     entity?.progress,
@@ -366,24 +307,15 @@ function TaskEditor({
   ]);
 
   const assignedMembersText = useMemo(() => {
-    if (assignedMembers.length === 0) {
-      return "No members";
-    }
-
+    if (assignedMembers.length === 0) return "No members";
     const names = assignedMembers
-      .map((member) => {
-        if (typeof member === "string") {
-          return "Member";
-        }
-
-        return member?.fullName || member?.email || "Member";
-      })
+      .map((member) =>
+        typeof member === "string"
+          ? "Member"
+          : member?.fullName || member?.email || "Member",
+      )
       .filter(Boolean);
-
-    if (names.length <= 2) {
-      return names.join(", ");
-    }
-
+    if (names.length <= 2) return names.join(", ");
     return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
   }, [assignedMembers]);
 
@@ -394,11 +326,8 @@ function TaskEditor({
 
   const saveTemporaryTitle = useCallback(() => {
     if (!canEdit || isSaving) return;
-
     const title = temporaryTitle.trim();
-
     if (!title) return;
-
     updateField("title", title);
     setEditingTitle(false);
   }, [canEdit, isSaving, temporaryTitle, updateField]);
@@ -410,7 +339,6 @@ function TaskEditor({
 
   const startTitleEditing = useCallback(() => {
     if (!canEdit || isSaving) return;
-
     setTemporaryTitle(form?.title || "");
     setEditingTitle(true);
   }, [canEdit, isSaving, form?.title]);
@@ -418,7 +346,6 @@ function TaskEditor({
   const updateDescription = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       if (!canEdit || isSaving) return;
-
       updateField("description", event.target.value);
     },
     [canEdit, isSaving, updateField],
@@ -426,24 +353,16 @@ function TaskEditor({
 
   return (
     <div
-      className={`
-        flex flex-1 flex-col overflow-hidden
-        ${isMobile ? "bg-white" : "bg-slate-50/40"}
-      `}
+      className={`flex flex-1 flex-col overflow-hidden ${isMobile ? "bg-white" : "bg-slate-50/40"}`}
     >
       <div className="flex-1 overflow-y-auto">
-        {/* TITLE */}
         <section
-          className={`
-            border-b border-slate-200/60
-            ${isMobile ? "bg-white px-4 py-4" : "px-6 py-5"}
-          `}
+          className={`border-b border-slate-200/60 ${isMobile ? "bg-white px-4 py-4" : "px-6 py-5"}`}
         >
           <div className="mb-2 flex items-center gap-2">
             <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
               {entityType === "subtask" ? "Subtask" : "Task"}
             </span>
-
             <span className="text-xs text-slate-400">
               {entity?.code || entity?._id?.slice(-6)}
             </span>
@@ -461,20 +380,13 @@ function TaskEditor({
           ) : (
             <div
               onClick={canEdit ? startTitleEditing : undefined}
-              className={`
-                group flex items-start gap-2
-                ${canEdit ? "cursor-pointer" : "cursor-default"}
-              `}
+              className={`group flex items-start gap-2 ${canEdit ? "cursor-pointer" : "cursor-default"}`}
             >
               <h2
-                className={`
-                  flex-1 font-semibold text-slate-800
-                  ${isMobile ? "text-lg" : "text-xl"}
-                `}
+                className={`flex-1 font-semibold text-slate-800 ${isMobile ? "text-lg" : "text-xl"}`}
               >
                 {form?.title || entity?.title || "Untitled Task"}
               </h2>
-
               {canEdit && (
                 <div className="rounded-lg bg-slate-100 p-1.5 opacity-0 transition group-hover:bg-slate-200 group-hover:opacity-100">
                   <Edit2 className="h-4 w-4 text-slate-500" />
@@ -484,24 +396,14 @@ function TaskEditor({
           )}
         </section>
 
-        {/* INFORMATION */}
-
-        {/* ACTIONS */}
         <section
-          className={`
-            border-b border-slate-200/60 bg-white/50
-            ${isMobile ? "px-3 py-3" : "px-6 py-4"}
-          `}
+          className={`border-b border-slate-200/60 bg-white/50 ${isMobile ? "px-3 py-3" : "px-6 py-4"}`}
         >
           <div
-            className={`
-              flex gap-2
-              ${isMobile ? "min-w-max flex-nowrap overflow-x-auto" : "flex-wrap"}
-            `}
+            className={`flex gap-2 ${isMobile ? "min-w-max flex-nowrap overflow-x-auto" : "flex-wrap"}`}
           >
             {canEdit && (
               <>
-                {/* STATUS */}
                 <div className="relative">
                   <ActionButton
                     isMobile={isMobile}
@@ -511,7 +413,6 @@ function TaskEditor({
                     iconColor="text-blue-500"
                     onClick={(event) => handleOpen(event, "status")}
                   />
-
                   {openPanel === "status" && (
                     <div style={popoverStyle()}>
                       <UpdateTaskStatusModal
@@ -526,7 +427,6 @@ function TaskEditor({
                   )}
                 </div>
 
-                {/* MEMBERS */}
                 <div className="relative">
                   <ActionButton
                     isMobile={isMobile}
@@ -536,14 +436,8 @@ function TaskEditor({
                     iconColor="text-indigo-500"
                     onClick={(event) => handleOpen(event, "members")}
                   />
-
                   {openPanel === "members" && (
-                    <div
-                      style={{
-                        ...popoverStyle(),
-                        overflow: "visible",
-                      }}
-                    >
+                    <div style={{ ...popoverStyle(), overflow: "visible" }}>
                       <UpdateTaskMembersModal
                         entity={entity}
                         isOpen
@@ -556,8 +450,6 @@ function TaskEditor({
                   )}
                 </div>
 
-                {/* DATES */}
-                {/* DATES — Manager / Owner only */}
                 {canUpdateDates && (
                   <div className="relative">
                     <ActionButton
@@ -568,12 +460,10 @@ function TaskEditor({
                       iconColor="text-emerald-500"
                       onClick={(event) => handleOpen(event, "dates")}
                     />
-
                     {openPanel === "dates" && (
                       <div
                         style={{
                           ...popoverStyle(),
-
                           ...(isMobile
                             ? {
                                 left: "auto",
@@ -600,7 +490,6 @@ function TaskEditor({
               </>
             )}
 
-            {/* TIME */}
             {canEdit && (
               <div className="relative">
                 <ActionButton
@@ -611,13 +500,11 @@ function TaskEditor({
                   iconColor="text-amber-500"
                   onClick={(event) => handleOpen(event, "time")}
                 />
-
                 {openPanel === "time" && (
                   <div
                     style={{
                       ...popoverStyle(),
                       overflow: "visible",
-
                       ...(isMobile
                         ? {
                             left: "auto",
@@ -641,15 +528,12 @@ function TaskEditor({
           </div>
         </section>
 
-        {/* DESCRIPTION */}
         <section className={isMobile ? "p-3" : "p-6"}>
           <div className="mb-2.5 flex items-center gap-2">
             <AlignLeft className="h-4 w-4 text-slate-400" />
-
             <span className="text-xs font-medium text-slate-500">
               Description
             </span>
-
             <span className="ml-auto text-[10px] text-slate-400">
               {(form?.description || "").length} characters
             </span>
@@ -663,21 +547,23 @@ function TaskEditor({
             placeholder={
               canEdit ? "Write a detailed description..." : "No description"
             }
-            className={`
-              min-h-[150px] w-full resize-none rounded-2xl
-              border border-slate-200/70 p-4 text-sm
-              outline-none transition
-              placeholder:text-slate-400
-              ${
-                canEdit
-                  ? "bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
-                  : "cursor-default bg-slate-50"
-              }
-              disabled:cursor-not-allowed disabled:opacity-60
-            `}
+            className={`min-h-[150px] w-full resize-none rounded-2xl border border-slate-200/70 p-4 text-sm outline-none transition placeholder:text-slate-400 ${canEdit ? "bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100" : "cursor-default bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-60`}
           />
 
-          {/* EXTRA DATA */}
+          {/* ✅ المرفقات بتاخد الـ attachments اللي جاية من فوق (من TaskDetailsModal) */}
+          {entityType === "task" && (
+            <div className="mt-4">
+              <AttachmentSection
+                listId={listId}
+                taskId={entity?._id}
+                attachments={attachments}
+                canUpload={canEdit}
+                canDelete={canDeleteAttachment}
+                refetch={refetchTasks}
+              />
+            </div>
+          )}
+
           <div className="mt-4 grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
             <div className="rounded-xl bg-slate-100/70 p-3">
               Created by:{" "}
@@ -687,7 +573,6 @@ function TaskEditor({
                   "Unknown"}
               </span>
             </div>
-
             <div className="rounded-xl bg-slate-100/70 p-3">
               Created:{" "}
               <span className="font-medium text-slate-700">
@@ -698,41 +583,21 @@ function TaskEditor({
         </section>
       </div>
 
-      {/* SAVE */}
       {canEdit && (
         <section
-          className={`
-            shrink-0 border-t border-slate-200/60 bg-white/95
-            backdrop-blur-sm
-            ${isMobile ? "px-4 py-3" : "p-5"}
-          `}
+          className={`shrink-0 border-t border-slate-200/60 bg-white/95 backdrop-blur-sm ${isMobile ? "px-4 py-3" : "p-5"}`}
         >
           {normalizedSaveError && (
             <p className="mb-3 text-sm text-red-600">{normalizedSaveError}</p>
           )}
-
           <div className={isMobile ? "" : "flex justify-end"}>
             <button
               type="button"
               disabled={isSaving}
               onClick={saveTask}
-              className={`
-                flex items-center justify-center gap-2
-                bg-gradient-to-r from-blue-600 to-blue-700
-                text-sm font-medium text-white shadow-md
-                transition
-                hover:from-blue-700 hover:to-blue-800
-                hover:shadow-lg active:scale-95
-                disabled:cursor-not-allowed disabled:opacity-60
-                ${
-                  isMobile
-                    ? "w-full rounded-xl px-4 py-3"
-                    : "rounded-2xl px-8 py-2.5"
-                }
-              `}
+              className={`flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-sm font-medium text-white shadow-md transition hover:from-blue-700 hover:to-blue-800 hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${isMobile ? "w-full rounded-xl px-4 py-3" : "rounded-2xl px-8 py-2.5"}`}
             >
               <Save className="h-4 w-4" />
-
               {isSaving ? "Saving..." : isMobile ? "Save" : "Save Changes"}
             </button>
           </div>

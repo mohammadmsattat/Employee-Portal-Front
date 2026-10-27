@@ -6,11 +6,11 @@ import {
   Image,
   File,
   MessageSquare,
-  MoreVertical,
-  Reply,
   X,
+  History, // ✅ جديد
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback, memo } from "react";
+import MentionInput from "./MentionInput";
 
 // ===== SKELETON =====
 const ActivitySkeleton = memo(() => (
@@ -43,12 +43,39 @@ const getTimeAgo = (date) => {
 // ===== ACTIVITY ITEM =====
 const ActivityItem = memo(({ item, isOwn, isMobile }) => {
   const d = item.data;
-  const name = d.createdBy?.fullName || d.uploadedBy?.fullName || "User";
-  const avatar = d.createdBy?.avatar || d.uploadedBy?.avatar;
+
+  // ✅ تحديث عشان نجيب الاسم من الـ Actor كمان
+  const name =
+    d.createdBy?.fullName ||
+    d.uploadedBy?.fullName ||
+    d.actor?.fullName ||
+    "System";
+  const avatar = d.createdBy?.avatar || d.uploadedBy?.avatar || d.actor?.avatar;
   const timeAgo = getTimeAgo(item.date || item.createdAt);
 
+  // ✅ لو النوع Log، نعرضه بشكل مختلف (Timeline)
+  if (item.type === "log") {
+    return (
+      <div className="flex items-center gap-3 py-1.5 px-3 rounded-lg bg-slate-100/50">
+        <div className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-white border border-slate-200 shadow-sm">
+          <History className="w-3 h-3 text-slate-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-600">
+            <span className="font-semibold text-slate-800">{name}</span>{" "}
+            {d.message}
+          </p>
+        </div>
+        <span className="text-[10px] text-slate-400 shrink-0">{timeAgo}</span>
+      </div>
+    );
+  }
+
+  // عرض الكومنتات والمرفقات كالعادة
   return (
-    <div className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""}`}>
+    <div
+      className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""} w-full min-w-0`}
+    >
       {/* Avatar */}
       <div className="shrink-0">
         {avatar ? (
@@ -67,7 +94,7 @@ const ActivityItem = memo(({ item, isOwn, isMobile }) => {
       </div>
 
       {/* Card */}
-      <div className={`flex-1 ${isMobile ? "max-w-[85%]" : ""}`}>
+      <div className={`flex-1 min-w-0 ${isMobile ? "max-w-[85%]" : ""}`}>
         <div
           className={`rounded-2xl p-3 shadow-sm ${
             isOwn
@@ -92,7 +119,9 @@ const ActivityItem = memo(({ item, isOwn, isMobile }) => {
           {/* Content */}
           {item.type === "comment" && (
             <p
-              className={`text-sm leading-relaxed ${isOwn ? "text-white" : "text-slate-700"}`}
+              className={`text-sm leading-relaxed whitespace-pre-wrap break-words overflow-hidden ${
+                isOwn ? "text-white" : "text-slate-700"
+              }`}
             >
               {d.content}
             </p>
@@ -146,6 +175,7 @@ function TaskActivity({
   error,
   refetch,
   isMobile = false,
+  assignedTo = [],
 }) {
   const fileInputRef = useRef(null);
   const scrollRef = useRef(null);
@@ -194,39 +224,32 @@ function TaskActivity({
   const handleFileAttach = useCallback((e) => {
     const file = e.target.files?.[0];
     if (file) {
-      console.log("File selected:", file);
+      console.log("📎 File selected:", file);
     }
   }, []);
 
-  const handleSendComment = useCallback(() => {
-    if (!commentText.trim()) return;
-    addComment(commentText);
-    setCommentText("");
-  }, [commentText, addComment, setCommentText]);
+  const handleSendComment = useCallback(
+    (text, mentions) => {
+      if (!text?.trim()) return;
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (commentText.trim()) {
-        addComment(commentText);
-        setCommentText("");
-      }
-    }
-  }, [commentText, addComment, setCommentText]);
-
-  const handleInput = useCallback((e) => {
-    e.target.style.height = "auto";
-    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
-  }, []);
+      addComment(text, mentions || []);
+      setCommentText("");
+    },
+    [addComment, setCommentText],
+  );
 
   // ===== RENDER =====
   return (
     <div
-      className={`flex-1 flex flex-col ${isMobile ? "bg-white" : "bg-slate-50/40"} overflow-hidden`}
+      className={`flex-1 flex flex-col ${
+        isMobile ? "bg-white" : "bg-slate-50/40"
+      } overflow-hidden min-w-0`}
     >
       {/* ===== HEADER ===== */}
       <div
-        className={`shrink-0 ${isMobile ? "px-3 py-2.5 bg-white/90" : "px-6 py-4 bg-white/80"} border-b border-slate-200/50 flex items-center justify-between backdrop-blur-sm`}
+        className={`shrink-0 ${
+          isMobile ? "px-3 py-2.5 bg-white/90" : "px-6 py-4 bg-white/80"
+        } border-b border-slate-200/50 flex items-center justify-between backdrop-blur-sm`}
       >
         <div className="flex items-center gap-2.5">
           <div
@@ -237,7 +260,9 @@ function TaskActivity({
             />
           </div>
           <span
-            className={`font-semibold text-slate-700 ${isMobile ? "text-xs" : "text-sm"}`}
+            className={`font-semibold text-slate-700 ${
+              isMobile ? "text-xs" : "text-sm"
+            }`}
           >
             Activity
           </span>
@@ -256,7 +281,9 @@ function TaskActivity({
       {/* ===== LIST ===== */}
       <div
         ref={scrollRef}
-        className={`flex-1 overflow-y-auto overscroll-contain ${isMobile ? "px-3 py-3 space-y-3" : "px-4 py-4 space-y-3"}`}
+        className={`flex-1 overflow-y-auto overscroll-contain ${
+          isMobile ? "px-3 py-3 space-y-3" : "px-4 py-4 space-y-3"
+        }`}
       >
         {/* Loading */}
         {loading &&
@@ -286,22 +313,30 @@ function TaskActivity({
         {/* Empty */}
         {!loading && !error && activity?.length === 0 && (
           <div
-            className={`flex flex-col items-center justify-center h-full text-center ${isMobile ? "p-6" : "p-8"}`}
+            className={`flex flex-col items-center justify-center h-full text-center ${
+              isMobile ? "p-6" : "p-8"
+            }`}
           >
             <div
-              className={`rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center ${isMobile ? "w-16 h-16" : "w-20 h-20"} mb-4`}
+              className={`rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center ${
+                isMobile ? "w-16 h-16" : "w-20 h-20"
+              } mb-4`}
             >
               <MessageSquare
                 className={`${isMobile ? "h-6 w-6" : "h-8 w-8"} text-blue-300`}
               />
             </div>
             <p
-              className={`font-semibold text-slate-700 ${isMobile ? "text-sm" : "text-base"}`}
+              className={`font-semibold text-slate-700 ${
+                isMobile ? "text-sm" : "text-base"
+              }`}
             >
-              No messages yet
+              No activity yet
             </p>
             <p
-              className={`text-slate-400 ${isMobile ? "text-xs mt-1" : "text-sm mt-1.5"}`}
+              className={`text-slate-400 ${
+                isMobile ? "text-xs mt-1" : "text-sm mt-1.5"
+              }`}
             >
               Start the conversation
             </p>
@@ -337,23 +372,19 @@ function TaskActivity({
 
       {/* ===== INPUT ===== */}
       <div
-        className={`shrink-0 ${isMobile ? "px-3 py-2.5 bg-white/95" : "px-4 py-3 bg-white/95"} border-t border-slate-200/50 backdrop-blur-sm safe-area-bottom`}
+        className={`shrink-0 ${
+          isMobile ? "px-3 py-2.5 bg-white/95" : "px-4 py-3 bg-white/95"
+        } border-t border-slate-200/50 backdrop-blur-sm safe-area-bottom`}
       >
         <div className="flex gap-2 items-end">
-          <div className="flex-1 relative">
-            <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isMobile ? "Type a message..." : "Write a comment..."
-              }
-              className="w-full border border-slate-200/60 rounded-2xl px-4 py-2.5 text-sm outline-none bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 resize-none min-h-[44px] max-h-[120px] transition placeholder:text-slate-400"
-              rows={1}
-              style={{ height: "auto" }}
-              onInput={handleInput}
-            />
-          </div>
+          <MentionInput
+            value={commentText}
+            onChange={setCommentText}
+            onSend={handleSendComment}
+            assignedTo={assignedTo}
+            isMobile={isMobile}
+            placeholder={isMobile ? "Type a message..." : "Write a comment..."}
+          />
 
           <div className="flex gap-1.5 shrink-0">
             <input
@@ -362,24 +393,14 @@ function TaskActivity({
               className="hidden"
               onChange={handleFileAttach}
             />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className={`${isMobile ? "h-11 w-11" : "h-11 w-11"} flex items-center justify-center rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition active:scale-95`}
-              title="Attach file"
-            >
-              <Paperclip
-                className={`${isMobile ? "w-4.5 h-4.5" : "w-5 h-5"}`}
-              />
-            </button>
 
             <button
-              onClick={handleSendComment}
+              onClick={() => handleSendComment(commentText, [])}
               disabled={!commentText.trim()}
-              className={`${isMobile ? "h-11 w-11" : "h-11 w-11"} flex items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition shadow-md hover:shadow-lg active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed`}
+              className="h-11 w-11 flex items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition shadow-md hover:shadow-lg active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
               title="Send"
             >
-              <Send className={`${isMobile ? "w-4.5 h-4.5" : "w-5 h-5"}`} />
+              <Send className={isMobile ? "w-4.5 h-4.5" : "w-5 h-5"} />
             </button>
           </div>
         </div>

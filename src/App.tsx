@@ -23,6 +23,8 @@ import OvertimePage from "./pages/Overtime/OvertimePage";
 import AdvancePage from "./pages/Advance/AdvancePage";
 import NotificationsPage from "./pages/Notifications/NotificationsPage";
 
+import WorkspaceDashboard from "./components/Tasks/WorkspaceDashboard";
+import GlobalDashboard from "./components/Tasks/GlobalDashboard";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -60,7 +62,14 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
 
               <Route path="/tasks" element={<TasksPage />} />
+
+              <Route
+                path="/workspace/:workspaceId/dashboard"
+                element={<WorkspaceDashboard />}
+              />
             </Route>
+
+            <Route path="/dashboard" element={<GlobalDashboard />} />
 
             {/* 404 route */}
             <Route path="*" element={<NotFound />} />

@@ -1,4 +1,11 @@
-import { FolderPlus, ListTodo, Pencil, Trash2, Users } from "lucide-react";
+import {
+  FolderPlus,
+  ListTodo,
+  Pencil,
+  Trash2,
+  Users,
+  BarChart3,
+} from "lucide-react";
 
 type HierarchyActionsMenuProps = {
   isOpen: boolean;
@@ -14,6 +21,8 @@ type HierarchyActionsMenuProps = {
   onManageListMembers?: () => void;
   onManageFolderMembers?: () => void;
 
+  onOpenDashboard?: () => void; // ✅ ضفنا دي
+
   menuRef: any;
 };
 
@@ -27,6 +36,7 @@ export const HierarchyActionsMenu = ({
   onManageMembers,
   onManageFolderMembers,
   onManageListMembers,
+  onOpenDashboard, // ✅ ضفنا دي
   menuRef,
 }: HierarchyActionsMenuProps) => {
   if (!isOpen) return null;
@@ -44,7 +54,8 @@ export const HierarchyActionsMenu = ({
     onDelete ||
     hasWorkspaceActions ||
     hasFolderActions ||
-    hasListActions,
+    hasListActions ||
+    onOpenDashboard, // ✅ ضفنا دي عشان القائمة متختفيش
   );
 
   // لا تعرض قائمة فارغة
@@ -58,6 +69,20 @@ export const HierarchyActionsMenu = ({
       <div className="border-b bg-slate-50 px-3 py-2 text-[11px] text-slate-400">
         Actions
       </div>
+
+      {/* ✅ DASHBOARD (Workspace Only) */}
+      {type === "workspace" && onOpenDashboard && (
+        <div className="p-1">
+          <button
+            type="button"
+            onClick={onOpenDashboard}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-slate-100 text-blue-600"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Dashboard
+          </button>
+        </div>
+      )}
 
       {/* RENAME */}
       {onRename && (

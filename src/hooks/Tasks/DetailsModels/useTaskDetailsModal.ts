@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useUpdateTaskMutation } from "@/rtk/Tasks/tasksApi";
 import { useUpdateSubTaskMutation } from "@/rtk/Tasks/subTasksApi";
+import { useGetTaskActivityQuery } from "@/rtk/Tasks/activityLogApi"; // ✅ جديد
 
 import {
   useGetCommentsQuery,
@@ -9,7 +10,7 @@ import {
   useDeleteCommentMutation,
 } from "@/rtk/Tasks/commentsApi";
 
-import { useGetAttachmentsQuery } from "@/rtk/Tasks/attachmentsApi";
+import { useGetTaskAttachmentsQuery } from "@/rtk/Tasks/attachmentsApi";
 
 export const useTaskDetailsModal = ({
   entity,
@@ -105,10 +106,36 @@ export const useTaskDetailsModal = ({
     isFetching: attachmentsFetching,
     isError: attachmentsError,
     refetch: refetchAttachments,
-  } = useGetAttachmentsQuery(queryParams, {
-    skip: !id,
-    refetchOnMountOrArgChange: true,
-  });
+  } = useGetTaskAttachmentsQuery(
+    {
+      listId,
+      taskId: id,
+    },
+    {
+      skip: !id || !listId || isSubTask,
+      refetchOnMountOrArgChange: true,
+    },
+  );
+
+  /* =========================
+     ACTIVITY LOGS (History) - ✅ جديد
+  ========================= */
+
+  const {
+    data: activityLogsData,
+    isFetching: activityLogsFetching,
+    isError: activityLogsError,
+    refetch: refetchActivityLogs,
+  } = useGetTaskActivityQuery(
+    {
+      listId,
+      taskId: isSubTask ? parentTaskId : id,
+    },
+    {
+      skip: !id || !listId || (isSubTask && !parentTaskId),
+      refetchOnMountOrArgChange: true,
+    },
+  );
 
   /* =========================
      NORMALIZED RESPONSE DATA
@@ -137,6 +164,18 @@ export const useTaskDetailsModal = ({
 
     return [];
   }, [attachmentsData]);
+
+  const activityLogsList = useMemo(() => {
+    if (Array.isArray(activityLogsData)) {
+      return activityLogsData;
+    }
+
+    if (Array.isArray(activityLogsData?.data)) {
+      return activityLogsData.data;
+    }
+
+    return [];
+  }, [activityLogsData]);
 
   /* =========================
      FORM
@@ -267,23 +306,19 @@ export const useTaskDetailsModal = ({
   /* =========================
      ADD COMMENT
   ========================= */
-
   const addComment = useCallback(
-    async (text) => {
+    async (text, mentions = []) => {
       const content = text?.trim();
-
       if (!content || !id) return null;
-
       if (isSubTask && !parentTaskId) {
         throw new Error("Parent task ID is missing.");
       }
 
       const result = await createComment({
         content,
-
         task: isSubTask ? parentTaskId : id,
-
         subTask: isSubTask ? id : undefined,
+        mentions,
       }).unwrap();
 
       return result;
@@ -307,7 +342,7 @@ export const useTaskDetailsModal = ({
   );
 
   /* =========================
-     ACTIVITY
+     ACTIVITY (MERGED)
   ========================= */
 
   const activity = useMemo(() => {
@@ -325,21 +360,30 @@ export const useTaskDetailsModal = ({
       date: new Date(attachment.createdAt || 0),
     }));
 
-    return [...comments, ...attachments].sort(
+    const logs = activityLogsList.map((log) => ({
+      type: "log",
+      data: log,
+      date: new Date(log.createdAt || 0),
+    }));
+
+    return [...comments, ...attachments, ...logs].sort(
       (firstItem, secondItem) =>
         firstItem.date.getTime() - secondItem.date.getTime(),
     );
-  }, [commentsList, attachmentsList, id]);
+  }, [commentsList, attachmentsList, activityLogsList, id]);
 
   /* =========================
      ACTIVITY LOADING / ERROR
   ========================= */
 
   const activityLoading =
-    Boolean(id) && (commentsFetching || attachmentsFetching);
+    Boolean(id) &&
+    (commentsFetching || attachmentsFetching || activityLogsFetching);
 
   const activityError = Boolean(
-    (commentsError && !commentsData) || (attachmentsError && !attachmentsData),
+    (commentsError && !commentsData) ||
+    (attachmentsError && !attachmentsData) ||
+    (activityLogsError && !activityLogsData),
   );
 
   /* =========================
@@ -359,8 +403,12 @@ export const useTaskDetailsModal = ({
       requests.push(refetchAttachments());
     }
 
+    if (refetchActivityLogs) {
+      requests.push(refetchActivityLogs());
+    }
+
     await Promise.allSettled(requests);
-  }, [id, refetchComments, refetchAttachments]);
+  }, [id, refetchComments, refetchAttachments, refetchActivityLogs]);
 
   /* =========================
      OPEN POPOVER
@@ -419,6 +467,7 @@ export const useTaskDetailsModal = ({
     /* SAVE */
     isSaving,
     saveError,
+    attachmentsList,
 
     /* ACTIVITY */
     activity,
@@ -427,7 +476,7 @@ export const useTaskDetailsModal = ({
     activityLoading,
     activityError,
     refetchActivity,
-
+    refetchAttachments,
     /* POPOVER */
     openPanel,
     handleOpen,

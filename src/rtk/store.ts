@@ -1,3 +1,4 @@
+import { DrawerasDrawerPrimitive } from "vaul";
 // src/store/index.ts
 
 import { configureStore } from "@reduxjs/toolkit";
@@ -26,6 +27,9 @@ import { workspaceApi } from "./Tasks/workspaceApi";
 import { folderApi } from "./Tasks/folderApi";
 import { listApi } from "./Tasks/listApi";
 import { timeTrackingApi } from "./Tasks/timeTrackingApi";
+import { activityLogApi } from "./Tasks/activityLogApi";
+import { workspaceDashboardApi } from "./Tasks/workspaceDashboardApi";
+import { globalDashboardApi } from "@/rtk/Tasks/globalDashboardApi";
 
 export const store = configureStore({
   reducer: {
@@ -54,6 +58,9 @@ export const store = configureStore({
     [commentApi.reducerPath]: commentApi.reducer,
     [attachmentApi.reducerPath]: attachmentApi.reducer,
     [timeTrackingApi.reducerPath]: timeTrackingApi.reducer,
+    [activityLogApi.reducerPath]: activityLogApi.reducer,
+    [workspaceDashboardApi.reducerPath]: workspaceDashboardApi.reducer,
+    [globalDashboardApi.reducerPath]: globalDashboardApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -73,7 +80,9 @@ export const store = configureStore({
       .concat(NotificationsApi.middleware)
       .concat(staffApi.middleware)
       .concat(timeTrackingApi.middleware)
-
+      .concat(activityLogApi.middleware)
+      .concat(workspaceDashboardApi.middleware)
+      .concat(globalDashboardApi.middleware)
 
       .concat(workspaceApi.middleware)
       .concat(folderApi.middleware)
@@ -81,7 +90,7 @@ export const store = configureStore({
       .concat(taskApi.middleware)
       .concat(subTaskApi.middleware)
       .concat(commentApi.middleware)
-      .concat(attachmentApi.middleware)
+      .concat(attachmentApi.middleware),
 });
 
 setupListeners(store.dispatch);

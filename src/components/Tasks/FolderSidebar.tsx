@@ -13,6 +13,7 @@ import {
   Check,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // ✅ ضيفنا دي
 
 import {
   canUpdateWorkspace,
@@ -33,8 +34,8 @@ import { useFolderSidebarController } from "@/hooks/Tasks/useFolderSidebarContro
 import { HierarchyActionsMenu } from "./HierarchyActionsMenu";
 
 /* =========================
-   ICON SYSTEM
-========================= */
+    ICON SYSTEM
+  ========================= */
 
 const WORKSPACE_ICONS = [
   Code,
@@ -77,8 +78,8 @@ const getWorkspaceColor = (workspaceId = "") => {
 };
 
 /* =========================
-   SIDEBAR
-========================= */
+    SIDEBAR
+  ========================= */
 
 const FolderSidebar = ({
   onSelectList,
@@ -96,22 +97,20 @@ const FolderSidebar = ({
 
   onOpenDeleteConfirm,
 }) => {
+  const navigate = useNavigate(); // ✅ ضيفنا دي
+
   const { state, actions } = useFolderSidebar({
     onSelectList,
     onSelectContext,
   });
 
-  /*
-   * الحذف يتم التحكم به من TasksPage.
-   * لذلك نحتاج هنا handleRename فقط.
-   */
   const { handleRename } = useFolderSidebarController({
     refetchTree,
   });
 
   /* =========================
-     MODAL HANDLERS
-  ========================= */
+      MODAL HANDLERS
+    ========================= */
 
   const handleOpenWorkspaceModal = () => {
     onOpenWorkspaceModal?.();
@@ -144,7 +143,7 @@ const FolderSidebar = ({
   return (
     <div className="h-full w-fit min-w-[220px] rounded-xl border bg-white p-2">
       {/* TOP */}
-      <div className="space-y-2 rounded-lg border bg-slate-50 px-3 py-3">
+      <div className="flex items-center justify-between rounded-lg border bg-slate-50 px-3 py-2.5">
         <div className="text-sm font-semibold text-slate-700">
           {state.activeFolder
             ? state.activeFolder.name
@@ -157,10 +156,10 @@ const FolderSidebar = ({
           <button
             type="button"
             onClick={handleOpenWorkspaceModal}
-            className="flex items-center gap-1 text-xs hover:text-blue-600"
+            className="flex h-6 w-6 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-200 hover:text-blue-600"
+            title="Create Workspace"
           >
             <Plus className="h-4 w-4" />
-            Workspace
           </button>
         )}
       </div>
@@ -171,12 +170,9 @@ const FolderSidebar = ({
           workspace?.role || workspace?.workspaceRole || null;
 
         const canRenameWorkspace = canUpdateWorkspace(workspaceRole);
-
         const canRemoveWorkspace = canDeleteWorkspace(workspaceRole);
-
         const canManageWorkspaceUsers =
           canManageWorkspaceMembers(workspaceRole);
-
         const canAddFolder = canCreateFolder(workspaceRole);
 
         const hasWorkspaceActions =
@@ -186,11 +182,8 @@ const FolderSidebar = ({
           canAddFolder;
 
         const isWorkspaceOpen = state.openWorkspaces[workspace._id];
-
         const WorkspaceIcon = getWorkspaceIcon(workspace._id);
-
         const workspaceColor = getWorkspaceColor(workspace._id);
-
         const isWorkspaceMenuOpen = state.menuWorkspace?._id === workspace._id;
 
         const isWorkspaceEditing =
@@ -234,7 +227,6 @@ const FolderSidebar = ({
                       className="h-4 w-4 cursor-pointer text-green-600"
                       onClick={(event) => {
                         event.stopPropagation();
-
                         handleRename({
                           id: workspace._id,
                           type: "workspace",
@@ -265,7 +257,6 @@ const FolderSidebar = ({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
-
                       actions.setMenuWorkspace(
                         isWorkspaceMenuOpen ? null : workspace,
                       );
@@ -279,6 +270,15 @@ const FolderSidebar = ({
                     isOpen={isWorkspaceMenuOpen}
                     type="workspace"
                     menuRef={state.menuRef}
+                    // ✅ ضفنا الـ Dashboard هنا
+                    onOpenDashboard={
+                      workspaceRole === "owner"
+                        ? () => {
+                            navigate(`/workspace/${workspace._id}/dashboard`);
+                            actions.setMenuWorkspace(null);
+                          }
+                        : undefined
+                    }
                     onRename={
                       canRenameWorkspace
                         ? () =>
@@ -293,7 +293,6 @@ const FolderSidebar = ({
                       canManageWorkspaceUsers
                         ? () => {
                             handleOpenManageMembers(workspace);
-
                             actions.setMenuWorkspace(null);
                           }
                         : undefined
@@ -302,7 +301,6 @@ const FolderSidebar = ({
                       canAddFolder
                         ? () => {
                             handleOpenFolderModal(workspace);
-
                             actions.setMenuWorkspace(null);
                           }
                         : undefined
@@ -315,7 +313,6 @@ const FolderSidebar = ({
                               workspace,
                               workspace._id,
                             );
-
                             actions.setMenuWorkspace(null);
                           }
                         : undefined
@@ -330,24 +327,16 @@ const FolderSidebar = ({
               <div className="ml-3 space-y-1">
                 {workspace.folders?.map((folder) => {
                   const folderRole = folder?.role || folder?.folderRole || null;
-
-                  const folderPermissionInput = {
-                    workspaceRole,
-                    folderRole,
-                  };
-
+                  const folderPermissionInput = { workspaceRole, folderRole };
                   const canRenameFolder = canUpdateFolder(
                     folderPermissionInput,
                   );
-
                   const canRemoveFolder = canDeleteFolder(
                     folderPermissionInput,
                   );
-
                   const canManageFolderUsers = canManageFolderMembers(
                     folderPermissionInput,
                   );
-
                   const canAddList = canCreateList(folderPermissionInput);
 
                   const hasFolderActions =
@@ -357,9 +346,7 @@ const FolderSidebar = ({
                     canAddList;
 
                   const isFolderOpen = state.openFolders[folder._id];
-
                   const isFolderMenuOpen = state.menuFolder?._id === folder._id;
-
                   const isFolderEditing =
                     state.editingItem?.id === folder._id &&
                     state.editingItem?.type === "folder";
@@ -398,7 +385,6 @@ const FolderSidebar = ({
                                 className="h-4 w-4 cursor-pointer text-green-600"
                                 onClick={(event) => {
                                   event.stopPropagation();
-
                                   handleRename({
                                     id: folder._id,
                                     folderId: folder._id,
@@ -431,7 +417,6 @@ const FolderSidebar = ({
                               type="button"
                               onClick={(event) => {
                                 event.stopPropagation();
-
                                 actions.setMenuFolder(
                                   isFolderMenuOpen ? null : folder,
                                 );
@@ -459,7 +444,6 @@ const FolderSidebar = ({
                                 canAddList
                                   ? () => {
                                       handleOpenListModal(workspace, folder);
-
                                       actions.setMenuFolder(null);
                                     }
                                   : undefined
@@ -471,7 +455,6 @@ const FolderSidebar = ({
                                         workspace,
                                         folder,
                                       );
-
                                       actions.setMenuFolder(null);
                                     }
                                   : undefined
@@ -484,7 +467,6 @@ const FolderSidebar = ({
                                         folder,
                                         workspace._id,
                                       );
-
                                       actions.setMenuFolder(null);
                                     }
                                   : undefined
@@ -500,19 +482,15 @@ const FolderSidebar = ({
                           {folder.lists?.map((list) => {
                             const directListRole =
                               list?.role || list?.listRole || null;
-
                             const listPermissionInput = {
                               workspaceRole,
                               folderRole,
                               listRole: directListRole,
                             };
-
                             const canRenameList =
                               canUpdateList(listPermissionInput);
-
                             const canRemoveList =
                               canDeleteList(listPermissionInput);
-
                             const canManageListUsers =
                               canManageListMembers(listPermissionInput);
 
@@ -522,10 +500,8 @@ const FolderSidebar = ({
                               canManageListUsers;
 
                             const isActive = state.activeList === list._id;
-
                             const isListMenuOpen =
                               state.menuList?._id === list._id;
-
                             const isListEditing =
                               state.editingItem?.id === list._id &&
                               state.editingItem?.type === "list";
@@ -546,11 +522,11 @@ const FolderSidebar = ({
                                       )
                                     }
                                     className={`
-                                      flex min-w-0 flex-1 items-center gap-1.5
-                                      rounded-md px-1.5 py-1 text-left
-                                      text-[13px] text-slate-600 transition
-                                      hover:bg-slate-50 hover:text-slate-800${isActive ? "bg-blue-50 font-medium text-blue-700" : ""}
-                                            `}
+                                        flex min-w-0 flex-1 items-center gap-1.5
+                                        rounded-md px-1.5 py-1 text-left
+                                        text-[13px] text-slate-600 transition
+                                        hover:bg-slate-50 hover:text-slate-800${isActive ? "bg-blue-50 font-medium text-blue-700" : ""}
+                                              `}
                                   >
                                     {isListEditing ? (
                                       <div
@@ -576,7 +552,6 @@ const FolderSidebar = ({
                                           className="h-4 w-4 cursor-pointer text-green-600"
                                           onClick={(event) => {
                                             event.stopPropagation();
-
                                             handleRename({
                                               id: list._id,
                                               type: "list",
@@ -600,7 +575,6 @@ const FolderSidebar = ({
                                     ) : (
                                       <>
                                         <List className="h-3.5 w-3.5 shrink-0" />
-
                                         <span className="truncate text-[13px] font-normal leading-5">
                                           {list.name}
                                         </span>
@@ -614,7 +588,6 @@ const FolderSidebar = ({
                                         type="button"
                                         onClick={(event) => {
                                           event.stopPropagation();
-
                                           actions.setMenuList(
                                             isListMenuOpen ? null : list,
                                           );
@@ -646,7 +619,6 @@ const FolderSidebar = ({
                                                   folder,
                                                   list,
                                                 );
-
                                                 actions.setMenuList(null);
                                               }
                                             : undefined
@@ -660,7 +632,6 @@ const FolderSidebar = ({
                                                   workspace._id,
                                                   folder._id,
                                                 );
-
                                                 actions.setMenuList(null);
                                               }
                                             : undefined

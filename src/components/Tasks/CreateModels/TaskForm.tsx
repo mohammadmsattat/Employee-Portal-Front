@@ -223,32 +223,38 @@ const TaskForm = ({
             </SelectTrigger>
 
             <SelectContent className="z-[9999] rounded-2xl border-slate-200 bg-white sm:rounded-lg">
-              {["todo", "in_progress", "review", "done", "cancelled"].map(
-                (status) => (
-                  <SelectItem
-                    key={status}
-                    value={status}
-                    className="capitalize"
-                  >
-                    <span className={`inline-flex items-center gap-2`}>
-                      <span
-                        className={`h-2 w-2 rounded-full ${
-                          status === "todo"
-                            ? "bg-slate-400"
-                            : status === "in_progress"
-                              ? "bg-blue-500"
-                              : status === "review"
-                                ? "bg-amber-500"
-                                : status === "done"
-                                  ? "bg-emerald-500"
-                                  : "bg-red-500"
-                        }`}
-                      />
-                      {status.replace("_", " ")}
-                    </span>
-                  </SelectItem>
-                ),
-              )}
+              {[
+                "todo",
+                "in_progress",
+                "review",
+                "pending",
+                "on_hold",
+                "done",
+                "cancelled",
+              ].map((status) => (
+                <SelectItem key={status} value={status} className="capitalize">
+                  <span className={`inline-flex items-center gap-2`}>
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        status === "todo"
+                          ? "bg-slate-400"
+                          : status === "in_progress"
+                            ? "bg-blue-500"
+                            : status === "review"
+                              ? "bg-amber-500"
+                              : status === "pending"
+                                ? "bg-yellow-500"
+                                : status === "on_hold"
+                                  ? "bg-purple-500"
+                                  : status === "done"
+                                    ? "bg-emerald-500"
+                                    : "bg-red-500"
+                      }`}
+                    />
+                    {status.replace("_", " ")}
+                  </span>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -291,7 +297,7 @@ const TaskForm = ({
                     <span
                       className={`h-2 w-2 rounded-full ${
                         priority === "low"
-                          ? "bg-slate-400"
+                          ? "bg-emerald-400"
                           : priority === "medium"
                             ? "bg-blue-500"
                             : priority === "high"

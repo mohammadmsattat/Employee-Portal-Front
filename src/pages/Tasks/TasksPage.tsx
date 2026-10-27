@@ -1,8 +1,8 @@
-// TasksPage.jsx - النسخة المعدلة
+// TasksPage.jsx
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Menu, Filter, Plus, X, ChevronLeft } from "lucide-react";
+import { Menu, Filter, Plus, X, ChevronLeft, Archive } from "lucide-react";
 
 import Layout from "@/components/layout/Layout";
 import TasksTableView from "@/components/Tasks/TasksTableView";
@@ -26,7 +26,12 @@ import AddSubTaskModal from "@/components/Tasks/CreateModels/AddSubTaskModal";
 import TaskChecklistModal from "@/components/Tasks/DetailsModels/TaskChecklistModal";
 import GlobalTaskTimer from "@/components/Tasks/GlobalTaskTimer";
 
-import { useDeleteTaskMutation } from "@/rtk/Tasks/tasksApi";
+import {
+  useDeleteTaskMutation,
+  useUpdateTaskMutation,
+  useArchiveTaskMutation, // ✅ جديد
+  useUnarchiveTaskMutation, // ✅ جديد
+} from "@/rtk/Tasks/tasksApi";
 
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -47,10 +52,10 @@ import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 // ===== استيراد الـ Hook الخاص بالحذف =====
 import { useFolderSidebarController } from "@/hooks/Tasks/useFolderSidebarController";
 import AddFolderModal from "@/components/Tasks/CreateModels/AddFolderModal ";
+
 /* =========================
    SKELETONS
 ========================= */
-
 const SidebarSkeleton = () => (
   <div className="w-[260px] shrink-0 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
     <div className="mb-4 h-8 w-32 animate-pulse rounded-xl bg-slate-200" />
@@ -166,7 +171,6 @@ const TableSkeletonMobile = () => (
 /* =========================
    STATES
 ========================= */
-
 const EmptyState = ({ text }) => (
   <div className="flex min-h-[300px] sm:min-h-[420px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white text-slate-400">
     <div className="mb-4 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-slate-100">
@@ -203,7 +207,6 @@ const ErrorState = ({ text, onRetry }) => (
 /* =========================
    PAGE
 ========================= */
-
 const TasksPage = () => {
   const [searchParams] = useSearchParams();
 
@@ -229,10 +232,16 @@ const TasksPage = () => {
   const [detailsTask, setDetailsTask] = useState(null);
   const [checklistTask, setChecklistTask] = useState(null);
 
+  // ✅ State for archived view
+  const [showArchived, setShowArchived] = useState(false);
+
   const { toast } = useToast();
 
   const [deleteTask] = useDeleteTaskMutation();
   const [deleteSubTask] = useDeleteSubTaskMutation();
+  const [updateTask] = useUpdateTaskMutation();
+  const [archiveTask] = useArchiveTaskMutation(); // ✅ جديد
+  const [unarchiveTask] = useUnarchiveTaskMutation(); // ✅ جديد
 
   // كشف حجم الشاشة
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -274,6 +283,7 @@ const TasksPage = () => {
     {
       listId: selectedList?._id || "",
       ...filters,
+      includeArchived: showArchived, // ✅ نمرر الفلتر
     },
     {
       skip: !selectedList,
@@ -625,6 +635,52 @@ const TasksPage = () => {
     }
   };
 
+  const handleArchiveTask = async (task) => {
+    if (!selectedList?._id) return;
+
+    try {
+      await archiveTask({
+        listId: selectedList._id,
+        taskId: task._id,
+      }).unwrap();
+
+      toast({
+        title: "Task archived",
+        description: `"${task.title}" has been archived.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Archive failed",
+        description: error?.data?.message || "Could not archive task.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUnarchiveTask = async (task) => {
+    if (!selectedList?._id) return;
+
+    try {
+      await unarchiveTask({
+        listId: selectedList._id,
+        taskId: task._id,
+      }).unwrap();
+
+      toast({
+        title: "Task unarchived",
+        description: `"${task.title}" has been restored.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Unarchive failed",
+        description: error?.data?.message || "Could not unarchive task.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const highlightedTaskId = taskId || null;
+
   const handleDeleteSubTask = async ({ taskId, subTaskId }) => {
     try {
       await deleteSubTask({
@@ -639,6 +695,38 @@ const TasksPage = () => {
         description: error?.data?.message || "Could not delete subtask.",
         variant: "destructive",
       });
+    }
+  };
+
+  // ✅ Quick Status Change (from table)
+  const handleChangeStatus = async (task, newStatus) => {
+    if (!selectedList?._id) {
+      toast({
+        title: "Cannot update status",
+        description: "No list selected.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await updateTask({
+        listId: selectedList._id,
+        id: task._id,
+        data: { status: newStatus },
+      }).unwrap();
+
+      toast({
+        title: "Status updated",
+        description: `Task status changed to "${newStatus.replace("_", " ")}"`,
+      });
+    } catch (error) {
+      toast({
+        title: "Update failed",
+        description: error?.data?.message || "Could not update status.",
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
@@ -757,6 +845,7 @@ const TasksPage = () => {
     };
 
     setSelectedList(normalizedList);
+    setShowArchived(false); // ✅ نرجع للـ active tasks لما نختار list جديدة
 
     setSelectedContext({
       workspace,
@@ -905,7 +994,22 @@ const TasksPage = () => {
             )}
 
             {isDesktop && (
-              <div className="flex justify-end">
+              <div className="flex justify-end items-center gap-2">
+                {selectedList && (
+                  <Button
+                    onClick={() => setShowArchived((prev) => !prev)}
+                    variant="outline"
+                    className={`h-11 rounded-xl px-5 font-medium shadow-sm transition-colors shrink-0 ${
+                      showArchived
+                        ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Archive className="mr-2 h-4 w-4" />
+                    {showArchived ? "Showing Archived" : "Show Archived"}
+                  </Button>
+                )}
+
                 <Button
                   onClick={handleOpenAddTask}
                   className="h-11 rounded-xl bg-blue-600 px-5 font-medium text-white shadow-lg hover:bg-blue-700 transition-colors shrink-0"
@@ -944,19 +1048,32 @@ const TasksPage = () => {
               !tasksLoading &&
               !tasksFetching &&
               !tasksError &&
-              tasks.length === 0 && <EmptyState text="No tasks yet" />}
+              tasks.length === 0 && (
+                <EmptyState
+                  text={
+                    showArchived
+                      ? "No archived tasks in this list"
+                      : "No tasks yet"
+                  }
+                />
+              )}
 
             {selectedList &&
               tasks.length > 0 &&
               (isMobile || isTablet ? (
                 <TasksTableViewMobile
                   tasks={tasks}
+                  listId={selectedList?._id}
+                  highlightedTaskId={highlightedTaskId}
                   permissions={permissions}
                   onAddSubTask={(task) => {
                     setSubTaskParent(task);
                     setOpenTaskModal(true);
                   }}
                   onOpenEditModal={setEditTask}
+                  onChangeStatus={handleChangeStatus}
+                  onArchiveTask={handleArchiveTask}
+                  onUnarchiveTask={handleUnarchiveTask}
                   onOpenDetailsModal={setDetailsTask}
                   onOpenChecklistModal={setChecklistTask}
                   onDeleteTask={handleDeleteTask}
@@ -967,11 +1084,16 @@ const TasksPage = () => {
                 <TasksTableView
                   tasks={tasks}
                   permissions={permissions}
+                  listId={selectedList?._id}
+                  highlightedTaskId={highlightedTaskId}
                   onAddSubTask={(task) => {
                     setSubTaskParent(task);
                     setOpenTaskModal(true);
                   }}
                   onOpenEditModal={setEditTask}
+                  onChangeStatus={handleChangeStatus}
+                  onArchiveTask={handleArchiveTask}
+                  onUnarchiveTask={handleUnarchiveTask}
                   onOpenDetailsModal={setDetailsTask}
                   onOpenChecklistModal={setChecklistTask}
                   onDeleteTask={handleDeleteTask}

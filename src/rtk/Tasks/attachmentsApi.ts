@@ -1,68 +1,94 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import baseURL, { attachmentEndPoint } from "@/Api/GlobalData";
+import baseURL, { buildAttachmentUrl } from "@/Api/GlobalData";
 
-const getCompanyId = () => localStorage.getItem("company");
 const getJWT = () => localStorage.getItem("token");
+
+type AttachmentQueryArgs = {
+  listId: string;
+  taskId: string;
+};
+
+type UploadAttachmentArgs = {
+  listId: string;
+  taskId: string;
+  file: File;
+};
+
+type DeleteAttachmentArgs = {
+  listId: string;
+  taskId: string;
+  attachmentId: string;
+};
 
 export const attachmentApi = createApi({
   reducerPath: "attachmentApi",
+
   baseQuery: fetchBaseQuery({
     baseUrl: baseURL,
+
     prepareHeaders: (headers) => {
       const jwt = getJWT();
       if (jwt) headers.set("Authorization", `Bearer ${jwt}`);
       return headers;
     },
   }),
+
   tagTypes: ["Attachments"],
 
   endpoints: (builder) => ({
-    getAttachments: builder.query<any, { taskId?: string; subTaskId?: string }>(
-      {
-        query: ({ taskId, subTaskId }) => {
-          const params = new URLSearchParams();
+    // =====================================
+    // GET TASK ATTACHMENTS
+    // GET /api/lists/:listId/tasks/:taskId/attachments
+    // =====================================
+    getTaskAttachments: builder.query<any, AttachmentQueryArgs>({
+      query: ({ listId, taskId }) => buildAttachmentUrl(listId, taskId),
 
-          if (taskId) params.append("taskId", taskId);
-          if (subTaskId) params.append("subTaskId", subTaskId);
+      providesTags: (result, error, { taskId }) => [
+        { type: "Attachments", id: taskId },
+      ],
+    }),
 
-          return `${attachmentEndPoint}?companyId=${getCompanyId()}&${params.toString()}`;
-        },
-        providesTags: ["Attachments"],
+    // =====================================
+    // UPLOAD ATTACHMENT
+    // POST /api/lists/:listId/tasks/:taskId/attachments
+    // =====================================
+    uploadAttachment: builder.mutation<any, UploadAttachmentArgs>({
+      query: ({ listId, taskId, file }) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        return {
+          url: buildAttachmentUrl(listId, taskId),
+          method: "POST",
+          body: formData,
+        };
       },
-    ),
-    addAttachment: builder.mutation<any, { taskId: string; url: string }>({
-      query: (data) => ({
-        url: `${attachmentEndPoint}?companyId=${getCompanyId()}`,
-        method: "POST",
-        body: {
-          task: data.taskId,
-          url: data.url, 
-        },
-      }),
-      invalidatesTags: ["Attachments"],
-    }),
-    uploadAttachment: builder.mutation<any, FormData>({
-      query: (formData) => ({
-        url: `${attachmentEndPoint}?companyId=${getCompanyId()}`,
-        method: "POST",
-        body: formData,
-      }),
-      invalidatesTags: ["Attachments"],
+
+      invalidatesTags: (result, error, { taskId }) => [
+        { type: "Attachments", id: taskId },
+      ],
     }),
 
-    deleteAttachment: builder.mutation<any, string>({
-      query: (id) => ({
-        url: `${attachmentEndPoint}/${id}?companyId=${getCompanyId()}`,
+    // =====================================
+    // DELETE ATTACHMENT
+    // DELETE /api/lists/:listId/tasks/:taskId/attachments/:attachmentId
+    // =====================================
+    deleteAttachment: builder.mutation<any, DeleteAttachmentArgs>({
+      query: ({ listId, taskId, attachmentId }) => ({
+        url: `${buildAttachmentUrl(listId, taskId)}/${attachmentId}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Attachments"],
+
+      invalidatesTags: (result, error, { taskId }) => [
+        { type: "Attachments", id: taskId },
+        "Attachments",
+      ],
     }),
   }),
 });
 
 export const {
-  useGetAttachmentsQuery,
-  useAddAttachmentMutation,
+  useGetTaskAttachmentsQuery,
   useUploadAttachmentMutation,
   useDeleteAttachmentMutation,
 } = attachmentApi;
