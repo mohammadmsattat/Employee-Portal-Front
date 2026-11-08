@@ -10,17 +10,31 @@ import {
   useMarkAllAsReadMutation,
 } from "@/rtk/Notifications/NotificationsApi";
 
+import {
+  getNotificationRoute,
+  type NotificationEntity,
+} from "@/utils/notificationRoute";
+
+type Notification = {
+  _id: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  entity?: NotificationEntity;
+};
+
+type NotificationsDropdownProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
 const NotificationsDropdown = ({
   open,
   onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) => {
+}: NotificationsDropdownProps) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
-  const [notificationOpen, setNotificationOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = () => {
@@ -44,7 +58,7 @@ const NotificationsDropdown = ({
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
 
-  const notifications = data?.data || [];
+  const notifications: Notification[] = data?.data || [];
 
   const unread = useMemo(
     () => notifications.filter((n) => !n.isRead),
@@ -69,79 +83,18 @@ const NotificationsDropdown = ({
     }
   };
 
-  // ✅ دالة الروتينج للـ Task
-  const handleNotificationClick = async (notification: any) => {
+  // ✅ نسخة مبسّطة — تعتمد على الدالة المشتركة
+  const handleNotificationClick = async (notification: Notification) => {
     try {
       if (!notification.isRead) {
         await markAsRead(notification._id).unwrap();
       }
 
-      const { entity } = notification;
+      const target = getNotificationRoute(notification.entity);
+      if (!target) return;
 
-      if (!entity?.model) return;
-
-      const params = new URLSearchParams();
-
-      // =========================
-      // WORKSPACE
-      // =========================
-      if (entity.model === "Workspace") {
-        params.set("type", "workspace");
-        params.set("workspaceId", entity.id);
-      }
-
-      // =========================
-      // FOLDER
-      // =========================
-      if (entity.model === "Folder") {
-        params.set("type", "folder");
-        params.set("workspaceId", entity.workspaceId);
-        params.set("folderId", entity.folderId);
-      }
-
-      // =========================
-      // LIST
-      // =========================
-      if (entity.model === "List") {
-        params.set("type", "list");
-        params.set("workspaceId", entity.workspaceId);
-        params.set("folderId", entity.folderId);
-        params.set("listId", entity.listId);
-      }
-
-      // =========================
-      // TASK
-      // =========================
-      if (entity.model === "Task") {
-        params.set("type", "task");
-
-        const taskId = entity.taskId || entity.id;
-        params.set("taskId", taskId);
-
-        if (entity.listId) params.set("listId", entity.listId);
-        if (entity.folderId) params.set("folderId", entity.folderId);
-        if (entity.workspaceId) params.set("workspaceId", entity.workspaceId);
-      }
-
-      // =========================
-      // SUBTASK
-      // =========================
-      if (entity.model === "SubTask") {
-        params.set("type", "subtask");
-
-        const taskId = entity.taskId || entity.id;
-        const subTaskId = entity.subTaskId || entity.id;
-
-        if (taskId) params.set("taskId", taskId);
-        if (subTaskId) params.set("subTaskId", subTaskId);
-        if (entity.listId) params.set("listId", entity.listId);
-        if (entity.folderId) params.set("folderId", entity.folderId);
-        if (entity.workspaceId) params.set("workspaceId", entity.workspaceId);
-      }
-
-      // ✅ اقفل الـ Dropdown وروح للـ Task
       onOpenChange(false);
-      navigate(`/tasks?${params.toString()}`);
+      navigate(target);
     } catch (err) {
       console.error(err);
     }
@@ -150,12 +103,11 @@ const NotificationsDropdown = ({
   return (
     <div className="relative">
       {/* BUTTON */}
-
       <button
         onClick={() => onOpenChange(!open)}
         className="relative flex h-10 w-10 mr-2 items-center justify-center rounded-sm transition hover:bg-slate-100"
       >
-        <BellRing className="h-5 w-5 text-slate-500 transform rotate-12" />{" "}
+        <BellRing className="h-5 w-5 text-slate-500 transform rotate-12" />
         {unread.length > 0 && (
           <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-sm bg-red-500 px-1 text-[11px] font-bold text-white">
             {unread.length}
@@ -167,7 +119,7 @@ const NotificationsDropdown = ({
       {open && (
         <div
           className={`
-            absolute top-12  z-50
+            absolute top-12 z-50
             w-[92vw] max-w-[380px]
             rounded-sm border border-slate-200
             bg-white shadow-xl
@@ -175,11 +127,9 @@ const NotificationsDropdown = ({
           `}
         >
           {/* HEADER */}
-
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-blue-600" />
-
               <h4 className="text-sm font-semibold text-slate-900">
                 {t("notifications.title")}
               </h4>
@@ -193,14 +143,12 @@ const NotificationsDropdown = ({
                 className="h-8 rounded-sm text-xs"
               >
                 <CheckCheck className="mr-1 h-4 w-4" />
-
                 {t("notifications.clearAll")}
               </Button>
             )}
           </div>
 
           {/* LIST */}
-
           <div className="max-h-[420px] overflow-y-auto bg-slate-50 p-2">
             {isLoading && (
               <div className="p-6 text-center text-sm text-slate-500">
@@ -217,7 +165,6 @@ const NotificationsDropdown = ({
             {unread.map((n) => (
               <div
                 key={n._id}
-                // ✅ غيرنا الـ onClick عشان ينادي دالة الروتينج
                 onClick={() => handleNotificationClick(n)}
                 className="
                   group relative mb-2 cursor-pointer
@@ -227,11 +174,9 @@ const NotificationsDropdown = ({
                 "
               >
                 <span className="absolute right-3 top-3 h-2 w-2 rounded-sm bg-blue-500" />
-
                 <p className="pr-4 text-sm font-medium text-slate-800">
                   {n.message}
                 </p>
-
                 <p className="mt-1 text-xs text-slate-400">
                   {new Date(n.createdAt).toLocaleString()}
                 </p>
@@ -255,7 +200,6 @@ const NotificationsDropdown = ({
           </div>
 
           {/* FOOTER */}
-
           <div className="border-t border-slate-100 p-2">
             <Button
               variant="ghost"

@@ -1,20 +1,14 @@
 import {
-  ArrowDown,
   ArrowRight,
-  ArrowUp,
   CalendarDays,
   CheckCircle2,
   ChevronDown,
-  Clock3,
   Eye,
   FileText,
   Search,
   UserRound,
   X,
   Filter,
-  Users,
-  Clock,
-  AlertCircle,
 } from "lucide-react";
 import PortalCard from "@/components/portal/PortalCard";
 import StatusBadge from "@/components/portal/StatusBadge";
@@ -26,8 +20,6 @@ import {
   MobileCard,
   MobileCardHeader,
   MobileCardContent,
-  MobileCardRow,
-  MobileCardLabel,
   MobileCardValue,
 } from "@/components/ui/MobileCard";
 import {
@@ -40,10 +32,14 @@ import {
 } from "@/components/ui/table";
 import { useManagerLeaves } from "@/hooks/Leaves/useManagerLeaves";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-const LeaveApprovalsPanel = () => {
+type LeaveApprovalsPanelProps = {
+  highlightId?: string | null;
+};
+
+const LeaveApprovalsPanel = ({ highlightId }: LeaveApprovalsPanelProps) => {
   const {
     data,
     isLoading,
@@ -65,7 +61,6 @@ const LeaveApprovalsPanel = () => {
     updating,
     handleApprove,
     handleReject,
-    calculateDays,
     resetFilters,
     totalPages,
     isMobile,
@@ -76,7 +71,19 @@ const LeaveApprovalsPanel = () => {
     string | null
   >(null);
 
-  const formatDate = (date) => format(new Date(date), "PPP");
+  // ✅ التمرير للطلب المطلوب بعد التحميل
+  useEffect(() => {
+    if (!highlightId || isLoading) return;
+
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`leave-row-${highlightId}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [highlightId, isLoading]);
+
+  const formatDate = (date: string) => format(new Date(date), "PPP");
 
   const counts = {
     total: data?.paginationResult?.totalDocuments || data?.data?.length || 0,
@@ -242,57 +249,69 @@ const LeaveApprovalsPanel = () => {
                       <TableHead className="text-center text-xs text-slate-500 tracking-wider">
                         To
                       </TableHead>
-                      <TableHead className="text-center text-center text-xs text-slate-500 tracking-wider">
+                      <TableHead className="text-center text-xs text-slate-500 tracking-wider">
                         Days
                       </TableHead>
-                      <TableHead className="text-center text-center text-xs text-slate-500 tracking-wider">
+                      <TableHead className="text-center text-xs text-slate-500 tracking-wider">
                         Status
                       </TableHead>
-                      <TableHead className="text-center text-center text-xs text-slate-500 tracking-wider">
+                      <TableHead className="text-center text-xs text-slate-500 tracking-wider">
                         Action
                       </TableHead>
                     </TableRow>
                   </TableHeader>
 
                   <TableBody>
-                    {data.data.map((req) => (
-                      <TableRow
-                        key={req._id}
-                        className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
-                      >
-                        <TableCell className="text-sm text-center font-medium text-slate-700 py-3">
-                          {req.userId?.fullName || "-"}
-                        </TableCell>
-                        <TableCell className="text-sm text-center text-slate-600">
-                          {req.leaveType?.typeKey || "-"}
-                        </TableCell>
-                        <TableCell className="text-sm text-center text-slate-600">
-                          {formatDate(req.startDate)}
-                        </TableCell>
-                        <TableCell className="text-sm text-center text-slate-600">
-                          {formatDate(req.endDate)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
-                            {req.days}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <StatusBadge status={req.status} />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <button
-                            onClick={() => setSelectedRequest(req)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {data.data.map((req) => {
+                      const isHighlighted =
+                        String(req._id) === String(highlightId);
+                      return (
+                        <TableRow
+                          key={req._id}
+                          id={`advance-row-${req._id}`}
+                          className={cn(
+                            "border-b border-slate-50 hover:bg-slate-50/50 transition-colors",
+                            isHighlighted && "animate-soft-blink relative z-10",
+                          )}
+                          style={
+                            isHighlighted
+                              ? { boxShadow: "inset 0 0 0 1px #3b82f6" } 
+                              : undefined
+                          }
+                        >
+                          <TableCell className="text-sm text-center font-medium text-slate-700 py-3">
+                            {req.userId?.fullName || "-"}
+                          </TableCell>
+                          <TableCell className="text-sm text-center text-slate-600">
+                            {req.leaveType?.typeKey || "-"}
+                          </TableCell>
+                          <TableCell className="text-sm text-center text-slate-600">
+                            {formatDate(req.startDate)}
+                          </TableCell>
+                          <TableCell className="text-sm text-center text-slate-600">
+                            {formatDate(req.endDate)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
+                              {req.days}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <StatusBadge status={req.status} />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <button
+                              onClick={() => setSelectedRequest(req)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
-                {/* ========== Pagination ========== */}
                 <UnifiedPagination
                   currentPage={page}
                   totalPages={totalPages}
@@ -313,17 +332,23 @@ const LeaveApprovalsPanel = () => {
           {data?.data?.length ? (
             data.data.map((req) => {
               const isExpanded = expandedMobileCardId === req._id;
+              const isHighlighted = String(req._id) === String(highlightId);
 
               return (
                 <MobileCard
                   key={req._id}
+                  id={`leave-row-${req._id}`}
                   compact
                   interactive
                   aria-expanded={isExpanded}
                   onClick={() =>
                     setExpandedMobileCardId(isExpanded ? null : req._id)
                   }
-                  className="overflow-hidden rounded-lg border-slate-200 bg-white p-0 shadow-sm"
+                  className={cn(
+                    "overflow-hidden rounded-lg border-slate-200 bg-white p-0 shadow-sm",
+                    isHighlighted &&
+                      "animate-soft-blink !border-2 !border-blue-500 relative z-10",
+                  )}
                 >
                   <MobileCardHeader
                     noBorder={!isExpanded}
@@ -346,7 +371,7 @@ const LeaveApprovalsPanel = () => {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge status={req.status}  />
+                      <StatusBadge status={req.status} />
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 text-slate-400 transition-transform duration-200",
@@ -432,41 +457,6 @@ const LeaveApprovalsPanel = () => {
 export default LeaveApprovalsPanel;
 
 // ============= Sub-Components =============
-
-const SummaryCard = ({
-  title,
-  value,
-  icon,
-  color = "blue",
-  bordered = false,
-}: {
-  title: string;
-  value: number;
-  icon?: React.ReactNode;
-  color?: "blue" | "amber" | "emerald" | "rose";
-  bordered?: boolean;
-}) => {
-  const colorMap = {
-    blue: "border-l-blue-600",
-    amber: "border-l-amber-500",
-    emerald: "border-l-emerald-500",
-    rose: "border-l-rose-500",
-  };
-
-  return (
-    <div
-      className={`rounded-lg border border-slate-200 ${bordered ? `border-l-4 ${colorMap[color]}` : ""} bg-white p-4 shadow-sm`}
-    >
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        {icon && <span className="text-slate-400">{icon}</span>}
-      </div>
-      <p className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900">
-        {value}
-      </p>
-    </div>
-  );
-};
 
 const EmptyState = () => (
   <div className="px-5 py-12 text-center">

@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   CalendarDays,
@@ -34,8 +34,6 @@ import {
   MobileCard,
   MobileCardHeader,
   MobileCardContent,
-  MobileCardRow,
-  MobileCardLabel,
   MobileCardValue,
 } from "@/components/ui/MobileCard";
 import { useManagerOvertimeRequests } from "@/hooks/Overtime/useManagerOvertimeRequests";
@@ -44,10 +42,12 @@ import { cn } from "@/lib/utils";
 
 interface ManagerOvertimeRequestsProps {
   embedded?: boolean;
+  highlightId?: string | null;
 }
 
 const ManagerOvertimeRequests = ({
   embedded = false,
+  highlightId,
 }: ManagerOvertimeRequestsProps) => {
   const [expandedMobileCardId, setExpandedMobileCardId] = useState<
     string | null
@@ -63,7 +63,6 @@ const ManagerOvertimeRequests = ({
     setStatusFilter,
     searchInput,
     setSearchInput,
-    searchFilter,
     data,
     isLoading,
     selectedRequest,
@@ -75,6 +74,18 @@ const ManagerOvertimeRequests = ({
     totalPages,
     t,
   } = useManagerOvertimeRequests();
+
+  // ✅ التمرير للطلب المطلوب
+  useEffect(() => {
+    if (!highlightId || isLoading) return;
+
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`overtime-row-${highlightId}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [highlightId, isLoading]);
 
   const formatDate = (date?: string) => {
     if (!date) return "-";
@@ -97,7 +108,6 @@ const ManagerOvertimeRequests = ({
     const loader = (
       <LoadingFull titleLines={2} cardLines={4} className="min-h-[60vh]" />
     );
-
     return embedded ? loader : <Layout>{loader}</Layout>;
   }
 
@@ -115,7 +125,7 @@ const ManagerOvertimeRequests = ({
           </div>
         )}
 
-        {/* ========== Summary Cards ========== */}
+        {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <SummaryCard
             title="Total Requests"
@@ -143,9 +153,8 @@ const ManagerOvertimeRequests = ({
           />
         </div>
 
-        {/* ========== Filters ========== */}
+        {/* Filters */}
         <PortalCard className="!p-0 overflow-hidden">
-          {/* Filter Header */}
           <button
             onClick={() => setShowFilters((prev) => !prev)}
             className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/50 transition-colors group"
@@ -203,11 +212,9 @@ const ManagerOvertimeRequests = ({
             </div>
           </button>
 
-          {/* Filter Content */}
           {showFilters && (
             <div className="border-t border-slate-100 bg-slate-50/30 px-5 py-5">
               <div className="grid gap-5 md:grid-cols-3">
-                {/* Search Field */}
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
                     <Search className="h-3.5 w-3.5 text-slate-400" />
@@ -232,12 +239,8 @@ const ManagerOvertimeRequests = ({
                       </button>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-400">
-                    Search by employee name or date
-                  </p>
                 </div>
 
-                {/* Status Filter */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
                     <AlertCircle className="h-3.5 w-3.5 text-slate-400" />
@@ -246,62 +249,28 @@ const ManagerOvertimeRequests = ({
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 pr-8 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M6%208L1%203h10z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px] bg-[right_12px_center] bg-no-repeat"
+                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   >
                     <option value="">
                       {t("managerOvertimeRequestsPage.allStatus")}
                     </option>
                     <option value="pending">
-                      {" "}
                       {t("managerOvertimeRequestsPage.pending")}
                     </option>
                     <option value="approved">
-                      {" "}
                       {t("managerOvertimeRequestsPage.approved")}
                     </option>
                     <option value="rejected">
-                      {" "}
                       {t("managerOvertimeRequestsPage.rejected")}
                     </option>
                   </select>
                 </div>
               </div>
-
-              {/* Active Filters Display */}
-              {(searchInput || statusFilter) && (
-                <div className="mt-4 pt-4 border-t border-slate-200/60 flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-slate-500 font-medium">
-                    Active filters:
-                  </span>
-                  {searchInput && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600 border border-blue-100">
-                      Search: "{searchInput}"
-                      <button
-                        onClick={() => setSearchInput("")}
-                        className="hover:text-blue-800 transition-colors"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  )}
-                  {statusFilter && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600 border border-blue-100">
-                      Status: {statusFilter}
-                      <button
-                        onClick={() => setStatusFilter("")}
-                        className="hover:text-blue-800 transition-colors"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  )}
-                </div>
-              )}
             </div>
           )}
         </PortalCard>
 
-        {/* ========== Desktop Table ========== */}
+        {/* Desktop Table */}
         <div className="hidden md:block">
           <PortalCard className="!p-0 overflow-hidden">
             <div className="border-b border-slate-100 px-5 py-3.5 bg-gradient-to-r from-blue-50/30 to-transparent">
@@ -326,13 +295,13 @@ const ManagerOvertimeRequests = ({
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 border-b border-slate-100">
                       <TableHead className="text-center text-xs text-slate-500 tracking-wider">
-                       Employee
+                        Employee
                       </TableHead>
                       <TableHead className="text-center text-xs text-slate-500 tracking-wider">
-                       Date
+                        Date
                       </TableHead>
                       <TableHead className="text-center text-xs text-slate-500 tracking-wider">
-                      Hours
+                        Hours
                       </TableHead>
                       <TableHead className="text-center text-xs text-slate-500 tracking-wider">
                         Status
@@ -344,38 +313,50 @@ const ManagerOvertimeRequests = ({
                   </TableHeader>
 
                   <TableBody>
-                    {data.data.map((req: OvertimeRequest) => (
-                      <TableRow
-                        key={req._id}
-                        className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
-                      >
-                        <TableCell className=" text-center text-sm font-medium text-slate-700 py-3">
-                          {req.userId?.fullName || "-"}
-                        </TableCell>
-                        <TableCell className="text-center text-sm text-slate-600">
-                          {formatDate(req.workDate || req.createdAt)}
-                        </TableCell>
-                        <TableCell className=" text-center text-center">
-                          <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
-                            {req.hours || "-"}h
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <StatusBadge status={req.status} />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <button
-                            onClick={() => setSelectedRequest(req)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {data.data.map((req: OvertimeRequest) => {
+                      const isHighlighted =
+                        String(req._id) === String(highlightId);
+                      return (
+                        <TableRow
+                          key={req._id}
+                          id={`advance-row-${req._id}`}
+                          className={cn(
+                            "border-b border-slate-50 hover:bg-slate-50/50 transition-colors",
+                            isHighlighted && "animate-soft-blink relative z-10",
+                          )}
+                          style={
+                            isHighlighted
+                              ? { boxShadow: "inset 0 0 0 1px #3b82f6" } // #3b82f6 هو لون أزرق (blue-500)
+                              : undefined
+                          }
+                        >
+                          <TableCell className="text-center text-sm font-medium text-slate-700 py-3">
+                            {req.userId?.fullName || "-"}
+                          </TableCell>
+                          <TableCell className="text-center text-sm text-slate-600">
+                            {formatDate(req.workDate || req.createdAt)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
+                              {req.hours || "-"}h
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <StatusBadge status={req.status} />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <button
+                              onClick={() => setSelectedRequest(req)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
-                </Table>{" "}
-                {/* ========== Pagination ========== */}
+                </Table>
                 <UnifiedPagination
                   currentPage={page}
                   totalPages={totalPages}
@@ -391,22 +372,28 @@ const ManagerOvertimeRequests = ({
           </PortalCard>
         </div>
 
-        {/* ========== Mobile Cards ========== */}
+        {/* Mobile Cards */}
         <div className="space-y-3 md:hidden">
           {data?.data?.length ? (
             data.data.map((req: OvertimeRequest) => {
               const isExpanded = expandedMobileCardId === req._id;
+              const isHighlighted = String(req._id) === String(highlightId);
 
               return (
                 <MobileCard
                   key={req._id}
+                  id={`overtime-row-${req._id}`}
                   compact
                   interactive
                   aria-expanded={isExpanded}
                   onClick={() =>
                     setExpandedMobileCardId(isExpanded ? null : req._id)
                   }
-                  className="overflow-hidden rounded-lg border-slate-200 bg-white p-0 shadow-sm"
+                  className={cn(
+                    "overflow-hidden rounded-lg border-slate-200 bg-white p-0 shadow-sm",
+                    isHighlighted &&
+                      "animate-soft-blink !border-2 !border-blue-500 relative z-10",
+                  )}
                 >
                   <MobileCardHeader
                     noBorder={!isExpanded}
@@ -429,7 +416,7 @@ const ManagerOvertimeRequests = ({
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge status={req.status}  />
+                      <StatusBadge status={req.status} />
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 text-slate-400 transition-transform duration-200",
@@ -453,8 +440,7 @@ const ManagerOvertimeRequests = ({
                           <div className="flex items-center gap-2 text-xs text-slate-500">
                             <Clock3 className="h-3.5 w-3.5" />
                             <span>
-                              {formatDate(req.startTime)} -{" "}
-                              {formatDate(req.endTime)}
+                              {req.startTime} - {req.endTime}
                             </span>
                           </div>
                         </div>
@@ -501,7 +487,6 @@ const ManagerOvertimeRequests = ({
         </div>
       </div>
 
-      {/* ========== Modal ========== */}
       {selectedRequest && (
         <ManagerOvertimeRequestModal
           request={selectedRequest}
@@ -555,24 +540,6 @@ const SummaryCard = ({
     </div>
   );
 };
-
-const InfoTile = ({
-  icon,
-  label,
-  value,
-}: {
-  icon?: JSX.Element;
-  label: string;
-  value: string | number;
-}) => (
-  <div className="rounded-md bg-slate-50 p-3">
-    <MobileCardLabel>{label}</MobileCardLabel>
-    <MobileCardValue className="mt-1 flex items-center gap-1.5">
-      {icon}
-      <span>{value}</span>
-    </MobileCardValue>
-  </div>
-);
 
 const EmptyState = () => (
   <div className="px-5 py-12 text-center">

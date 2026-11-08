@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { Plus, FileText, CheckCircle2, CalendarDays, Clock3, Gift, Inbox } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Plus, FileText, CheckCircle2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import AddLeaveRequestModal from "./AddLeavesRequestModal";
@@ -11,12 +12,23 @@ type LeaveTab = "my" | "approvals";
 interface TabItem {
   key: LeaveTab;
   label: string;
-  icon: any;
+  icon: React.ElementType;
 }
 
 const LeavesPage = () => {
-  const [activeTab, setActiveTab] = useState<LeaveTab>("my");
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("highlight");
+
+  // ✅ إذا في highlight → افتح tab "approvals" مباشرة
+  const [activeTab, setActiveTab] = useState<LeaveTab>(
+    highlightId ? "approvals" : "my",
+  );
   const [isLeaveModalOpen, setLeaveModalOpen] = useState(false);
+
+  // ✅ لو تغيّر highlight (مثلاً تنقّل من إشعار لآخر) → فعّل "approvals"
+  useEffect(() => {
+    if (highlightId) setActiveTab("approvals");
+  }, [highlightId]);
 
   // replace later with real permission logic
   const canApproveLeaves = true;
@@ -79,7 +91,7 @@ const LeavesPage = () => {
 
             {/* Web Header (With Card) */}
             <div className="hidden sm:block">
-              <div className="flex flex-col gap-4 rounded-2xl  p-6 shadow-sm ring-1 ring-black/5">
+              <div className="flex flex-col gap-4 rounded-2xl p-6 shadow-sm ring-1 ring-black/5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -146,7 +158,11 @@ const LeavesPage = () => {
 
           {/* Content */}
           <div>
-            {activeTab === "my" ? <MyLeavesPanel /> : <LeaveApprovalsPanel />}
+            {activeTab === "my" ? (
+              <MyLeavesPanel />
+            ) : (
+              <LeaveApprovalsPanel highlightId={highlightId} />
+            )}
           </div>
         </div>
       </div>

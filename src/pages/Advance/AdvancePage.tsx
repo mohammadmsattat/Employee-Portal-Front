@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { CheckCircle2, FileText, LucideIcon, Plus, Wallet } from "lucide-react";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { CheckCircle2, FileText, LucideIcon, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,15 @@ type TabItem = {
   label: string;
   icon: LucideIcon;
 };
-const getInitialTab = (pathname: string, search: string): AdvanceTab => {
+
+const getInitialTab = (
+  pathname: string,
+  search: string,
+  highlight: string | null,
+): AdvanceTab => {
+  // ✅ highlight → approvals
+  if (highlight) return "approvals";
+
   const tab = new URLSearchParams(search).get("tab");
 
   if (tab === "approvals" || pathname.includes("manager-advance-requests")) {
@@ -27,9 +35,12 @@ const getInitialTab = (pathname: string, search: string): AdvanceTab => {
 
 const AdvancePage = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("highlight");
   const { t } = useTranslation();
+
   const [activeTab, setActiveTab] = useState<AdvanceTab>(() =>
-    getInitialTab(location.pathname, location.search),
+    getInitialTab(location.pathname, location.search, highlightId),
   );
   const [isAdvanceModalOpen, setAdvanceModalOpen] = useState(false);
 
@@ -37,8 +48,10 @@ const AdvancePage = () => {
   const canApproveAdvances = true;
 
   useEffect(() => {
-    setActiveTab(getInitialTab(location.pathname, location.search));
-  }, [location.pathname, location.search]);
+    setActiveTab(
+      getInitialTab(location.pathname, location.search, highlightId),
+    );
+  }, [location.pathname, location.search, highlightId]);
 
   const tabs = useMemo(() => {
     const base: TabItem[] = [
@@ -172,7 +185,7 @@ const AdvancePage = () => {
             {activeTab === "my" ? (
               <MyAdvanceRequests embedded />
             ) : (
-              <ManagerAdvanceRequests embedded />
+              <ManagerAdvanceRequests embedded highlightId={highlightId} />
             )}
           </div>
         </div>

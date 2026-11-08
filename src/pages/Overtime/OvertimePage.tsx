@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { CheckCircle2, FileText, Plus, Clock3, LucideIcon } from "lucide-react";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { CheckCircle2, FileText, Plus, LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,15 @@ type TabItem = {
   label: string;
   icon: LucideIcon;
 };
-const getInitialTab = (pathname: string, search: string): OvertimeTab => {
+
+const getInitialTab = (
+  pathname: string,
+  search: string,
+  highlight: string | null,
+): OvertimeTab => {
+  // ✅ highlight → approvals
+  if (highlight) return "approvals";
+
   const tab = new URLSearchParams(search).get("tab");
 
   if (tab === "approvals" || pathname.includes("manager-overtime-requests")) {
@@ -26,9 +34,12 @@ const getInitialTab = (pathname: string, search: string): OvertimeTab => {
 
 const OvertimePage = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("highlight");
   const { t } = useTranslation();
+
   const [activeTab, setActiveTab] = useState<OvertimeTab>(() =>
-    getInitialTab(location.pathname, location.search),
+    getInitialTab(location.pathname, location.search, highlightId),
   );
   const [isOvertimeModalOpen, setOvertimeModalOpen] = useState(false);
 
@@ -36,8 +47,10 @@ const OvertimePage = () => {
   const canApproveOvertime = true;
 
   useEffect(() => {
-    setActiveTab(getInitialTab(location.pathname, location.search));
-  }, [location.pathname, location.search]);
+    setActiveTab(
+      getInitialTab(location.pathname, location.search, highlightId),
+    );
+  }, [location.pathname, location.search, highlightId]);
 
   const tabs = useMemo<TabItem[]>(() => {
     const base: TabItem[] = [
@@ -171,7 +184,7 @@ const OvertimePage = () => {
             {activeTab === "my" ? (
               <MyOvertimeRequests embedded />
             ) : (
-              <ManagerOvertimeRequests embedded />
+              <ManagerOvertimeRequests embedded highlightId={highlightId} />
             )}
           </div>
         </div>

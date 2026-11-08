@@ -11,6 +11,18 @@ import {
 } from "@/rtk/Notifications/NotificationsApi";
 
 import { useNavigate } from "react-router-dom";
+import {
+  getNotificationRoute,
+  type NotificationEntity,
+} from "@/utils/notificationRoute";
+
+type Notification = {
+  _id: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  entity?: NotificationEntity;
+};
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
@@ -21,12 +33,9 @@ const NotificationsPage = () => {
   });
 
   const [markAllAsRead, { isLoading: isMarking }] = useMarkAllAsReadMutation();
-
   const [markAsRead] = useMarkAsReadMutation();
 
-  const notifications = data?.data || [];
-  console.log(notifications);
-
+  const notifications: Notification[] = data?.data || [];
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const handleMarkAllAsRead = async () => {
@@ -37,94 +46,23 @@ const NotificationsPage = () => {
     }
   };
 
-  const handleNotificationClick = async (notification) => {
+  // ✅ نسخة مبسّطة — تعتمد على الدالة المشتركة
+  const handleNotificationClick = async (notification: Notification) => {
     try {
       if (!notification.isRead) {
         await markAsRead(notification._id).unwrap();
       }
 
-      const { entity } = notification;
+      const target = getNotificationRoute(notification.entity);
+      if (!target) return;
 
-      if (!entity?.model) return;
-
-      const params = new URLSearchParams();
-
-      // =========================
-      // WORKSPACE
-      // =========================
-
-      if (entity.model === "Workspace") {
-        params.set("type", "workspace");
-
-        params.set("workspaceId", entity.id);
-      }
-
-      // =========================
-      // FOLDER
-      // =========================
-
-      if (entity.model === "Folder") {
-        params.set("type", "folder");
-
-        params.set("workspaceId", entity.workspaceId);
-
-        params.set("folderId", entity.folderId);
-      }
-
-      // =========================
-      // LIST
-      // =========================
-
-      if (entity.model === "List") {
-        params.set("type", "list");
-
-        params.set("workspaceId", entity.workspaceId);
-
-        params.set("folderId", entity.folderId);
-
-        params.set("listId", entity.listId);
-      }
-
-      // =========================
-      // TASK
-      // =========================
-
-      if (entity.model === "Task") {
-        params.set("type", "task");
-
-        const taskId = entity.taskId || entity.id;
-        params.set("taskId", taskId);
-
-        if (entity.listId) params.set("listId", entity.listId);
-        if (entity.folderId) params.set("folderId", entity.folderId);
-        if (entity.workspaceId) params.set("workspaceId", entity.workspaceId);
-      }
-
-      // =========================
-      // SUBTASK
-      // =========================
-
-      if (entity.model === "SubTask") {
-        params.set("type", "subtask");
-
-        const taskId = entity.taskId || entity.id;
-        const subTaskId = entity.subTaskId || entity.id;
-
-        if (taskId) params.set("taskId", taskId);
-        if (subTaskId) params.set("subTaskId", subTaskId);
-        if (entity.listId) params.set("listId", entity.listId);
-        if (entity.folderId) params.set("folderId", entity.folderId);
-        if (entity.workspaceId) params.set("workspaceId", entity.workspaceId);
-
-      }
-
-      navigate(`/tasks?${params.toString()}`);
+      navigate(target);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const getNotificationIcon = (message: string) => {
+  const getNotificationIcon = (message = "") => {
     const lower = message.toLowerCase();
 
     if (lower.includes("leave")) {
@@ -142,7 +80,6 @@ const NotificationsPage = () => {
     <Layout>
       <div className="space-y-6">
         {/* HERO */}
-
         <section className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.06)]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_35%)]" />
 
@@ -156,7 +93,6 @@ const NotificationsPage = () => {
                 <h1 className="text-3xl font-bold text-slate-900">
                   Notifications
                 </h1>
-
                 <p className="mt-2 text-sm text-slate-500">
                   Stay updated with your latest activities
                 </p>
@@ -177,16 +113,13 @@ const NotificationsPage = () => {
         </section>
 
         {/* STATS */}
-
         <section className="grid gap-4 sm:grid-cols-3">
           <StatsCard title="Total" value={notifications.length} />
-
           <StatsCard
             title="Unread"
             value={unreadCount}
             valueClass="text-blue-600"
           />
-
           <StatsCard
             title="Read"
             value={notifications.length - unreadCount}
@@ -195,7 +128,6 @@ const NotificationsPage = () => {
         </section>
 
         {/* LIST */}
-
         <section className="space-y-4">
           {isLoading && (
             <Card className="rounded-3xl p-10 text-center">
@@ -206,7 +138,6 @@ const NotificationsPage = () => {
           {!isLoading && notifications.length === 0 && (
             <Card className="rounded-3xl border-dashed p-14 text-center">
               <Bell className="mx-auto h-10 w-10 text-slate-400" />
-
               <p className="mt-4 text-slate-500">No notifications yet</p>
             </Card>
           )}
@@ -238,7 +169,6 @@ const NotificationsPage = () => {
                   <p className="text-sm text-slate-700">
                     {notification.message}
                   </p>
-
                   <p className="mt-3 text-xs text-slate-400">
                     {new Date(notification.createdAt).toLocaleString()}
                   </p>
@@ -254,18 +184,16 @@ const NotificationsPage = () => {
 
 export default NotificationsPage;
 
-const StatsCard = ({
-  title,
-  value,
-  valueClass,
-}: {
+/* ================= STATS CARD ================= */
+type StatsCardProps = {
   title: string;
   value: number;
   valueClass?: string;
-}) => (
+};
+
+const StatsCard = ({ title, value, valueClass }: StatsCardProps) => (
   <div className="rounded-2xl border border-slate-200/80 bg-white p-5">
     <p className="text-sm text-slate-500">{title}</p>
-
     <p className={`mt-3 text-3xl font-bold ${valueClass || ""}`}>{value}</p>
   </div>
 );
