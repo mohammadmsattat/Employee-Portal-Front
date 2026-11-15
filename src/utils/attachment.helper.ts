@@ -93,3 +93,23 @@ export const validateFile = (
 
   return { valid: true };
 };
+
+export const getFileCategoryFromMime = (mime: string = ""): string => {
+  const m = mime.toLowerCase();
+  if (m.startsWith("image/")) return "image";
+  if (m === "application/pdf") return "pdf";
+  if (m.includes("word") || m.includes("wordprocessingml")) return "word";
+  if (m.includes("excel") || m.includes("spreadsheetml") || m === "text/csv")
+    return "excel";
+  if (m.includes("powerpoint") || m.includes("presentationml"))
+    return "powerpoint";
+  if (m.startsWith("text/")) return "text";
+  if (
+    m.includes("zip") ||
+    m.includes("rar") ||
+    m.includes("7z") ||
+    m.includes("compressed")
+  )
+    return "archive";
+  return "other";
+};

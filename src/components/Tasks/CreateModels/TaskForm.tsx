@@ -1,3 +1,5 @@
+// TaskForm.jsx - نسخة محدثة مع دعم المرفقات
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -19,9 +21,14 @@ import {
   ListChecks,
   AlertCircle,
   UserMinus,
+  Paperclip,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import MemberSearchSelect from "@/components/ui/MemberSearchSelect";
+
+// ✅ NEW: Attachment imports
+import AttachmentUploader from "@/components/tasks/Attachments/AttachmentUploader";
+import PendingAttachmentList from "@/components/tasks/Attachments/PendingAttachmentList";
 
 type Mode = "task" | "subtask";
 
@@ -44,6 +51,12 @@ interface Props {
   lists?: any[];
   onClose?: () => void;
   errors?: any;
+
+  // ✅ NEW: Attachments props
+  pendingFiles?: File[];
+  addPendingFile?: (file: File) => void;
+  removePendingFile?: (index: number) => void;
+  canUpload?: boolean;
 }
 
 const TaskForm = ({
@@ -63,6 +76,12 @@ const TaskForm = ({
   lists = [],
   onClose,
   errors = {},
+
+  // ✅ NEW: Attachments props
+  pendingFiles = [],
+  addPendingFile,
+  removePendingFile,
+  canUpload = false,
 }: Props) => {
   // Format date for display
   const formatDate = (date: Date | null) => {
@@ -539,13 +558,47 @@ const TaskForm = ({
         />
       </div>
 
+      {/* ✅ NEW: ATTACHMENTS */}
+      {canUpload && (
+        <div>
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <Label className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+              <Paperclip className="h-4 w-4 text-blue-500" />
+              {t("tasks.attachments") || "Attachments"}
+            </Label>
+
+            {pendingFiles.length > 0 && (
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">
+                {pendingFiles.length}
+              </span>
+            )}
+          </div>
+
+          <AttachmentUploader
+            onUpload={(file) => addPendingFile?.(file)}
+            canUpload={canUpload && !isLoading}
+          />
+
+          {pendingFiles.length > 0 && (
+            <div className="mt-3">
+              <PendingAttachmentList
+                files={pendingFiles}
+                onRemove={(index) => removePendingFile?.(index)}
+                disabled={isLoading}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ACTIONS */}
       <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:gap-3 sm:justify-end">
         {onClose && (
           <Button
             variant="outline"
             onClick={onClose}
-            className="h-11 w-full rounded-2xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:w-auto sm:rounded-lg"
+            disabled={isLoading}
+            className="h-11 w-full rounded-2xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:rounded-lg"
           >
             {t("buttons.cancel") || "Cancel"}
           </Button>

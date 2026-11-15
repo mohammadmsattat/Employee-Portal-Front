@@ -296,7 +296,8 @@ const TasksTableView = ({
                 const progressColor = getProgressColor(progress);
 
                 const isArchived = Boolean(task.isArchived);
-                const isDone = task.status === "done";
+                const canBeArchived =
+                  task.status === "done" || task.status === "cancelled";
 
                 return (
                   <>
@@ -409,7 +410,7 @@ const TasksTableView = ({
                                     </button>
 
                                     {/* ARCHIVE - يظهر بس لما status=done */}
-                                    {isDone && (
+                                    {canBeArchived && (
                                       <button
                                         onClick={async (e) => {
                                           e.stopPropagation();
@@ -490,10 +491,7 @@ const TasksTableView = ({
                       {/* STATUS */}
                       <td className="px-4 py-3">
                         {isArchived ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap bg-emerald-50 text-emerald-600 border-emerald-200">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            Done
-                          </span>
+                          <StatusBadge status={task.status} />
                         ) : (
                           <StatusDropdown
                             status={task.status}
@@ -753,4 +751,3 @@ const TasksTableView = ({
 };
 
 export default TasksTableView;
-  

@@ -57,6 +57,9 @@ export const useLogin = () => {
       JSON.stringify(data.data.groupId?.locationId || null),
     );
     localStorage.setItem("group", JSON.stringify(data.data.groupId || null));
+
+    // ✅ إطلاق حدث إشعار بتسجيل الدخول بنجاح لإغلاق المودال
+    window.dispatchEvent(new CustomEvent("login-success"));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

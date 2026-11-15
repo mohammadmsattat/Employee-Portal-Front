@@ -536,7 +536,8 @@ const TasksTableViewMobile = ({
           const isPinned =
             task.priority === "urgent" || task.priority === "high";
           const isArchived = Boolean(task.isArchived);
-          const isDone = task.status === "done" || task.status === "completed";
+          const canBeArchived =
+            task.status === "done" || task.status === "cancelled";
 
           return (
             <div
@@ -645,7 +646,7 @@ const TasksTableViewMobile = ({
                   </div>
                 ) : !isArchived ? (
                   <div className="relative z-10 mt-3 flex items-center gap-2 text-[10px] text-slate-500">
-                    {isDone ? (
+                    {canBeArchived ? (
                       <>
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                         <span className="font-medium text-emerald-600">

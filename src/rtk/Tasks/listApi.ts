@@ -1,9 +1,7 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-
-import baseURL, { buildListUrl } from "@/Api/GlobalData";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { buildListUrl } from "@/Api/GlobalData";
 import { workspaceApi } from "@/rtk/Tasks/workspaceApi";
-
-const getJWT = () => localStorage.getItem("token");
+import { baseQueryWithReauth } from "../Auth/baseQuery";
 
 type GetListsArgs = {
   workspaceId: string;
@@ -15,162 +13,86 @@ type GetListsArgs = {
 
 export const listApi = createApi({
   reducerPath: "listApi",
-
-  baseQuery: fetchBaseQuery({
-    baseUrl: baseURL,
-
-    prepareHeaders: (headers) => {
-      const jwt = getJWT();
-
-      if (jwt) {
-        headers.set("Authorization", `Bearer ${jwt}`);
-      }
-
-      return headers;
-    },
-  }),
-
+  baseQuery: baseQueryWithReauth,
   tagTypes: ["List"],
 
   endpoints: (builder) => ({
-    // =====================================
-    // GET LISTS BY FOLDER
-    // GET /api/workspaces/:workspaceId/folders/:folderId/lists
-    // =====================================
     getLists: builder.query<any, GetListsArgs>({
       query: ({ workspaceId, folderId, page, limit, search }) => {
         const params = new URLSearchParams();
-
-        if (page !== undefined) {
-          params.set("page", String(page));
-        }
-
-        if (limit !== undefined) {
-          params.set("limit", String(limit));
-        }
-
-        if (search) {
-          params.set("search", search);
-        }
+        if (page !== undefined) params.set("page", String(page));
+        if (limit !== undefined) params.set("limit", String(limit));
+        if (search) params.set("search", search);
 
         const queryString = params.toString();
         const url = buildListUrl(workspaceId, folderId);
-
         return queryString ? `${url}?${queryString}` : url;
       },
-
       providesTags: ["List"],
     }),
 
-    // =====================================
-    // GET LIST BY ID
-    // =====================================
     getListById: builder.query<
       any,
-      {
-        workspaceId: string;
-        folderId: string;
-        id: string;
-      }
+      { workspaceId: string; folderId: string; id: string }
     >({
       query: ({ workspaceId, folderId, id }) =>
         `${buildListUrl(workspaceId, folderId)}/${id}`,
-
       providesTags: ["List"],
     }),
 
-    // =====================================
-    // CREATE LIST
-    // =====================================
     createList: builder.mutation<
       any,
-      {
-        workspaceId: string;
-        folderId: string;
-        data: any;
-      }
+      { workspaceId: string; folderId: string; data: any }
     >({
       query: ({ workspaceId, folderId, data }) => ({
         url: buildListUrl(workspaceId, folderId),
         method: "POST",
         body: data,
       }),
-
       invalidatesTags: ["List"],
-
       onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
         try {
           await queryFulfilled;
-
           dispatch(workspaceApi.util.invalidateTags(["Workspace"]));
-        } catch {
-          // لا نحدّث الـcache إذا فشل الطلب
-        }
+        } catch {}
       },
     }),
 
-    // =====================================
-    // UPDATE LIST
-    // =====================================
     updateList: builder.mutation<
       any,
-      {
-        workspaceId: string;
-        folderId: string;
-        id: string;
-        data: any;
-      }
+      { workspaceId: string; folderId: string; id: string; data: any }
     >({
       query: ({ workspaceId, folderId, id, data }) => ({
         url: `${buildListUrl(workspaceId, folderId)}/${id}`,
         method: "PATCH",
         body: data,
       }),
-
       invalidatesTags: ["List"],
-
       onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
         try {
           await queryFulfilled;
-
           dispatch(workspaceApi.util.invalidateTags(["Workspace"]));
-        } catch {
-          // لا نحدّث الـcache إذا فشل الطلب
-        }
+        } catch {}
       },
     }),
 
-    // =====================================
-    // DELETE LIST
-    // =====================================
     deleteList: builder.mutation<
       any,
-      {
-        workspaceId: string;
-        folderId: string;
-        id: string;
-      }
+      { workspaceId: string; folderId: string; id: string }
     >({
       query: ({ workspaceId, folderId, id }) => ({
         url: `${buildListUrl(workspaceId, folderId)}/${id}`,
         method: "DELETE",
       }),
-
       invalidatesTags: ["List"],
-
       onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
         try {
           await queryFulfilled;
-
           dispatch(workspaceApi.util.invalidateTags(["Workspace"]));
-        } catch {
-        }
+        } catch {}
       },
     }),
 
-    // =====================================
-    // ADD LIST MEMBER
-    // =====================================
     addListMember: builder.mutation<
       any,
       {
@@ -183,56 +105,32 @@ export const listApi = createApi({
     >({
       query: ({ workspaceId, folderId, id, userId, role }) => ({
         url: `${buildListUrl(workspaceId, folderId)}/${id}/members`,
-
         method: "POST",
-
-        body: {
-          userId,
-          role,
-        },
+        body: { userId, role },
       }),
-
       invalidatesTags: ["List"],
-
       onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
         try {
           await queryFulfilled;
-
           dispatch(workspaceApi.util.invalidateTags(["Workspace"]));
-        } catch {
-          // لا نحدّث الـcache إذا فشل الطلب
-        }
+        } catch {}
       },
     }),
 
-    // =====================================
-    // REMOVE LIST MEMBER
-    // =====================================
     removeListMember: builder.mutation<
       any,
-      {
-        workspaceId: string;
-        folderId: string;
-        id: string;
-        userId: string;
-      }
+      { workspaceId: string; folderId: string; id: string; userId: string }
     >({
       query: ({ workspaceId, folderId, id, userId }) => ({
         url: `${buildListUrl(workspaceId, folderId)}/${id}/members/${userId}`,
-
         method: "DELETE",
       }),
-
       invalidatesTags: ["List"],
-
       onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
         try {
           await queryFulfilled;
-
           dispatch(workspaceApi.util.invalidateTags(["Workspace"]));
-        } catch {
-          // لا نحدّث الـcache إذا فشل الطلب
-        }
+        } catch {}
       },
     }),
   }),

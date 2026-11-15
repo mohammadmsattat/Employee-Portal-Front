@@ -1,6 +1,7 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithReauth } from "./baseQuery";
 
-import baseURL, {
+import {
   HrLogInEndPoint,
   HrSignOutEndPoint,
   HrResetPasswordEndPoint,
@@ -26,40 +27,18 @@ import {
 
 export const authApi = createApi({
   reducerPath: "authApi",
-
-  baseQuery: fetchBaseQuery({
-    baseUrl: baseURL,
-
-    prepareHeaders: (headers) => {
-      const token =
-        localStorage.getItem("staffToken") || localStorage.getItem("token");
-
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-
-      return headers;
-    },
-  }),
-
+  baseQuery: baseQueryWithReauth,
   tagTypes: ["Auth"],
 
   endpoints: (builder) => ({
-    // ================= LOGIN =================
-
     hrLogin: builder.mutation<LoginResponse, LoginRequest>({
       query: (loginData) => ({
         url: HrLogInEndPoint,
-
         method: "POST",
-
         body: loginData,
       }),
-
       invalidatesTags: ["Auth"],
     }),
-
-    // ================= SWITCH COMPANY =================
 
     hrSwitchCompany: builder.mutation<
       SwitchCompanyResponse,
@@ -67,30 +46,20 @@ export const authApi = createApi({
     >({
       query: (data) => ({
         url: HrSwitchCompanyEndPoint,
-
         method: "POST",
-
         body: data,
       }),
-
       invalidatesTags: ["Auth"],
     }),
-
-    // ================= SIGN OUT =================
 
     hrSignOut: builder.mutation<SignOutResponse, SignOutRequest>({
       query: (data) => ({
         url: HrSignOutEndPoint,
-
         method: "POST",
-
         body: data,
       }),
-
       invalidatesTags: ["Auth"],
     }),
-
-    // ================= FORGOT PASSWORD =================
 
     forgotPassword: builder.mutation<
       ForgotPasswordResponse,
@@ -98,16 +67,10 @@ export const authApi = createApi({
     >({
       query: ({ email }) => ({
         url: HrForgotPasswordEndPoint,
-
         method: "POST",
-
-        body: {
-          email,
-        },
+        body: { email },
       }),
     }),
-
-    // ================= VERIFY RESET CODE =================
 
     verifyResetCode: builder.mutation<
       VerifyResetCodeResponse,
@@ -115,17 +78,10 @@ export const authApi = createApi({
     >({
       query: ({ email, resetCode }) => ({
         url: HrVerifyResetCodeEndPoint,
-
         method: "POST",
-
-        body: {
-          email,
-          resetCode,
-        },
+        body: { email, resetCode },
       }),
     }),
-
-    // ================= RESET PASSWORD =================
 
     resetPassword: builder.mutation<
       ResetPasswordResponse,
@@ -133,15 +89,9 @@ export const authApi = createApi({
     >({
       query: ({ email, newPassword }) => ({
         url: HrResetPasswordEndPoint,
-
         method: "POST",
-
-        body: {
-          email,
-          newPassword,
-        },
+        body: { email, newPassword },
       }),
-
       invalidatesTags: ["Auth"],
     }),
   }),

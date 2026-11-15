@@ -1,9 +1,11 @@
-// useAddTaskModal.tsx - نسخة معدلة مع الـ Validation
+// useAddTaskModal.tsx - نسخة محدثة مع دعم رفع المرفقات
 
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateTaskMutation } from "@/rtk/Tasks/tasksApi";
+import { useUploadAttachmentMutation } from "@/rtk/Tasks/attachmentsApi";
 import { useGetAllStaffQuery } from "@/rtk/Staff/StaffApi";
+import { validateFile } from "@/utils/attachment.helper";
 
 interface FormState {
   title: string;
@@ -39,7 +41,12 @@ export const useAddTaskModal = ({
 }) => {
   const { toast } = useToast();
   const [createTask, { isLoading }] = useCreateTaskMutation();
+  const [uploadAttachment] = useUploadAttachmentMutation();
   const [errors, setErrors] = useState<ValidationErrors>({});
+
+  // ✅ NEW: pending files state
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
 
   const user = useMemo(() => {
     try {
@@ -81,6 +88,19 @@ export const useAddTaskModal = ({
     };
   }, [isOpen]);
 
+  // ✅ NEW: beforeunload warning لو فيه ملفات معلقة
+  useEffect(() => {
+    if (!isOpen || pendingFiles.length === 0) return;
+
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isOpen, pendingFiles.length]);
+
   const reset = () => {
     setFormData({
       title: "",
@@ -95,6 +115,45 @@ export const useAddTaskModal = ({
       workspace: "",
     });
     setErrors({});
+    setPendingFiles([]); // ✅ NEW
+  };
+
+  // ✅ NEW: Add pending file with validation
+  const addPendingFile = (file: File) => {
+    if (!file) return;
+
+    const { valid, error } = validateFile(file);
+
+    if (!valid) {
+      toast({
+        title: "Invalid file",
+        description: error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // منع رفع نفس الملف مرتين (نفس الاسم + الحجم + النوع)
+    const isDuplicate = pendingFiles.some(
+      (f) =>
+        f.name === file.name && f.size === file.size && f.type === file.type,
+    );
+
+    if (isDuplicate) {
+      toast({
+        title: "File already added",
+        description: `"${file.name}" is already in the list.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPendingFiles((prev) => [...prev, file]);
+  };
+
+  // ✅ NEW: Remove pending file by index
+  const removePendingFile = (index: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   // ✅ Validate a single field
@@ -153,7 +212,10 @@ export const useAddTaskModal = ({
       case "dueDate":
         if (!value) {
           newErrors.dueDate = "Due date is required";
-        } else if (formData.startDate && new Date(value) < new Date(formData.startDate)) {
+        } else if (
+          formData.startDate &&
+          new Date(value) < new Date(formData.startDate)
+        ) {
           newErrors.dueDate = "Due date must be after start date";
         } else {
           delete newErrors.dueDate;
@@ -225,7 +287,10 @@ export const useAddTaskModal = ({
           if (!value) {
             newErrors.dueDate = "Due date is required";
             isValid = false;
-          } else if (formData.startDate && new Date(value) < new Date(formData.startDate)) {
+          } else if (
+            formData.startDate &&
+            new Date(value) < new Date(formData.startDate)
+          ) {
             newErrors.dueDate = "Due date must be after start date";
             isValid = false;
           }
@@ -241,6 +306,24 @@ export const useAddTaskModal = ({
   const handleFieldChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     validateField(field, value);
+  };
+
+  // ✅ NEW: استخراج taskId من الـ response بشكل مرن
+  // بيدعم الأشكال المحتملة للـ response من الـ Backend
+  const extractTaskId = (response: any): string | null => {
+    if (!response) return null;
+
+    return (
+      response?._id ||
+      response?.id ||
+      response?.data?._id ||
+      response?.data?.id ||
+      response?.task?._id ||
+      response?.task?.id ||
+      response?.data?.task?._id ||
+      response?.data?.task?.id ||
+      null
+    );
   };
 
   const handleSubmit = async () => {
@@ -274,12 +357,91 @@ export const useAddTaskModal = ({
         createdBy: user._id,
       };
 
-      await createTask({ listId: formData.list, data: payload }).unwrap();
+      // =====================================
+      // 1. CREATE TASK
+      // =====================================
+      const createResult = await createTask({
+        listId: formData.list,
+        data: payload,
+      }).unwrap();
 
-      toast({
-        title: "Task Created",
-        description: "Task has been successfully created.",
-      });
+      const taskId = extractTaskId(createResult);
+
+      if (!taskId) {
+        // الـ task اتعمل بس مش عارفين الـ ID — نبلغ المستخدم
+        console.error("createTask response:", createResult);
+        toast({
+          title: "Task Created",
+          description:
+            "Task was created, but attachments could not be uploaded. Please add them from the task view.",
+          variant: "default",
+        });
+        reset();
+        onClose();
+        return;
+      }
+
+      // =====================================
+      // 2. UPLOAD ATTACHMENTS (if any)
+      // =====================================
+      let uploadedCount = 0;
+      let failedCount = 0;
+
+      if (pendingFiles.length > 0) {
+        setIsUploadingFiles(true);
+
+        try {
+          const results = await Promise.allSettled(
+            pendingFiles.map((file) =>
+              uploadAttachment({
+                listId: formData.list,
+                taskId,
+                file,
+              }).unwrap(),
+            ),
+          );
+
+          uploadedCount = results.filter(
+            (r) => r.status === "fulfilled",
+          ).length;
+          failedCount = results.filter((r) => r.status === "rejected").length;
+
+          // لو فيه فشل، اطبع تفاصيله في الكونسول للمساعدة في الديباج
+          if (failedCount > 0) {
+            results.forEach((result, i) => {
+              if (result.status === "rejected") {
+                console.error(
+                  `Failed to upload "${pendingFiles[i].name}":`,
+                  result.reason,
+                );
+              }
+            });
+          }
+        } finally {
+          setIsUploadingFiles(false);
+        }
+      }
+
+      // =====================================
+      // 3. SHOW RESULT TO USER
+      // =====================================
+      if (failedCount > 0) {
+        toast({
+          title: "Task Created",
+          description: `Task created with ${uploadedCount} attachment(s). ${failedCount} failed to upload. You can retry them from the task view.`,
+          variant: "default",
+        });
+      } else if (uploadedCount > 0) {
+        toast({
+          title: "Task Created",
+          description: `Task created successfully with ${uploadedCount} attachment(s).`,
+        });
+      } else {
+        toast({
+          title: "Task Created",
+          description: "Task has been successfully created.",
+        });
+      }
 
       reset();
       onClose();
@@ -300,8 +462,12 @@ export const useAddTaskModal = ({
     setFormData,
     handleFieldChange,
     handleSubmit,
-    isLoading,
+    isLoading: isLoading || isUploadingFiles, // ✅ NEW: يعتبر loading لو بيرفع ملفات
     errors,
     validateField,
+    // ✅ NEW
+    pendingFiles,
+    addPendingFile,
+    removePendingFile,
   };
 };

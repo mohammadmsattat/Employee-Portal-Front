@@ -1,4 +1,4 @@
-// AddTaskModal.jsx - النسخة المُصححة
+// AddTaskModal.jsx - نسخة محدثة مع دعم المرفقات
 
 import { useTranslation } from "react-i18next";
 import { X, Plus, ClipboardList, ListChecks } from "lucide-react";
@@ -17,6 +17,10 @@ const AddTaskModal = ({ isOpen, onClose, listId, workspaceId, allLists }) => {
     handleSubmit,
     isLoading,
     errors,
+    // ✅ NEW: attachments props
+    pendingFiles,
+    addPendingFile,
+    removePendingFile,
   } = useAddTaskModal({
     isOpen,
     onClose,
@@ -97,7 +101,8 @@ const AddTaskModal = ({ isOpen, onClose, listId, workspaceId, allLists }) => {
 
             <button
               onClick={onClose}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-white/60 text-slate-400 transition hover:bg-white/80 hover:text-slate-600 backdrop-blur-sm sm:h-9 sm:w-9 sm:rounded-lg"
+              disabled={isLoading}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-white/60 text-slate-400 transition hover:bg-white/80 hover:text-slate-600 backdrop-blur-sm disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-9 sm:rounded-lg"
             >
               <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
@@ -118,6 +123,11 @@ const AddTaskModal = ({ isOpen, onClose, listId, workspaceId, allLists }) => {
             lists={allLists || []}
             onClose={onClose}
             errors={errors}
+            // ✅ NEW: attachments props
+            pendingFiles={pendingFiles}
+            addPendingFile={addPendingFile}
+            removePendingFile={removePendingFile}
+            canUpload={true}
           />
         </div>
       </div>
