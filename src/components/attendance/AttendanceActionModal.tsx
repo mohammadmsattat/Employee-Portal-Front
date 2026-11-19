@@ -1,4 +1,5 @@
-import { FC } from "react";
+import { FC, useState } from "react";
+
 import {
   Clock,
   Fingerprint,
@@ -8,6 +9,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
+
 import { TFunction } from "i18next";
 import { AttendanceFingerprint } from "@/interfaces/attendance";
 
@@ -19,8 +21,13 @@ type AttendanceActionModalProps = {
   workedTimeText: string;
   locationLoading: boolean;
   currentLocation: unknown;
+  workLocation: {
+    latitude: number;
+    longitude: number;
+  } | null;
   isWithinDistance: boolean;
   canAction: boolean;
+  isRemoteAttendance: boolean;
   handleFingerprint: () => Promise<void>;
   mode: "Check-in" | "Check-out";
   setMode: (mode: "Check-in" | "Check-out") => void;
@@ -37,41 +44,101 @@ const AttendanceActionModal: FC<AttendanceActionModalProps> = ({
   workedTimeText,
   locationLoading,
   currentLocation,
+  workLocation,
   isWithinDistance,
   canAction,
+  isRemoteAttendance,
   handleFingerprint,
   mode,
   todayRecords = [],
   status = null,
   t,
 }) => {
+  const [locationPermissionError, setLocationPermissionError] = useState("");
+
   if (!isOpen) return null;
 
-  const disabled = !canAction || locationLoading || !isWithinDistance;
+  // Remote employees don't need location verification.
+  // Fixed and Flexible employees keep the original validation.
+  const disabled = isRemoteAttendance
+    ? !canAction
+    : !canAction || locationLoading || !isWithinDistance;
 
-  const locationMissing = !locationLoading && !currentLocation;
+  const locationMissing =
+    !isRemoteAttendance && !locationLoading && !currentLocation;
+
+  const workLocationMissing = !isRemoteAttendance && !workLocation;
+
   const locationOutside =
-    !locationLoading && !!currentLocation && !isWithinDistance;
+    !isRemoteAttendance &&
+    !locationLoading &&
+    !!currentLocation &&
+    !!workLocation &&
+    !isWithinDistance;
 
-  const hasLocationIssue = locationMissing || locationOutside;
+  const hasLocationIssue =
+    locationMissing || workLocationMissing || locationOutside;
 
-  const locationMessage = locationLoading
-    ? t("overtimeModal.loading")
-    : locationMissing
-      ? t("homePage.locationRequired")
-      : locationOutside
-        ? t("homePage.outsideLocation")
-        : t("homePage.locationVerified") || "Verified";
+  const locationMessage = isRemoteAttendance
+    ? "Remote attendance. Location verification is not required."
+    : locationLoading
+      ? t("overtimeModal.loading")
+      : locationMissing
+        ? t("homePage.locationRequired")
+        : workLocationMissing
+          ? "Work location is not configured. Please contact HR."
+          : locationOutside
+            ? t("homePage.outsideLocation")
+            : t("homePage.locationVerified") || "Verified";
+            
   const actionLabel =
     mode === "Check-in" ? t("homePage.checkIn") : t("homePage.checkOut");
 
+  // Request browser location permission.
   const requestLocationPermission = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setLocationPermissionError(
+        "Your browser does not support location services.",
+      );
+      return;
+    }
+
+    if (!window.isSecureContext) {
+      setLocationPermissionError(
+        "Location access requires a secure HTTPS connection.",
+      );
+      return;
+    }
+
+    setLocationPermissionError("");
 
     navigator.geolocation.getCurrentPosition(
-      () => window.location.reload(),
-      () => undefined,
-      { enableHighAccuracy: true },
+      () => {
+        setLocationPermissionError("");
+        window.location.reload();
+      },
+      (error) => {
+        console.error("Location permission error:", error);
+
+        if (error.code === 1) {
+          setLocationPermissionError(
+            "Location is blocked by your browser. Open the site settings next to the address bar, change Location to Allow, and refresh the page.",
+          );
+        } else if (error.code === 2) {
+          setLocationPermissionError(
+            "Your current location is unavailable. Please check your device location settings.",
+          );
+        } else if (error.code === 3) {
+          setLocationPermissionError(
+            "Location request timed out. Please try again.",
+          );
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 15000,
+      },
     );
   };
 
@@ -140,12 +207,28 @@ const AttendanceActionModal: FC<AttendanceActionModalProps> = ({
                 <button
                   type="button"
                   onClick={requestLocationPermission}
-                  className="rounded-full bg-red-500 px-3 py-1 text-xs font-black text-red-600 transition hover:bg-red-100"
+                  className="rounded-full bg-red-50 px-3 py-1.5 text-xs font-black text-red-600 transition hover:bg-red-100"
                 >
-                  Allow
+                  Enable Location
                 </button>
               )}
             </div>
+
+            {/* Location Permission Warning */}
+            {locationPermissionError && !isRemoteAttendance && (
+              <div
+                role="alert"
+                className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3"
+              >
+                <div className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+
+                  <p className="text-xs font-medium leading-5 text-amber-800">
+                    {locationPermissionError}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="mt-6 flex flex-col items-center">
               <button
@@ -179,7 +262,9 @@ const AttendanceActionModal: FC<AttendanceActionModalProps> = ({
 
               <p className="mt-1 max-w-xs text-center text-sm font-medium text-slate-500">
                 {disabled
-                  ? t("homePage.locationRequired")
+                  ? isRemoteAttendance
+                    ? "Attendance is currently unavailable."
+                    : t("homePage.locationRequired")
                   : t("buttons.tapToContinue") || "Tap to continue"}
               </p>
             </div>
@@ -191,10 +276,12 @@ const AttendanceActionModal: FC<AttendanceActionModalProps> = ({
               label={t("homePage.checkIn")}
               value={lastCheckIn?.Time || "--"}
             />
+
             <InfoTile
               label={t("homePage.checkOut")}
               value={lastCheckOut?.Time || "--"}
             />
+
             <InfoTile
               label={t("homePage.workedHours") || "Worked"}
               value={workedTimeText}
@@ -208,6 +295,7 @@ const AttendanceActionModal: FC<AttendanceActionModalProps> = ({
                 <p className="text-base font-black text-slate-950">
                   Today's checks
                 </p>
+
                 <p className="text-xs font-semibold text-slate-400">
                   {todayRecords.length} records
                 </p>
@@ -274,6 +362,7 @@ const InfoTile = ({ label, value }: { label: string; value: string }) => (
     <p className="truncate text-[10px] font-black uppercase tracking-wide text-slate-400">
       {label}
     </p>
+
     <p className="mt-1 truncate text-sm font-black text-slate-950">{value}</p>
   </div>
 );

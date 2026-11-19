@@ -23,6 +23,10 @@ export interface DailyFingerprintGroup {
   totalRecords?: number;
 }
 
+export interface GetMyDailyFingerprintsParams {
+  startDate?: string;
+  endDate?: string;
+}
 // ===================== FINGERPRINT API =====================
 export const fingerprintApi = createApi({
   reducerPath: "fingerprintApi",
@@ -49,22 +53,36 @@ export const fingerprintApi = createApi({
       number
     >({
       query: (page = 1) =>
-        `${fingerprintEndPoint}?page=${page}`,
+        `${fingerprintEndPoint}`,
 
       providesTags: ["Fingerprint"],
     }),
 
     /* ================= GET MY DAILY ATTENDANCE ================= */
-    getMyDailyFingerprints: builder.query<
-      ApiResponse<DailyFingerprintGroup[]>,
-      number
-    >({
-      query: (page = 1) =>
-        `${fingerprintByDayEndPoint}?page=${page}`,
+  getMyDailyFingerprints: builder.query<
+  ApiResponse<DailyFingerprintGroup[]>,
+  GetMyDailyFingerprintsParams
+>({
+  query: ({ startDate, endDate } = {}) => {
+    const params = new URLSearchParams();
 
-      providesTags: ["Fingerprint"],
-    }),
+    if (startDate) {
+      params.set("startDate", startDate);
+    }
 
+    if (endDate) {
+      params.set("endDate", endDate);
+    }
+
+    const queryString = params.toString();
+
+    return queryString
+      ? `${fingerprintByDayEndPoint}?${queryString}`
+      : fingerprintByDayEndPoint;
+  },
+
+  providesTags: ["Fingerprint"],
+}),
     /* ================= CREATE CHECK-IN / CHECK-OUT ================= */
 
     createLogedFingerprint: builder.mutation<

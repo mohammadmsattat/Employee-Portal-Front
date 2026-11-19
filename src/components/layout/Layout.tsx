@@ -37,21 +37,23 @@ const Layout = ({ children }: LayoutProps) => {
     todayRecords,
     locationLoading,
     currentLocation,
+    workLocation,
     isWithinDistance,
     canAction,
     handleFingerprint,
     mode,
     setMode,
     status,
+    isRemoteAttendance,
   } = useAttendance();
 
   return (
     <div className="min-h-screen bg-[#f4ffb] text-slate-950">
       <AppHeader />
 
-      <main className="   relative min-h-screen  w-full px-4  pb-28  pt-5 sm:px-6 md:px-8 md:pb-10 md:pt-8  xl:px-10 ">
-        {" "}
+      <main className="relative min-h-screen w-full px-4 pb-28 pt-5 sm:px-6 md:px-8 md:pb-10 md:pt-8 xl:px-10">
         <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-80 bg-[linear-gradient(180deg,rgba(37,99,235,0.12),rgba(244,247,251,0))]" />
+
         <div className="mx-auto max-w-7xl">
           {isValidElement(children)
             ? cloneElement(children, {
@@ -78,8 +80,10 @@ const Layout = ({ children }: LayoutProps) => {
         todayRecords={todayRecords}
         locationLoading={locationLoading}
         currentLocation={currentLocation}
+        workLocation={workLocation}
         isWithinDistance={isWithinDistance}
         canAction={canAction}
+        isRemoteAttendance={isRemoteAttendance}
         handleFingerprint={handleFingerprint}
         mode={mode}
         setMode={setMode}
@@ -92,6 +96,7 @@ const Layout = ({ children }: LayoutProps) => {
         data-attendance-trigger
         onClick={() => setAttendanceOpen(true)}
       />
+
       {leaveOpen && (
         <AddLeaveRequestModal
           isOpen={leaveOpen}

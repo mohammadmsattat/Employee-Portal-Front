@@ -1,14 +1,14 @@
 export interface IUser {
   _id: string;
-  profileImage :string;
+  profileImage: string;
   fullName: string;
   email: string;
-department?: string;
-position?: string;
+  department?: string;
+  position?: string;
   groupId?: {
     _id?: string;
     groupName?: string;
-
+    attendanceType?: "fixed" | "remote" | "flexible";
     leavePolicy?: {
       _id?: string;
       policyName?: string;

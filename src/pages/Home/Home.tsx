@@ -31,9 +31,20 @@ const openAttendanceModal = () => {
 };
 
 const Home = () => {
-  const { user, leaveBalances, pendingRequests, t } = useHome();
-  const { workedTimeText, locationLoading, isWithinDistance, canAction, mode } =
-    useAttendance();
+  const { user, leaveBalances, pendingRequests, t, isRemoteAttendance } =
+    useHome();
+
+  const {
+    workedTimeText,
+    locationLoading,
+    isWithinDistance,
+    canAction: attendanceCanAction,
+    mode,
+  } = useAttendance();
+
+  // Remote employees can check in regardless of their location.
+  // Other employees keep the original attendance condition.
+  const canAction = isRemoteAttendance ? true : attendanceCanAction;
 
   const pendingCount = pendingRequests?.length || 0;
 
@@ -76,13 +87,21 @@ const Home = () => {
                   icon={<MapPin className="h-4 w-4" />}
                   label="Location"
                   value={
-                    locationLoading
-                      ? "..."
-                      : isWithinDistance
-                        ? "In Range"
-                        : "Outside"
+                    isRemoteAttendance
+                      ? "Remote"
+                      : locationLoading
+                        ? "..."
+                        : isWithinDistance
+                          ? "In Range"
+                          : "Outside"
                   }
-                  color={isWithinDistance ? "emerald" : "red"}
+                  color={
+                    isRemoteAttendance
+                      ? "blue"
+                      : isWithinDistance
+                        ? "emerald"
+                        : "red"
+                  }
                 />
                 <StatCardMobile
                   icon={<Gift className="h-4 w-4" />}
@@ -175,13 +194,21 @@ const Home = () => {
                     icon={<MapPin className="h-5 w-5" />}
                     label="Location"
                     value={
-                      locationLoading
-                        ? "..."
-                        : isWithinDistance
-                          ? "In Range"
-                          : "Outside"
+                      isRemoteAttendance
+                        ? "Remote"
+                        : locationLoading
+                          ? "..."
+                          : isWithinDistance
+                            ? "In Range"
+                            : "Outside"
                     }
-                    color={isWithinDistance ? "emerald" : "red"}
+                    color={
+                      isRemoteAttendance
+                        ? "blue"
+                        : isWithinDistance
+                          ? "emerald"
+                          : "red"
+                    }
                   />
                   <StatCardWeb
                     icon={<Gift className="h-5 w-5" />}

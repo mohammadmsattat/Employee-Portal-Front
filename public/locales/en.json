@@ -36,6 +36,8 @@
     "resetting": "Resetting..."
   },
   "navigation": {
+     "menu": "Navigation",
+  "employeePortal": "Employee Portal",
     "home": "Home",
     "requests": "Requests",
     "attendance": "Attendance",

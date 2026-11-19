@@ -36,6 +36,8 @@
     "resetting": "جاري إعادة التعيين..."
   },
   "navigation": {
+     "menu": "التنقل",
+  "employeePortal": "بوابة الموظفين",
     "home": "الرئيسية",
     "requests": "الطلبات",
     "attendance": "الحضور",

@@ -33,6 +33,12 @@ export const useHome = () => {
     return storedGroup ? JSON.parse(storedGroup) : null;
   }, []);
 
+  // ===== Attendance Type =====
+  const attendanceType = useMemo(() => {
+    return group?.attendanceType || user?.groupId?.attendanceType || "fixed";
+  }, [group, user]);
+
+  const isRemoteAttendance = attendanceType === "remote";
   const leavePolicyId = useMemo(() => {
     const policyId =
       group?.leavePolicy?._id ||
@@ -49,69 +55,57 @@ export const useHome = () => {
   }, [group, user]);
 
   // ===== Leave Data =====
-  const { 
-    data: leaveTypesData, 
+  const {
+    data: leaveTypesData,
     refetch: refetchLeaveTypes,
-    isFetching: isFetchingLeaveTypes 
+    isFetching: isFetchingLeaveTypes,
   } = useGetAllLeavesQuery(
     { page: 1, limit: 100, policyId: leavePolicyId },
-    { 
+    {
       skip: !leavePolicyId,
-      refetchOnMountOrArgChange: true, 
-      refetchOnFocus: true, 
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
     },
   );
 
-  const { 
-    data: leaveLogsData, 
+  const {
+    data: leaveLogsData,
     refetch: refetchLeaveLogs,
-    isFetching: isFetchingLeaveLogs 
+    isFetching: isFetchingLeaveLogs,
   } = useGetMyLeaveLogsQuery(
     { page: 1, limit: 200 },
-    { 
+    {
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
     },
   );
 
-  const { 
-    data: myLeaveRequests, 
-    refetch: refetchLeaveRequests 
-  } = useGetMyLeaveRequestsQuery(
-    { page: 1, limit: 200, status: LEAVE_REQUEST_STATUS.PENDING },
-    { 
-      refetchOnMountOrArgChange: true,
-      refetchOnFocus: true,
-    },
-  );
+  const { data: myLeaveRequests, refetch: refetchLeaveRequests } =
+    useGetMyLeaveRequestsQuery(
+      { page: 1, limit: 200, status: LEAVE_REQUEST_STATUS.PENDING },
+      {
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: true,
+      },
+    );
 
-  const { 
-    data: myAdvanceRequests, 
-    refetch: refetchAdvanceRequests 
-  } = useGetMyAdvanceRequestsQuery(
-    { page: 1, limit: 200, status: LEAVE_REQUEST_STATUS.PENDING },
-    { 
-      refetchOnMountOrArgChange: true,
-      refetchOnFocus: true,
-    },
-  );
+  const { data: myAdvanceRequests, refetch: refetchAdvanceRequests } =
+    useGetMyAdvanceRequestsQuery(
+      { page: 1, limit: 200, status: LEAVE_REQUEST_STATUS.PENDING },
+      {
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: true,
+      },
+    );
 
-  const { 
-    data: myOvertimeRequests, 
-    refetch: refetchOvertimeRequests 
-  } = useGetMyOvertimeRequestsQuery(
-    { page: 1, limit: 200, status: LEAVE_REQUEST_STATUS.PENDING },
-    { 
-      refetchOnMountOrArgChange: true,
-      refetchOnFocus: true,
-    },
-  );
-
-  // ===== Debug Logs =====
-  console.log("leavePolicyId:", leavePolicyId);
-  console.log("leaveTypesData:", leaveTypesData);
-  console.log("leaveLogsData:", leaveLogsData);
-  console.log("isFetchingLeaveTypes:", isFetchingLeaveTypes);
+  const { data: myOvertimeRequests, refetch: refetchOvertimeRequests } =
+    useGetMyOvertimeRequestsQuery(
+      { page: 1, limit: 200, status: LEAVE_REQUEST_STATUS.PENDING },
+      {
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: true,
+      },
+    );
 
   // ===== leavePolicyId =====
   useEffect(() => {
@@ -155,6 +149,13 @@ export const useHome = () => {
 
   // ===== Geolocation Tracking =====
   useEffect(() => {
+    // Remote employees do not need location tracking.
+    if (isRemoteAttendance) {
+      localStorage.removeItem("location");
+      return;
+    }
+
+    // Check browser geolocation support.
     if (!navigator.geolocation) return;
 
     const watchId = navigator.geolocation.watchPosition(
@@ -163,14 +164,40 @@ export const useHome = () => {
           latitude: Number(pos.coords.latitude.toFixed(6)),
           longitude: Number(pos.coords.longitude.toFixed(6)),
         };
+
         localStorage.setItem("location", JSON.stringify(location));
       },
-      (err) => console.error("Error getting location:", err),
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
+      (err) => {
+        console.error("Error getting location:", err);
+
+        if (err.code === err.PERMISSION_DENIED) {
+          // Remove previously saved location
+          localStorage.removeItem("location");
+
+          console.warn(
+            "Location permission denied. Please enable location from browser settings.",
+          );
+        }
+
+        if (err.code === err.POSITION_UNAVAILABLE) {
+          console.warn("Location is currently unavailable.");
+        }
+
+        if (err.code === err.TIMEOUT) {
+          console.warn("Location request timed out.");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000,
+      },
     );
 
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [isRemoteAttendance]);
 
   // ===== Listen for Login Messages =====
   useEffect(() => {
@@ -179,7 +206,7 @@ export const useHome = () => {
     if (storedToken && storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
-      
+
       if (leavePolicyId) {
         refetchLeaveTypes();
         refetchLeaveLogs();
@@ -194,7 +221,7 @@ export const useHome = () => {
         localStorage.setItem("token", event.data.token);
         localStorage.setItem("user", JSON.stringify(event.data.user));
         setUser(event.data.user);
-        
+
         setTimeout(() => {
           refetchLeaveTypes();
           refetchLeaveLogs();
@@ -220,5 +247,9 @@ export const useHome = () => {
     navigate,
     t,
     i18n,
+
+    // Attendance
+    attendanceType,
+    isRemoteAttendance,
   };
 };
