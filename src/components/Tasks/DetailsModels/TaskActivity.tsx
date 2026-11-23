@@ -144,7 +144,7 @@ const ActivityItem = memo(({ item, isOwn, isMobile }) => {
                 ) : (
                   <File className="w-4 h-4" />
                 )}
-                {d.fileName || "Open attachment"}
+                {d.originalName || d.fileName || "Open attachment"}
               </a>
               {d.fileType?.startsWith("image/") && (
                 <div className="mt-2 rounded-xl overflow-hidden border border-slate-200/20">

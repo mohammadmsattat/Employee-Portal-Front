@@ -353,9 +353,9 @@ function TaskEditor({
 
   return (
     <div
-      className={`flex flex-1 flex-col overflow-hidden ${isMobile ? "bg-white" : "bg-slate-50/40"}`}
+      className={`flex flex-1 flex-col min-w-0 overflow-hidden ${isMobile ? "bg-white" : "bg-slate-50/40"}`}
     >
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-w-0 overflow-y-auto">
         <section
           className={`border-b border-slate-200/60 ${isMobile ? "bg-white px-4 py-4" : "px-6 py-5"}`}
         >
@@ -552,7 +552,8 @@ function TaskEditor({
 
           {/* ✅ المرفقات بتاخد الـ attachments اللي جاية من فوق (من TaskDetailsModal) */}
           {entityType === "task" && (
-            <div className="mt-4">
+            <div className="mt-4 w-full min-w-0">
+              {" "}
               <AttachmentSection
                 listId={listId}
                 taskId={entity?._id}

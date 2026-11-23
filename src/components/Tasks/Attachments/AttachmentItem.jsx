@@ -17,12 +17,12 @@ const AttachmentItem = ({
   const canPreview = isPreviewable(attachment.fileCategory);
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white p-3 transition hover:border-slate-300 hover:shadow-sm">
+    <div className="flex w-full min-w-0 box-border items-center gap-3 rounded-xl border border-slate-200/70 bg-white p-3 transition hover:border-slate-300 hover:shadow-sm">
+      {" "}
       {/* ICON */}
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
         <Icon className="h-5 w-5" />
       </div>
-
       {/* INFO */}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-slate-800">
@@ -32,7 +32,6 @@ const AttachmentItem = ({
           {formatFileSize(attachment.fileSize)}
         </p>
       </div>
-
       {/* ACTIONS */}
       <div className="flex shrink-0 items-center gap-1">
         {canPreview && (

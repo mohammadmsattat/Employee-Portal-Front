@@ -19,7 +19,7 @@ const AttachmentList = ({
   }
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2 min-w-0 w-full">
       {attachments.map((attachment) => (
         <AttachmentItem
           key={attachment._id}
