@@ -1,225 +1,137 @@
-# Employee Portal Frontend
+# Smart ERP — Employee Portal (Frontend)
 
-React/Vite frontend for the employee self-service portal. The app covers staff authentication, attendance, leave requests and approvals, overtime requests, advance requests, profile details, notifications, and an in-progress tasks module.
+## 1) Project Overview
 
-## Tech Stack
+The **Employee Portal** is the self-service, employee-facing side of the Smart ERP **HR** module. Employees use it from a desktop browser or a phone to clock in and out, request leave, overtime and salary advances, follow their approvals and notifications, and manage tasks. Managers use the same app to review and approve their team's requests.
 
-- React 18
-- TypeScript
-- Vite
-- Redux Toolkit Query
-- React Router
-- Tailwind CSS
-- shadcn/Radix UI primitives
-- i18next with English and Arabic locale files
-- Vitest and Testing Library
+It is a frontend only: it connects to the **Smart ERP backend API** (the HR endpoints), so it needs a running backend to work.
 
-## Requirements
+### Key Features
 
-- Node.js 18 or newer
-- npm
-- Running backend API, usually from `SY_ERP_backend`
+- **Authentication**: login, multi-company selection and company switching, forgot-password flow with email verification code.
+- **Attendance**: fingerprint-style check in/out with a daily attendance view.
+- **Leaves**: request leave, track balances and request history, and (for managers) approve or reject team requests.
+- **Overtime**: submit overtime requests and follow their status, with manager approval screens.
+- **Advances**: submit salary-advance requests and follow their status, with manager approval screens.
+- **Notifications**: in-app notification centre and a dropdown in the top bar.
+- **Tasks**: workspaces, folders and lists, tasks and sub-tasks, checklists, comments with mentions, attachments, time tracking, and workspace and global dashboards.
+- **Profile**: the employee's own details.
+- **Permissions**: screens and actions are shown based on the user's role and permissions.
+- **Responsive and bilingual**: separate mobile and desktop layouts, English and Arabic with full RTL support.
 
-## Getting Started
+---
 
-Install dependencies:
+## 2) Run & Build
 
-```sh
+### Requirements
+
+- **Node.js 18 or later** and **npm**.
+- A running **Smart ERP backend** reachable from the browser.
+
+### Install
+
+```bash
+cd Employee-Portal-Front
 npm install
 ```
 
-Start the development server:
+### Configure the API address
 
-```sh
-npm run dev
+The API base URL and endpoint paths are defined in `src/Api/GlobalData.ts`. This file is **git-ignored** (`/src/Api` and `GlobalData.*` are in `.gitignore`), so it is not in the repository and must be created on each machine. It exports:
+
+- the API base URL, and
+- the endpoint constants used by the app (login, switch company, password reset, fingerprint, leaves, overtime, advances, notifications, tasks, and so on).
+
+Point the base URL at your local or hosted backend before running.
+
+### Run
+
+```bash
+npm run dev          # development server at http://localhost:8080
+npm run build        # production build into dist/
+npm run build:dev    # build in development mode
+npm run preview      # preview the production build locally
+npm run lint         # ESLint
+npm run test         # unit tests (Vitest), single run
+npm run test:watch   # unit tests in watch mode
 ```
 
-Build for production:
+The development server uses port `8080` and fails if it is taken (`strictPort`).
 
-```sh
-npm run build
+### Deployment
+
+`dist/` contains static files that can be served by Nginx or any static host. The app uses client-side routing, so every route must fall back to `index.html`:
+
+```nginx
+location / {
+  try_files $uri /index.html;
+}
 ```
 
-Preview a production build:
+---
 
-```sh
-npm run preview
+## 3) Project Structure
+
+```
+Employee-Portal-Front/
+├── index.html
+├── vite.config.ts            # Vite config (alias "@" => src, port 8080)
+├── vitest.config.ts
+├── tailwind.config.ts
+├── tsconfig*.json
+├── public/
+│   └── locales/              # en.json / ar.json translations
+└── src/
+    ├── main.tsx / App.tsx    # Entry point and routes
+    ├── Api/                  # API base URL and endpoints (GlobalData.ts, git-ignored)
+    ├── rtk/                  # Redux Toolkit store + RTK Query APIs (auth, leaves, overtime,
+    │                         #   advance, fingerprint, notifications, staff, tasks)
+    ├── pages/                # Screens: Auth, Home, Attendance, Leaves, Overtime, Advance,
+    │                         #   Notifications, Profile, Tasks
+    ├── components/           # layout (top/bottom bars), home cards, tasks UI, shadcn/ui
+    ├── hooks/                # Screen logic per feature
+    ├── providers/            # Private routes, RTL wrapper
+    ├── interfaces/           # TypeScript types
+    ├── lib/                  # Permissions, leave balance, formatting helpers
+    ├── utils/                # Helpers (e.g. attachments)
+    └── test/                 # Vitest setup and tests
 ```
 
-Run tests:
+Data flow: `pages` → `hooks` → `rtk` (RTK Query) → backend API.
 
-```sh
-npm test
+---
+
+## 4) Technical Details
+
+### Technologies and Languages
+
+| Category             | Technology                                          |
+| -------------------- | --------------------------------------------------- |
+| Languages            | TypeScript (TSX), a few JavaScript (JSX) files, CSS |
+| Framework            | React 18, React Router 6                            |
+| Build and test       | Vite 5, Vitest, Testing Library, ESLint             |
+| State and data       | Redux Toolkit + RTK Query, TanStack Query           |
+| Forms and validation | React Hook Form, Zod                                |
+| UI                   | Tailwind CSS 3, shadcn/ui (Radix UI), Recharts      |
+| Internationalization | i18next, react-i18next (English and Arabic, RTL)    |
+
+### Code Size (measured with `cloc`)
+
+About **34,600 lines of code** (≈ **41,100 total lines** including comments and blanks) in **218 source files**.
+
+| Language         |   Files |       Code |  Comments |     Blank |      Total |
+| ---------------- | ------: | ---------: | --------: | --------: | ---------: |
+| TypeScript (TSX) |     134 |     25,161 |       976 |     3,021 |     29,158 |
+| TypeScript       |      76 |      7,702 |       564 |     1,563 |      9,829 |
+| JavaScript (JSX) |       3 |      1,621 |        86 |       205 |      1,912 |
+| CSS (PostCSS)    |       2 |        115 |        13 |        25 |        153 |
+| JavaScript       |       3 |         45 |         1 |         6 |         52 |
+| **Source total** | **218** | **34,644** | **1,640** | **4,820** | **41,104** |
+
+The same run also counted JSON (7 files, 9,383 lines, mostly translations and lock files), Markdown, XML, HTML and one JSON-with-comments file. These are excluded from the total above.
+
+To reproduce:
+
+```bash
+npx cloc . --exclude-dir=node_modules,dist
 ```
-
-Run lint:
-
-```sh
-npm run lint
-```
-
-Note: lint currently reports existing issues across the project. Build and TypeScript checks can still pass while lint remains noisy.
-
-## API Configuration
-
-The backend base URL and endpoint constants live in:
-
-```txt
-src/Api/GlobalData.ts
-```
-
-Update `baseURL` there when switching between local, LAN, staging, or production backends.
-
-The frontend expects auth data in `localStorage` after login:
-
-- `token`
-- `user`
-- `company`
-- `group`
-- `location`
-
-Most RTK Query APIs append `companyId` from `localStorage.company` and attach `Authorization: Bearer <token>`.
-
-## Main Features
-
-### Authentication
-
-Files:
-
-- `src/pages/Auth`
-- `src/hooks/Auth`
-- `src/rtk/Auth/AuthApi.ts`
-
-Includes login, forgot password, code verification, and password reset.
-
-### Layout And Navigation
-
-Files:
-
-- `src/components/layout/Layout.tsx`
-- `src/components/layout/Bottombar.tsx`
-- `src/components/layout/header`
-- `src/providers/PrivateRoute.tsx`
-
-Protected routes are declared in `src/App.tsx`. Mobile navigation uses the bottom bar and mobile header; desktop uses the desktop header.
-
-### Attendance
-
-Files:
-
-- `src/pages/Attendance/Attendance.tsx`
-- `src/hooks/Attendance/useAttendance.ts`
-- `src/components/attendance/AttendanceActionModal.tsx`
-- `src/rtk/Fingerprint/fingerprintApi.ts`
-
-Attendance uses geolocation and fingerprint logs. The action modal has a single action button that decides the next action from the current day's latest log:
-
-- Last action today is `Check-in` -> next action is `Check-out`
-- No action today, or last action today is `Check-out` -> next action is `Check-in`
-
-The attendance history page uses the daily fingerprint endpoint and displays expandable day groups.
-
-Relevant backend endpoints:
-
-- `GET /api/finger-print/days?companyId=...&page=...`
-- `POST /api/finger-print/loged?companyId=...`
-
-### Leaves
-
-Files:
-
-- `src/pages/Leaves`
-- `src/hooks/Leaves`
-- `src/rtk/leaves`
-
-Includes leave request creation, personal leave history, manager approvals, review modal, balances, and mobile expandable cards.
-
-### Overtime
-
-Files:
-
-- `src/pages/Overtime`
-- `src/hooks/Overtime`
-- `src/rtk/Overtime`
-
-Includes personal overtime requests, manager approvals, overtime policies, overtime types, and request modals.
-
-### Advances
-
-Files:
-
-- `src/pages/Advance`
-- `src/hooks/Advance`
-- `src/rtk/Advance`
-
-Includes personal advance requests, manager approvals, advance policies, advance types, and request modals.
-
-### Tasks
-
-Files:
-
-- `src/pages/Tasks`
-- `src/components/Tasks`
-- `src/hooks/Tasks`
-- `src/rtk/Tasks`
-
-The tasks area includes workspace/folder/list APIs, task and subtask APIs, comments, attachments, members, status, and date modals. This module is still active work and has known review findings.
-
-## Project Structure
-
-```txt
-src/
-  Api/             API endpoint constants and base URL
-  components/      Reusable UI and domain components
-  hooks/           Feature hooks and page logic
-  interfaces/      Shared TypeScript interfaces
-  lib/             Utility functions
-  pages/           Route-level pages and modals
-  providers/       Routing and layout providers
-  rtk/             Redux Toolkit Query API slices and store
-  test/            Vitest setup and tests
-```
-
-## Internationalization
-
-i18n is configured in:
-
-```txt
-src/i18n.ts
-```
-
-Locale files:
-
-```txt
-public/locales/en.json
-public/locales/ar.json
-```
-
-Language is detected from the `appLang` cookie.
-
-## Scripts
-
-| Command              | Purpose                   |
-| -------------------- | ------------------------- |
-| `npm run dev`        | Start Vite dev server     |
-| `npm run build`      | Create production build   |
-| `npm run build:dev`  | Build in development mode |
-| `npm run preview`    | Preview production build  |
-| `npm run lint`       | Run ESLint                |
-| `npm test`           | Run Vitest once           |
-| `npm run test:watch` | Run Vitest in watch mode  |
-
-## Development Notes
-
-- Prefer existing feature hooks under `src/hooks` when adding page logic.
-- Keep RTK Query API definitions under `src/rtk/<domain>`.
-- Keep endpoint constants in `src/Api/GlobalData.ts`.
-- UI should follow existing Tailwind/shadcn patterns.
-- Be careful with files that have spaces in their names under task modal/action folders.
-- The repository may contain existing work-in-progress changes; check `git status` before large edits.
-
-## Known Caveats
-
-- `npm run lint` currently fails due to existing TypeScript lint and hook warnings.
-- The tasks module has known open issues and should be coordinated before broad edits.
-- Some APIs still mix `localStorage` and cookie-based auth conventions; confirm the expected backend auth source before changing shared API slices.
