@@ -15,6 +15,7 @@ import {
   HandCoins,
   FileText,
   CheckCircle2,
+  FolderKanban,
 } from "lucide-react";
 
 import {
@@ -197,6 +198,15 @@ const Topbar = () => {
 
           <Link to="/attendance" className={navLink("/attendance")}>
             {t("navigation.attendance")}
+          </Link>
+
+          {/* NEW: Projects link */}
+          <Link
+            to="/projects"
+            className={`${navLink("/projects")} flex items-center gap-1.5`}
+          >
+            <FolderKanban size={16} />
+            {t("navigation.projects")}
           </Link>
         </nav>
 

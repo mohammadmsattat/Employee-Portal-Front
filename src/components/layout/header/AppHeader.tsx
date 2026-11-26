@@ -26,6 +26,10 @@ const AppHeader = ({ config }: AppHeaderProps) => {
       title: t("navigation.approveOvertimeRequests"),
     },
     {
+      path: "/projects",
+      title: t("navigation.projects"),
+    },
+    {
       path: "/advance/manager-advance-requests",
       title: t("navigation.approveAdvances"),
     },

@@ -30,6 +30,7 @@ import { timeTrackingApi } from "./Tasks/timeTrackingApi";
 import { activityLogApi } from "./Tasks/activityLogApi";
 import { workspaceDashboardApi } from "./Tasks/workspaceDashboardApi";
 import { globalDashboardApi } from "@/rtk/Tasks/globalDashboardApi";
+import { projectsApi } from "@/rtk/CRM/projectApi";
 
 export const store = configureStore({
   reducer: {
@@ -61,6 +62,8 @@ export const store = configureStore({
     [activityLogApi.reducerPath]: activityLogApi.reducer,
     [workspaceDashboardApi.reducerPath]: workspaceDashboardApi.reducer,
     [globalDashboardApi.reducerPath]: globalDashboardApi.reducer,
+    //crm
+    [projectsApi.reducerPath]: projectsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -83,6 +86,7 @@ export const store = configureStore({
       .concat(activityLogApi.middleware)
       .concat(workspaceDashboardApi.middleware)
       .concat(globalDashboardApi.middleware)
+      .concat(projectsApi.middleware)
 
       .concat(workspaceApi.middleware)
       .concat(folderApi.middleware)

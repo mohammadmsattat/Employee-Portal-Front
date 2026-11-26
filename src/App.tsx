@@ -26,6 +26,7 @@ import NotificationsPage from "./pages/Notifications/NotificationsPage";
 import WorkspaceDashboard from "./components/Tasks/WorkspaceDashboard";
 import GlobalDashboard from "./components/Tasks/GlobalDashboard";
 import { SessionExpiredModal } from "./components/SessionExpiredModal";
+import Projects from "./components/CRM/Projects";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +35,6 @@ const AppRoutes = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // 1. إذا كنا في صفحة اللوجن أو التسجيل، لا تظهر المودال أبداً
     if (
       location.pathname === "/login" ||
       location.pathname === "/forgot-password" ||
@@ -120,6 +120,8 @@ const AppRoutes = () => {
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/tasks" element={<TasksPage />} />
+          <Route path="/projects" element={<Projects />} />
+
           <Route
             path="/workspace/:workspaceId/dashboard"
             element={<WorkspaceDashboard />}

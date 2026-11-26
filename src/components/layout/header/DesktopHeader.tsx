@@ -14,12 +14,13 @@ import {
   User,
   LogOut,
   LayoutDashboard,
+  FolderKanban, // ← جديد
 } from "lucide-react";
 
 const DesktopHeader = () => {
   const {
     t,
-    user, // ✅ تمت الإضافة
+    user,
     userName,
     userEmail,
     userInitials,
@@ -28,7 +29,6 @@ const DesktopHeader = () => {
     handleLogout,
   } = useTopbar();
 
-  // ✅ التحقق من صلاحية الـ Owner
   const isWorkspaceOwner = user?.isWorkspaceOwner || false;
 
   const [profileOpen, setProfileOpen] = useState(false);
@@ -73,7 +73,14 @@ const DesktopHeader = () => {
       to: "/tasks",
       icon: User,
     },
-    // ✅ إضافة زرار الـ Dashboard بشرط أن يكون المستخدم Owner
+
+    // ← جديد: Projects
+    {
+      label: t("navigation.projects"),
+      to: "/projects",
+      icon: FolderKanban,
+    },
+
     ...(isWorkspaceOwner
       ? [
           {
@@ -165,7 +172,6 @@ const DesktopHeader = () => {
 
               {profileOpen && (
                 <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.12)]">
-                  {/* USER INFO */}
                   <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src="" />
@@ -183,7 +189,6 @@ const DesktopHeader = () => {
                     </div>
                   </div>
 
-                  {/* MENU */}
                   <div className="p-2">
                     <Link
                       to="/profile"
